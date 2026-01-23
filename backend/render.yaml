@@ -1,0 +1,45 @@
+# Render.com Deployment Configuration
+# https://render.com/docs/yaml-spec
+
+services:
+  - type: web
+    name: flayre-api
+    runtime: python
+    region: oregon
+    plan: free
+    branch: main
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: PRIMARY_MODEL
+        value: moonshotai/kimi-k2:free
+      - key: FAST_MODEL
+        value: tngtech/deepseek-r1t2-chimera:free
+      - key: VISION_MODEL
+        value: bytedance-seed/seed-1.6-flash
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: POLAR_ACCESS_TOKEN
+        sync: false
+      - key: POLAR_ORGANIZATION_ID
+        sync: false
+      - key: POLAR_PRODUCT_ID
+        sync: false
+      - key: POLAR_WEBHOOK_SECRET
+        sync: false

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>flayre.ai</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+  <div id="app">
+    <!-- Loading State -->
+    <div id="loading-view" class="view">
+      <div class="loading-spinner"></div>
+      <p>Loading...</p>
+    </div>
+
+    <!-- Login View -->
+    <div id="login-view" class="view hidden">
+      <div class="header">
+        <div class="logo">
+          <span class="logo-icon">🔥</span>
+          <span class="logo-text">flayre.ai</span>
+        </div>
+      </div>
+
+      <div class="content">
+        <h2>Sign in to continue</h2>
+        <p class="subtitle">Analyze conversations and get smart responses</p>
+
+        <form id="login-form">
+          <div class="form-group">
+            <input type="email" id="email" placeholder="Email address" required>
+          </div>
+          <div class="form-group">
+            <input type="password" id="password" placeholder="Password" required>
+          </div>
+          <div id="login-error" class="error hidden"></div>
+          <button type="submit" class="btn btn-primary" id="login-btn">
+            Sign In
+          </button>
+        </form>
+
+        <p class="footer-text">
+          Don't have an account? <a href="#" id="signup-link">Sign up free</a>
+        </p>
+      </div>
+    </div>
+
+    <!-- Main View (Authenticated) -->
+    <div id="main-view" class="view hidden">
+      <div class="header">
+        <div class="logo">
+          <span class="logo-icon">🔥</span>
+          <span class="logo-text">flayre.ai</span>
+        </div>
+        <button id="logout-btn" class="btn-icon" title="Logout">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Usage Indicator -->
+      <div id="usage-bar" class="usage-bar">
+        <div class="usage-info">
+          <span id="usage-text">0/10 analyses</span>
+          <span id="plan-badge" class="badge">FREE</span>
+        </div>
+        <div class="usage-progress">
+          <div id="usage-fill" class="usage-fill" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Platform Indicator -->
+      <div id="platform-indicator" class="platform-indicator">
+        <span id="platform-icon">💬</span>
+        <span id="platform-name">Ready to analyze</span>
+      </div>
+
+      <!-- Analyze Button -->
+      <button id="analyze-btn" class="btn btn-primary btn-large">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <polyline points="21 15 16 10 5 21"></polyline>
+        </svg>
+        Analyze Screenshot
+      </button>
+
+      <!-- Results Container -->
+      <div id="results-container" class="hidden">
+        <!-- Context Summary -->
+        <div id="context-card" class="context-card">
+          <div class="context-header">
+            <span class="context-icon">💭</span>
+            <span class="context-title">Context</span>
+          </div>
+          <p id="context-summary" class="context-text"></p>
+          <div class="context-tags">
+            <span id="tone-tag" class="tag"></span>
+            <span id="relationship-tag" class="tag"></span>
+          </div>
+        </div>
+
+        <!-- Response Cards -->
+        <div id="responses-container" class="responses">
+          <!-- Responses inserted here by JS -->
+        </div>
+      </div>
+
+      <!-- Analyzing State -->
+      <div id="analyzing-state" class="analyzing hidden">
+        <div class="loading-spinner"></div>
+        <p>Analyzing conversation...</p>
+        <p class="analyzing-sub">Vision AI is reading the screenshot</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js" type="module"></script>
+</body>
+
+</html>
