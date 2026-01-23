@@ -99,7 +99,7 @@ export default function LoginPage() {
                                     type="text"
                                     value={formData.fullName}
                                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                                    className="input bg-neutral-800 border-neutral-700 text-white placeholder-neutral-500"
+                                    className="input text-neutral-900 placeholder-neutral-400"
                                     placeholder="John Doe"
                                 />
                             </div>
@@ -113,7 +113,7 @@ export default function LoginPage() {
                                 type="email"
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                className="input bg-neutral-800 border-neutral-700 text-white placeholder-neutral-500"
+                                className="input text-neutral-900 placeholder-neutral-400"
                                 placeholder="you@example.com"
                                 required
                             />
@@ -127,7 +127,7 @@ export default function LoginPage() {
                                 type="password"
                                 value={formData.password}
                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                className="input bg-neutral-800 border-neutral-700 text-white placeholder-neutral-500"
+                                className="input text-neutral-900 placeholder-neutral-400"
                                 placeholder="••••••••"
                                 required
                                 minLength={8}
