@@ -64,15 +64,26 @@ const elements = {
 document.addEventListener('DOMContentLoaded', init);
 
 async function init() {
-  // Check auth status
-  const auth = await chrome.runtime.sendMessage({ action: 'getAuthToken' });
+  try {
+    // Check auth status with timeout to prevent hanging
+    const authPromise = chrome.runtime.sendMessage({ action: 'getAuthToken' });
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Auth check timeout')), 3000)
+    );
 
-  if (auth.accessToken && auth.user) {
-    currentUser = auth.user;
-    showMainView();
-    await updateUsage();
-    await detectPlatform();
-  } else {
+    const auth = await Promise.race([authPromise, timeoutPromise]).catch(() => ({}));
+
+    if (auth && auth.accessToken && auth.user) {
+      currentUser = auth.user;
+      showMainView();
+      // Don't await these - let them load async
+      updateUsage().catch(console.error);
+      detectPlatform().catch(console.error);
+    } else {
+      showLoginView();
+    }
+  } catch (error) {
+    console.error('Init error:', error);
     showLoginView();
   }
 
@@ -85,8 +96,11 @@ async function init() {
 // ============================================
 
 function showView(viewName) {
-  Object.values(views).forEach(v => v.classList.add('hidden'));
-  views[viewName]?.classList.remove('hidden');
+  Object.entries(views).forEach(([name, el]) => {
+    if (el) {
+      el.classList.toggle('hidden', name !== viewName);
+    }
+  });
 }
 
 function showLoginView() {
@@ -103,19 +117,27 @@ function showMainView() {
 
 function setupEventListeners() {
   // Login form
-  elements.loginForm?.addEventListener('submit', handleLogin);
+  if (elements.loginForm) {
+    elements.loginForm.addEventListener('submit', handleLogin);
+  }
 
   // Signup link
-  elements.signupLink?.addEventListener('click', (e) => {
-    e.preventDefault();
-    chrome.tabs.create({ url: `${CONFIG.FRONTEND_URL}/login` });
-  });
+  if (elements.signupLink) {
+    elements.signupLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      chrome.tabs.create({ url: `${CONFIG.FRONTEND_URL}/login` });
+    });
+  }
 
   // Logout
-  elements.logoutBtn?.addEventListener('click', handleLogout);
+  if (elements.logoutBtn) {
+    elements.logoutBtn.addEventListener('click', handleLogout);
+  }
 
   // Analyze button
-  elements.analyzeBtn?.addEventListener('click', handleAnalyze);
+  if (elements.analyzeBtn) {
+    elements.analyzeBtn.addEventListener('click', handleAnalyze);
+  }
 }
 
 // ============================================
@@ -125,14 +147,18 @@ function setupEventListeners() {
 async function handleLogin(e) {
   e.preventDefault();
 
-  const email = elements.emailInput.value;
-  const password = elements.passwordInput.value;
+  const email = elements.emailInput?.value;
+  const password = elements.passwordInput?.value;
 
   if (!email || !password) return;
 
-  elements.loginBtn.disabled = true;
-  elements.loginBtn.textContent = 'Signing in...';
-  elements.loginError.classList.add('hidden');
+  if (elements.loginBtn) {
+    elements.loginBtn.disabled = true;
+    elements.loginBtn.textContent = 'Signing in...';
+  }
+  if (elements.loginError) {
+    elements.loginError.classList.add('hidden');
+  }
 
   try {
     const response = await fetch(`${CONFIG.API_URL}/api/v1/auth/login`, {
@@ -156,20 +182,30 @@ async function handleLogin(e) {
 
     currentUser = data.user;
     showMainView();
-    await updateUsage();
-    await detectPlatform();
+
+    // Load data async
+    updateUsage().catch(console.error);
+    detectPlatform().catch(console.error);
 
   } catch (error) {
-    elements.loginError.textContent = error.message;
-    elements.loginError.classList.remove('hidden');
+    if (elements.loginError) {
+      elements.loginError.textContent = error.message;
+      elements.loginError.classList.remove('hidden');
+    }
   } finally {
-    elements.loginBtn.disabled = false;
-    elements.loginBtn.textContent = 'Sign In';
+    if (elements.loginBtn) {
+      elements.loginBtn.disabled = false;
+      elements.loginBtn.textContent = 'Sign In';
+    }
   }
 }
 
 async function handleLogout() {
-  await chrome.runtime.sendMessage({ action: 'clearAuth' });
+  try {
+    await chrome.runtime.sendMessage({ action: 'clearAuth' });
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
   currentUser = null;
   showLoginView();
 }
@@ -182,24 +218,32 @@ async function updateUsage() {
   try {
     const auth = await chrome.runtime.sendMessage({ action: 'getAuthToken' });
 
+    if (!auth || !auth.accessToken) return;
+
     const response = await fetch(`${CONFIG.API_URL}/api/v1/billing/subscription`, {
       headers: { 'Authorization': `Bearer ${auth.accessToken}` }
     });
 
     if (response.ok) {
       const data = await response.json();
-      const used = data.usage.analyses_used;
-      const limit = data.usage.analyses_limit;
+      const used = data.usage?.analyses_used || 0;
+      const limit = data.usage?.analyses_limit || 10;
       const isPro = data.is_pro;
 
-      elements.usageText.textContent = isPro
-        ? `${used} analyses (unlimited)`
-        : `${used}/${limit} analyses`;
+      if (elements.usageText) {
+        elements.usageText.textContent = isPro
+          ? `${used} analyses (unlimited)`
+          : `${used}/${limit} analyses`;
+      }
 
-      elements.usageFill.style.width = isPro ? '0%' : `${(used / limit) * 100}%`;
+      if (elements.usageFill) {
+        elements.usageFill.style.width = isPro ? '0%' : `${(used / limit) * 100}%`;
+      }
 
-      elements.planBadge.textContent = isPro ? 'PRO' : 'FREE';
-      elements.planBadge.classList.toggle('pro', isPro);
+      if (elements.planBadge) {
+        elements.planBadge.textContent = isPro ? 'PRO' : 'FREE';
+        elements.planBadge.classList.toggle('pro', isPro);
+      }
     }
   } catch (error) {
     console.error('Failed to fetch usage:', error);
@@ -207,24 +251,36 @@ async function updateUsage() {
 }
 
 async function detectPlatform() {
-  const result = await chrome.runtime.sendMessage({ action: 'detectPlatform' });
+  try {
+    const result = await chrome.runtime.sendMessage({ action: 'detectPlatform' });
 
-  const platformEmojis = {
-    whatsapp: '💬',
-    instagram: '📸',
-    discord: '🎮',
-    other: '💭'
-  };
+    const platformEmojis = {
+      whatsapp: '💬',
+      instagram: '📸',
+      discord: '🎮',
+      other: '💭'
+    };
 
-  const platformNames = {
-    whatsapp: 'WhatsApp detected',
-    instagram: 'Instagram detected',
-    discord: 'Discord detected',
-    other: 'Ready to analyze'
-  };
+    const platformNames = {
+      whatsapp: 'WhatsApp detected',
+      instagram: 'Instagram detected',
+      discord: 'Discord detected',
+      other: 'Ready to analyze'
+    };
 
-  elements.platformIcon.textContent = platformEmojis[result.platform] || '💭';
-  elements.platformName.textContent = platformNames[result.platform] || 'Ready to analyze';
+    const platform = result?.platform || 'other';
+
+    if (elements.platformIcon) {
+      elements.platformIcon.textContent = platformEmojis[platform] || '💭';
+    }
+    if (elements.platformName) {
+      elements.platformName.textContent = platformNames[platform] || 'Ready to analyze';
+    }
+  } catch (error) {
+    console.error('Platform detection error:', error);
+    if (elements.platformIcon) elements.platformIcon.textContent = '💭';
+    if (elements.platformName) elements.platformName.textContent = 'Ready to analyze';
+  }
 }
 
 // ============================================
@@ -235,16 +291,16 @@ async function handleAnalyze() {
   if (isAnalyzing) return;
 
   isAnalyzing = true;
-  elements.analyzeBtn.disabled = true;
-  elements.resultsContainer.classList.add('hidden');
-  elements.analyzingState.classList.remove('hidden');
+  if (elements.analyzeBtn) elements.analyzeBtn.disabled = true;
+  if (elements.resultsContainer) elements.resultsContainer.classList.add('hidden');
+  if (elements.analyzingState) elements.analyzingState.classList.remove('hidden');
 
   try {
     // Capture screenshot
     const capture = await chrome.runtime.sendMessage({ action: 'captureScreenshot' });
 
-    if (!capture.success) {
-      throw new Error(capture.error || 'Failed to capture screenshot');
+    if (!capture || !capture.success) {
+      throw new Error(capture?.error || 'Failed to capture screenshot');
     }
 
     // Get platform
@@ -254,67 +310,77 @@ async function handleAnalyze() {
     const result = await chrome.runtime.sendMessage({
       action: 'analyzeScreenshot',
       screenshot: capture.screenshot,
-      platform: platform.platform
+      platform: platform?.platform
     });
 
-    if (result.error) {
+    if (result?.error) {
       throw new Error(result.error);
     }
 
     // Display results
     displayResults(result);
-    await updateUsage();
+    updateUsage().catch(console.error);
 
   } catch (error) {
     alert(`Analysis failed: ${error.message}`);
   } finally {
     isAnalyzing = false;
-    elements.analyzeBtn.disabled = false;
-    elements.analyzingState.classList.add('hidden');
+    if (elements.analyzeBtn) elements.analyzeBtn.disabled = false;
+    if (elements.analyzingState) elements.analyzingState.classList.add('hidden');
   }
 }
 
 function displayResults(result) {
   // Context
-  elements.contextSummary.textContent = result.context?.summary || 'Conversation analyzed';
-  elements.toneTag.textContent = result.context?.tone || 'neutral';
-  elements.relationshipTag.textContent = result.context?.relationship_type || 'unknown';
+  if (elements.contextSummary) {
+    elements.contextSummary.textContent = result.context?.summary || 'Conversation analyzed';
+  }
+  if (elements.toneTag) {
+    elements.toneTag.textContent = result.context?.tone || 'neutral';
+  }
+  if (elements.relationshipTag) {
+    elements.relationshipTag.textContent = result.context?.relationship_type || 'unknown';
+  }
 
   // Clear previous responses
-  elements.responsesContainer.innerHTML = '';
+  if (elements.responsesContainer) {
+    elements.responsesContainer.innerHTML = '';
 
-  // Response cards
-  const toneEmojis = {
-    warm: '💜',
-    direct: '✨',
-    playful: '🎉'
-  };
+    // Response cards
+    const toneEmojis = {
+      warm: '💜',
+      direct: '✨',
+      playful: '🎉'
+    };
 
-  result.responses?.forEach(response => {
-    const card = document.createElement('div');
-    card.className = 'response-card';
-    card.innerHTML = `
-      <div class="response-header">
-        <span class="response-tone ${response.tone}">
-          ${toneEmojis[response.tone] || '💬'} ${response.tone}
-        </span>
-        <span class="response-chars">${response.character_count} chars</span>
-      </div>
-      <p class="response-content">${response.content}</p>
-      <div class="copy-indicator">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-        </svg>
-        Click to copy
-      </div>
-    `;
+    result.responses?.forEach(response => {
+      const card = document.createElement('div');
+      card.className = 'response-card';
+      card.innerHTML = `
+        <div class="response-header">
+          <span class="response-tone ${response.tone}">
+            ${toneEmojis[response.tone] || '💬'} ${response.tone}
+          </span>
+          <span class="response-chars">${response.character_count} chars</span>
+        </div>
+        <p class="response-content">${response.content}</p>
+        <div class="copy-indicator">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          Click to copy
+        </div>
+      `;
 
-    card.addEventListener('click', () => copyResponse(card, response.content));
-    elements.responsesContainer.appendChild(card);
-  });
+      card.addEventListener('click', () => copyResponse(card, response.content));
+      elements.responsesContainer.appendChild(card);
+    });
+  }
 
-  elements.resultsContainer.classList.remove('hidden');
+  if (elements.resultsContainer) {
+    elements.resultsContainer.classList.remove('hidden');
+  }
 }
 
 async function copyResponse(card, content) {
@@ -324,25 +390,27 @@ async function copyResponse(card, content) {
     // Visual feedback
     card.classList.add('copied');
     const indicator = card.querySelector('.copy-indicator');
-    indicator.classList.add('copied');
-    indicator.innerHTML = `
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="20 6 9 17 4 12"></polyline>
-      </svg>
-      Copied!
-    `;
-
-    setTimeout(() => {
-      card.classList.remove('copied');
-      indicator.classList.remove('copied');
+    if (indicator) {
+      indicator.classList.add('copied');
       indicator.innerHTML = `
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
-        Click to copy
+        Copied!
       `;
-    }, 2000);
+
+      setTimeout(() => {
+        card.classList.remove('copied');
+        indicator.classList.remove('copied');
+        indicator.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          Click to copy
+        `;
+      }, 2000);
+    }
 
   } catch (error) {
     console.error('Copy failed:', error);

@@ -3,12 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-interface User {
-    id: string;
-    email: string;
-    full_name?: string;
-}
+import { useAuth, getAccessToken } from "@/context/AuthContext";
 
 interface Subscription {
     plan_type: string;
@@ -30,27 +25,34 @@ interface Conversation {
 
 export default function DashboardPage() {
     const router = useRouter();
-    const [user, setUser] = useState<User | null>(null);
+    const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
+
     const [subscription, setSubscription] = useState<Subscription | null>(null);
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
 
+    // Redirect if not authenticated
     useEffect(() => {
-        // Check auth
-        const token = localStorage.getItem("access_token");
-        const userData = localStorage.getItem("user");
+        if (!authLoading && !isAuthenticated) {
+            router.push("/login?redirect=/dashboard");
+        }
+    }, [isAuthenticated, authLoading, router]);
 
-        if (!token || !userData) {
-            router.push("/login");
+    // Fetch data when authenticated
+    useEffect(() => {
+        if (isAuthenticated) {
+            fetchData();
+        }
+    }, [isAuthenticated]);
+
+    const fetchData = async () => {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const token = getAccessToken();
+
+        if (!token) {
+            setLoading(false);
             return;
         }
-
-        setUser(JSON.parse(userData));
-        fetchData(token);
-    }, [router]);
-
-    const fetchData = async (token: string) => {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
         try {
             // Fetch subscription
@@ -76,9 +78,8 @@ export default function DashboardPage() {
         }
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("user");
+    const handleLogout = async () => {
+        await logout();
         router.push("/");
     };
 
@@ -92,7 +93,8 @@ export default function DashboardPage() {
         return emojis[platform.toLowerCase()] || "💭";
     };
 
-    if (loading) {
+    // Show loading while checking auth
+    if (authLoading || loading) {
         return (
             <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
                 <div className="text-center">
@@ -103,6 +105,11 @@ export default function DashboardPage() {
                 </div>
             </div>
         );
+    }
+
+    // Don't render if not authenticated (will redirect)
+    if (!isAuthenticated) {
+        return null;
     }
 
     return (
