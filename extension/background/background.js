@@ -55,13 +55,35 @@ async function captureScreenshot() {
       throw new Error('No active tab found');
     }
 
-    const screenshot = await chrome.tabs.captureVisibleTab(null, {
+    // Check if tab URL is capturable (not chrome://, edge://, etc.)
+    if (tab.url && (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://') ||
+      tab.url.startsWith('edge://') || tab.url.startsWith('about:'))) {
+      throw new Error('Cannot capture this page. Please navigate to a website.');
+    }
+
+    // Get the current window ID for captureVisibleTab
+    const currentWindow = await chrome.windows.getCurrent();
+
+    if (!currentWindow || !currentWindow.id) {
+      throw new Error('Could not get current window');
+    }
+
+    // Use windowId explicitly instead of null
+    const screenshot = await chrome.tabs.captureVisibleTab(currentWindow.id, {
       format: 'png',
       quality: 90
     });
 
+    if (!screenshot) {
+      throw new Error('Screenshot capture returned empty result');
+    }
+
     // Return base64 data (remove data URL prefix for API)
     const base64Data = screenshot.split(',')[1];
+
+    if (!base64Data) {
+      throw new Error('Failed to extract base64 data from screenshot');
+    }
 
     return {
       success: true,
@@ -70,9 +92,18 @@ async function captureScreenshot() {
     };
   } catch (error) {
     console.error('Screenshot capture failed:', error);
+
+    // Provide more specific error messages
+    let errorMessage = error.message;
+    if (errorMessage.includes('Permission denied') || errorMessage.includes('Cannot access')) {
+      errorMessage = 'Permission denied. Please refresh the page and try again.';
+    } else if (errorMessage.includes('No tab')) {
+      errorMessage = 'No active tab found. Please open a chat conversation first.';
+    }
+
     return {
       success: false,
-      error: error.message
+      error: errorMessage
     };
   }
 }
@@ -84,9 +115,16 @@ async function captureScreenshot() {
 async function analyzeScreenshot(screenshot, platform) {
   const token = await getAuthToken();
 
+  console.log('[flayre.ai] Token check:', {
+    hasToken: !!token.accessToken,
+    tokenPreview: token.accessToken ? token.accessToken.substring(0, 50) + '...' : 'none'
+  });
+
   if (!token.accessToken) {
     throw new Error('Not authenticated');
   }
+
+  console.log('[flayre.ai] Calling analyze API at:', `${CONFIG.API_URL}/api/v1/analyze`);
 
   const response = await fetch(`${CONFIG.API_URL}/api/v1/analyze`, {
     method: 'POST',
@@ -100,8 +138,11 @@ async function analyzeScreenshot(screenshot, platform) {
     })
   });
 
+  console.log('[flayre.ai] Response status:', response.status);
+
   if (!response.ok) {
     const error = await response.json();
+    console.error('[flayre.ai] Error response:', error);
     throw new Error(error.detail || error.message || 'Analysis failed');
   }
 

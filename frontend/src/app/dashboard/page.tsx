@@ -30,6 +30,7 @@ export default function DashboardPage() {
     const [subscription, setSubscription] = useState<Subscription | null>(null);
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showInstallModal, setShowInstallModal] = useState(false);
 
     // Redirect if not authenticated
     useEffect(() => {
@@ -192,8 +193,8 @@ export default function DashboardPage() {
                         <div className="flex items-center gap-3">
                             <div
                                 className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${subscription?.is_pro
-                                        ? "bg-gradient-hero text-white"
-                                        : "bg-neutral-100"
+                                    ? "bg-gradient-hero text-white"
+                                    : "bg-neutral-100"
                                     }`}
                             >
                                 {subscription?.is_pro ? "⭐" : "🆓"}
@@ -223,15 +224,15 @@ export default function DashboardPage() {
                         <p className="text-white/80 text-sm mb-4">
                             Get the Chrome extension for one-click analysis
                         </p>
-                        <a
-                            href="#"
-                            className="btn bg-white text-purple-600 hover:bg-neutral-100 w-full"
+                        <button
+                            onClick={() => setShowInstallModal(true)}
+                            className="btn bg-white text-purple-600 hover:bg-neutral-100 w-full flex items-center justify-center gap-2"
                         >
                             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 0C5.373 0 0 5.373 0 12c0 4.068 2.012 7.662 5.093 9.838A12.006 12.006 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 2c5.523 0 10 4.477 10 10 0 2.282-.762 4.385-2.047 6.073l-8.026-8.026A4 4 0 0 0 8 12a4 4 0 0 0 4 4c.928 0 1.784-.316 2.463-.846l1.415 1.415A5.98 5.98 0 0 1 12 18a6 6 0 1 1 0-12 6 6 0 0 1 4.243 1.757l-1.414 1.414A4 4 0 0 0 12 8a4 4 0 0 0 0 8 4.002 4.002 0 0 0 3.465-2H12v-2h6v1a6 6 0 0 1-.34 2l5.393 5.393A9.97 9.97 0 0 0 22 12c0-5.523-4.477-10-10-10z" />
                             </svg>
                             Add to Chrome
-                        </a>
+                        </button>
                     </div>
                 </div>
 
@@ -286,6 +287,61 @@ export default function DashboardPage() {
                     )}
                 </div>
             </main>
+
+            {/* Install Extension Modal */}
+            {showInstallModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl max-w-md w-full p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xl font-bold text-neutral-900">Install Extension</h3>
+                            <button
+                                onClick={() => setShowInstallModal(false)}
+                                className="text-neutral-400 hover:text-neutral-600"
+                            >
+                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="space-y-4">
+                            <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold">1</div>
+                                <div>
+                                    <p className="font-medium text-neutral-900">Download the extension</p>
+                                    <p className="text-sm text-neutral-600">The extension folder is in the project repository</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold">2</div>
+                                <div>
+                                    <p className="font-medium text-neutral-900">Open Chrome Extensions</p>
+                                    <p className="text-sm text-neutral-600">Go to <code className="bg-neutral-100 px-1 rounded">chrome://extensions</code></p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold">3</div>
+                                <div>
+                                    <p className="font-medium text-neutral-900">Enable Developer Mode</p>
+                                    <p className="text-sm text-neutral-600">Toggle it on in the top right corner</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold">4</div>
+                                <div>
+                                    <p className="font-medium text-neutral-900">Load the extension</p>
+                                    <p className="text-sm text-neutral-600">Click "Load unpacked" and select the extension folder</p>
+                                </div>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setShowInstallModal(false)}
+                            className="btn btn-primary w-full mt-6"
+                        >
+                            Got it!
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

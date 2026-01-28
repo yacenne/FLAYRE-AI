@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "flayre.ai - AI Conversation Assistant",
-  "version": "2.0.0",
+  "version": "2.0.3",
   "description": "Get smart response suggestions for any chat conversation with AI-powered analysis",
   "icons": {
     "16": "icons/icon16.png",
@@ -10,12 +10,11 @@
   },
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "tabs"
   ],
   "host_permissions": [
-    "https://social-coach-api.onrender.com/*",
-    "http://localhost:8000/*",
-    "https://*.supabase.co/*"
+    "<all_urls>"
   ],
   "action": {
     "default_popup": "popup/popup.html",

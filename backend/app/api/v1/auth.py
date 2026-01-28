@@ -81,6 +81,48 @@ async def signup(
         )
 
 
+@router.post("/test-token")
+async def test_token(
+    token: str,
+    db: Client = Depends(get_admin_db)
+):
+    """
+    Debug endpoint to test token verification.
+    """
+    result = {"token_preview": token[:50] + "..." if len(token) > 50 else token}
+    
+    # Test 1: Try Supabase auth.get_user()
+    try:
+        user_response = db.auth.get_user(token)
+        if user_response and user_response.user:
+            result["supabase_get_user"] = {
+                "success": True,
+                "user_id": user_response.user.id,
+                "email": user_response.user.email
+            }
+        else:
+            result["supabase_get_user"] = {"success": False, "error": "No user returned"}
+    except Exception as e:
+        result["supabase_get_user"] = {"success": False, "error": str(e)}
+    
+    # Test 2: Try manual JWT decode
+    from app.core.security import decode_access_token
+    try:
+        payload = decode_access_token(token)
+        if payload:
+            result["jwt_decode"] = {
+                "success": True,
+                "sub": payload.get("sub"),
+                "exp": payload.get("exp"),
+                "iss": payload.get("iss")
+            }
+        else:
+            result["jwt_decode"] = {"success": False, "error": "Decode returned None"}
+    except Exception as e:
+        result["jwt_decode"] = {"success": False, "error": str(e)}
+    
+    return result
+
 @router.post("/login", response_model=AuthResponse)
 async def login(
     credentials: UserLogin,

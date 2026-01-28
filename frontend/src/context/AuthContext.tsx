@@ -92,17 +92,44 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Get initial session
         const initializeAuth = async () => {
             try {
-                const { data: { session: currentSession } } = await supabase.auth.getSession();
-                setSession(currentSession);
-                setUser(transformUser(currentSession?.user || null));
+                // Add timeout to prevent hanging
+                const sessionPromise = supabase.auth.getSession();
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("Auth timeout")), 5000)
+                );
 
-                // Also update localStorage for backward compatibility
+                const result = await Promise.race([sessionPromise, timeoutPromise]) as any;
+                const currentSession = result?.data?.session;
+
                 if (currentSession) {
+                    setSession(currentSession);
+                    setUser(transformUser(currentSession.user));
                     localStorage.setItem("access_token", currentSession.access_token);
                     localStorage.setItem("user", JSON.stringify(transformUser(currentSession.user)));
+                } else {
+                    // Fallback: check localStorage for existing session
+                    const storedToken = localStorage.getItem("access_token");
+                    const storedUser = localStorage.getItem("user");
+                    if (storedToken && storedUser) {
+                        try {
+                            setUser(JSON.parse(storedUser));
+                            // Session will be null but user data is available
+                        } catch (e) {
+                            console.error("Failed to parse stored user:", e);
+                        }
+                    }
                 }
             } catch (error) {
                 console.error("Auth initialization error:", error);
+                // Fallback to localStorage on error/timeout
+                const storedUser = localStorage.getItem("user");
+                if (storedUser) {
+                    try {
+                        setUser(JSON.parse(storedUser));
+                    } catch (e) {
+                        console.error("Failed to parse stored user:", e);
+                    }
+                }
             } finally {
                 setIsLoading(false);
             }
@@ -221,7 +248,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         user,
         session,
         isLoading,
-        isAuthenticated: !!user && !!session,
+        isAuthenticated: !!user,
         login,
         signup,
         loginWithGoogle,

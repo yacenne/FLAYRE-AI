@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     supabase_url: str
     supabase_key: str  # anon key
     supabase_service_key: str  # service role key
+    supabase_jwt_secret: str = ""  # JWT secret from Supabase dashboard (Settings > API)
     
     # ===========================================
     # Polar.sh Payments

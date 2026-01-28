@@ -71,9 +71,16 @@ async function init() {
       setTimeout(() => reject(new Error('Auth check timeout')), 3000)
     );
 
-    const auth = await Promise.race([authPromise, timeoutPromise]).catch(() => ({}));
+    let auth = null;
+    try {
+      auth = await Promise.race([authPromise, timeoutPromise]);
+    } catch (e) {
+      console.warn('Auth check failed:', e);
+      auth = null;
+    }
 
-    if (auth && auth.accessToken && auth.user) {
+    // Safely check auth properties
+    if (auth && typeof auth === 'object' && auth.accessToken && auth.user) {
       currentUser = auth.user;
       showMainView();
       // Don't await these - let them load async
@@ -167,10 +174,20 @@ async function handleLogin(e) {
       body: JSON.stringify({ email, password })
     });
 
-    const data = await response.json();
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type');
+    let data;
+
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      // Handle non-JSON response (like plain "Not Found")
+      const text = await response.text();
+      throw new Error(text || `Server error: ${response.status}`);
+    }
 
     if (!response.ok) {
-      throw new Error(data.detail || 'Login failed');
+      throw new Error(data.detail || data.message || 'Login failed');
     }
 
     // Store auth
@@ -218,14 +235,25 @@ async function updateUsage() {
   try {
     const auth = await chrome.runtime.sendMessage({ action: 'getAuthToken' });
 
-    if (!auth || !auth.accessToken) return;
+    console.log('[flayre.ai] updateUsage - auth token present:', !!auth?.accessToken);
 
-    const response = await fetch(`${CONFIG.API_URL}/api/v1/billing/subscription`, {
+    if (!auth || !auth.accessToken) {
+      console.log('[flayre.ai] No auth token, skipping usage fetch');
+      return;
+    }
+
+    const url = `${CONFIG.API_URL}/api/v1/billing/subscription`;
+    console.log('[flayre.ai] Fetching usage from:', url);
+
+    const response = await fetch(url, {
       headers: { 'Authorization': `Bearer ${auth.accessToken}` }
     });
 
+    console.log('[flayre.ai] Usage response status:', response.status);
+
     if (response.ok) {
       const data = await response.json();
+      console.log('[flayre.ai] Usage data:', data);
       const used = data.usage?.analyses_used || 0;
       const limit = data.usage?.analyses_limit || 10;
       const isPro = data.is_pro;
@@ -244,9 +272,12 @@ async function updateUsage() {
         elements.planBadge.textContent = isPro ? 'PRO' : 'FREE';
         elements.planBadge.classList.toggle('pro', isPro);
       }
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('[flayre.ai] Usage fetch failed:', response.status, JSON.stringify(errorData));
     }
   } catch (error) {
-    console.error('Failed to fetch usage:', error);
+    console.error('[flayre.ai] Failed to fetch usage:', error.message || error, JSON.stringify(error));
   }
 }
 

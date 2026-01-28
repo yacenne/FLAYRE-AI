@@ -3,11 +3,10 @@
  */
 
 export const CONFIG = {
-  // API Base URL - change for production
-  API_URL: 'https://social-coach-api.onrender.com',
-  // API_URL: 'http://localhost:8000',
+  // API Base URL - Production backend on Render
+  API_URL: 'https://flayre-ai.onrender.com',
 
-  // Frontend URL
+  // Frontend URL - Production frontend on Vercel
   FRONTEND_URL: 'https://flayreai.vercel.app',
 
   // Storage keys

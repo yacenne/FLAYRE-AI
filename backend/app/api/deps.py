@@ -72,7 +72,10 @@ async def get_current_user_id(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ) -> str:
     """
-    Extract and validate user ID from JWT token.
+    Extract and validate user ID from JWT token using Supabase.
+    
+    Uses Supabase client to verify the token - this is the recommended approach
+    as Supabase handles all JWT validation internally.
     
     Raises:
         HTTPException: If token is missing or invalid
@@ -88,23 +91,33 @@ async def get_current_user_id(
         )
     
     token = credentials.credentials
-    payload = decode_access_token(token)
     
-    if not payload:
+    try:
+        # Use Supabase service client to verify the token
+        admin_client = get_supabase_admin()
+        user_response = admin_client.auth.get_user(token)
+        
+        if not user_response or not user_response.user:
+            logger.warning("[AUTH] Token verification failed - no user returned")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired token",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+        
+        user_id = user_response.user.id
+        logger.info(f"[AUTH] User verified: {user_id}")
+        return user_id
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[AUTH] Token verification error: {type(e).__name__}: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"}
         )
-    
-    user_id = payload.get("sub")
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload"
-        )
-    
-    return user_id
 
 
 async def get_current_user_optional(
@@ -120,8 +133,9 @@ async def get_current_user_optional(
     
     try:
         token = credentials.credentials
-        payload = decode_access_token(token)
-        return payload.get("sub") if payload else None
+        admin_client = get_supabase_admin()
+        user_response = admin_client.auth.get_user(token)
+        return user_response.user.id if user_response and user_response.user else None
     except Exception:
         return None
 
