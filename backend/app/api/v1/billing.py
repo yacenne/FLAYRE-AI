@@ -33,14 +33,10 @@ async def get_subscription(
 ):
     """
     Get current user subscription details.
+    Creates a default free subscription if one doesn't exist.
     """
-    subscription = await subscription_repo.get_by_user_id(user_id)
-    
-    if not subscription:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Subscription not found"
-        )
+    # This will create a free subscription if the user doesn't have one
+    subscription = await subscription_repo.get_or_create_subscription(user_id)
     
     return SubscriptionResponse(
         id=subscription.id,

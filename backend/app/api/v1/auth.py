@@ -169,28 +169,44 @@ async def login(
 
 @router.post("/refresh")
 async def refresh_token(
-    refresh_token: str,
+    request: dict,
     db: Client = Depends(get_db)
 ):
     """
     Refresh access token using refresh token.
+    
+    Expected request body: {"refresh_token": "..."}
     """
     try:
-        auth_response = db.auth.refresh_session(refresh_token)
+        refresh_token_value = request.get("refresh_token")
         
-        if not auth_response.session:
+        if not refresh_token_value:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="refresh_token is required"
+            )
+        
+        auth_response = db.auth.refresh_session(refresh_token_value)
+        
+        if not auth_response.session or not auth_response.user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid refresh token"
             )
         
         session = auth_response.session
+        user = auth_response.user
         
         return {
             "access_token": session.access_token,
             "refresh_token": session.refresh_token,
             "token_type": "bearer",
-            "expires_in": session.expires_in
+            "expires_in": session.expires_in,
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "full_name": user.user_metadata.get("full_name")
+            }
         }
     except HTTPException:
         raise

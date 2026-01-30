@@ -167,6 +167,7 @@ async def check_usage_limit(
 ) -> str:
     """
     Check if user has remaining analysis quota.
+    Creates a default subscription if one doesn't exist.
     
     Raises:
         HTTPException: If usage limit exceeded
@@ -174,13 +175,8 @@ async def check_usage_limit(
     Returns:
         User ID (for chaining dependencies)
     """
-    subscription = await subscription_repo.get_by_user_id(user_id)
-    
-    if not subscription:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Subscription not found"
-        )
+    # This will create a free subscription if the user doesn't have one
+    subscription = await subscription_repo.get_or_create_subscription(user_id)
     
     if not subscription.can_analyze:
         raise HTTPException(

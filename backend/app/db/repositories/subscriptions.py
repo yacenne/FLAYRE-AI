@@ -93,6 +93,49 @@ class SubscriptionRepository(BaseRepository[UserSubscription]):
             logger.debug(f"Subscription not found for user: {user_id}")
             return None
     
+    async def create_default_subscription(self, user_id: str) -> UserSubscription:
+        """
+        Create a default free subscription for a new user.
+        
+        Args:
+            user_id: User UUID
+        
+        Returns:
+            Created subscription
+        """
+        try:
+            data = {
+                "user_id": user_id,
+                "plan_type": "free",
+                "status": "active",
+                "monthly_analyses_used": 0,
+                "monthly_analyses_limit": 10,
+                "cancel_at_period_end": False
+            }
+            response = self._table.insert(data).execute()
+            if response.data and len(response.data) > 0:
+                logger.info(f"Created default subscription for user: {user_id}")
+                return self._to_entity(response.data[0])
+            raise DatabaseError("Failed to create subscription")
+        except Exception as e:
+            logger.error(f"Error creating default subscription: {e}")
+            raise DatabaseError(f"Failed to create subscription: {e}")
+    
+    async def get_or_create_subscription(self, user_id: str) -> UserSubscription:
+        """
+        Get subscription, creating a default one if it doesn't exist.
+        
+        Args:
+            user_id: User UUID
+        
+        Returns:
+            UserSubscription (existing or newly created)
+        """
+        subscription = await self.get_by_user_id(user_id)
+        if subscription:
+            return subscription
+        return await self.create_default_subscription(user_id)
+    
     async def get_by_polar_subscription(self, polar_id: str) -> Optional[UserSubscription]:
         """
         Get subscription by Polar.sh subscription ID.

@@ -116,8 +116,9 @@ async def analyze_screenshot(
             )
             
             if response.status_code != 200:
-                logger.error(f"Vision AI error: {response.status_code} - {response.text}")
-                raise AIServiceError(f"Vision AI returned {response.status_code}")
+                error_text = response.text[:500] if response.text else "No response body"
+                logger.error(f"Vision AI error: {response.status_code} - {error_text}")
+                raise AIServiceError(f"Vision AI returned {response.status_code}: {error_text}")
             
             data = response.json()
             content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
