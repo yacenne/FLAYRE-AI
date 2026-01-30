@@ -190,10 +190,11 @@ async function handleLogin(e) {
       throw new Error(data.detail || data.message || 'Login failed');
     }
 
-    // Store auth
+    // Store auth (including refresh token)
     await chrome.runtime.sendMessage({
       action: 'setAuthToken',
       token: data.access_token,
+      refreshToken: data.refresh_token,
       user: data.user
     });
 
@@ -245,11 +246,32 @@ async function updateUsage() {
     const url = `${CONFIG.API_URL}/api/v1/billing/subscription`;
     console.log('[flayre.ai] Fetching usage from:', url);
 
-    const response = await fetch(url, {
+    let response = await fetch(url, {
       headers: { 'Authorization': `Bearer ${auth.accessToken}` }
     });
 
     console.log('[flayre.ai] Usage response status:', response.status);
+
+    // If token expired, try refreshing
+    if (response.status === 401) {
+      console.log('[flayre.ai] Token expired, attempting refresh before usage fetch...');
+      try {
+        await chrome.runtime.sendMessage({ action: 'refreshToken' });
+        // Get the new token
+        const newAuth = await chrome.runtime.sendMessage({ action: 'getAuthToken' });
+        if (newAuth && newAuth.accessToken) {
+          // Retry with new token
+          response = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${newAuth.accessToken}` }
+          });
+          console.log('[flayre.ai] Usage retry response status:', response.status);
+        }
+      } catch (refreshError) {
+        console.error('[flayre.ai] Token refresh failed during usage fetch:', refreshError);
+        // Don't throw, just skip updating usage
+        return;
+      }
+    }
 
     if (response.ok) {
       const data = await response.json();

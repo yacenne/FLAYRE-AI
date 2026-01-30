@@ -12,6 +12,7 @@ export const CONFIG = {
   // Storage keys
   STORAGE_KEYS: {
     ACCESS_TOKEN: 'flayre_access_token',
+    REFRESH_TOKEN: 'flayre_refresh_token',
     USER: 'flayre_user',
     LAST_ANALYSIS: 'flayre_last_analysis'
   },

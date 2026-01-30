@@ -54,8 +54,13 @@ def get_user_repo(db: Client = Depends(get_db)) -> UserRepository:
     return UserRepository(db)
 
 
-def get_subscription_repo(db: Client = Depends(get_db)) -> SubscriptionRepository:
-    """Get subscription repository instance."""
+def get_subscription_repo(db: Client = Depends(get_admin_db)) -> SubscriptionRepository:
+    """
+    Get subscription repository instance with admin client.
+    
+    Uses admin client to bypass RLS for subscription creation/updates,
+    which is safe since endpoints are already protected by authentication.
+    """
     return SubscriptionRepository(db)
 
 
