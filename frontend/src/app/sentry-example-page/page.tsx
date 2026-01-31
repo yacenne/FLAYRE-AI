@@ -13,18 +13,65 @@ class SentryExampleFrontendError extends Error {
 export default function Page() {
   const [hasSentError, setHasSentError] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
+  const isEnabled = process.env.NEXT_PUBLIC_SENTRY_EXAMPLE_ENABLED === "true";
 
   useEffect(() => {
     Sentry.logger.info("Sentry example page loaded");
     async function checkConnectivity() {
-      const result = await Sentry.diagnoseSdkConnectivity();
-      setIsConnected(result !== "sentry-unreachable");
+      try {
+        const result = await Sentry.diagnoseSdkConnectivity();
+        setIsConnected(result !== "sentry-unreachable");
+      } catch (error) {
+        Sentry.logger.error("Failed to check Sentry connectivity:", error);
+        setIsConnected(false);
+      }
     }
     checkConnectivity();
   }, []);
 
+  // Don't render demo if not enabled
+  if (!isEnabled) {
+    return (
+      <div className="sentryExamplePage">
+        <main>
+          <h1>Sentry Example</h1>
+          <p className="description">
+            This demo is currently disabled. Set NEXT_PUBLIC_SENTRY_EXAMPLE_ENABLED=true to enable it.
+          </p>
+        </main>
+        <style>{`
+          .sentryExamplePage main {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+          }
+          .sentryExamplePage h1 {
+            padding: 0px 4px;
+            border-radius: 4px;
+            background-color: rgba(24, 20, 35, 0.03);
+            font-family: monospace;
+            font-size: 20px;
+            line-height: 1.2;
+          }
+          .sentryExamplePage .description {
+            text-align: center;
+            color: #6E6C75;
+            max-width: 500px;
+            line-height: 1.5;
+            font-size: 20px;
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
-    <div>
+    <div className="sentryExamplePage">
 
       <main>
         <div className="flex-spacer" />
@@ -106,7 +153,7 @@ export default function Page() {
       </main>
 
       <style>{`
-        main {
+        .sentryExamplePage main {
           display: flex;
           min-height: 100vh;
           flex-direction: column;
@@ -117,7 +164,7 @@ export default function Page() {
           font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
         }
 
-        h1 {
+        .sentryExamplePage h1 {
           padding: 0px 4px;
           border-radius: 4px;
           background-color: rgba(24, 20, 35, 0.03);
@@ -126,12 +173,12 @@ export default function Page() {
           line-height: 1.2;
         }
 
-        p {
+        .sentryExamplePage p {
           margin: 0;
           font-size: 20px;
         }
 
-        a {
+        .sentryExamplePage a {
           color: #6341F0;
           text-decoration: underline;
           cursor: pointer;
@@ -141,7 +188,7 @@ export default function Page() {
           }
         }
 
-        button {
+        .sentryExamplePage button {
           border-radius: 8px;
           color: white;
           cursor: pointer;
@@ -171,17 +218,17 @@ export default function Page() {
           }
 
           &:disabled {
-	            cursor: not-allowed;
-	            opacity: 0.6;
+            cursor: not-allowed;
+            opacity: 0.6;
 
-	            & > span {
-	              transform: translateY(0);
-	              border: none
-	            }
-	          }
+            & > span {
+              transform: translateY(0);
+              border: none
+            }
+          }
         }
 
-        .description {
+        .sentryExamplePage .description {
           text-align: center;
           color: #6E6C75;
           max-width: 500px;
@@ -193,11 +240,11 @@ export default function Page() {
           }
         }
 
-        .flex-spacer {
+        .sentryExamplePage .flex-spacer {
           flex: 1;
         }
 
-        .success {
+        .sentryExamplePage .success {
           padding: 12px 16px;
           border-radius: 8px;
           font-size: 20px;
@@ -207,11 +254,11 @@ export default function Page() {
           color: #181423;
         }
 
-        .success_placeholder {
+        .sentryExamplePage .success_placeholder {
           height: 46px;
         }
 
-        .connectivity-error {
+        .sentryExamplePage .connectivity-error {
           padding: 12px 16px;
           background-color: #E50045;
           border-radius: 8px;
@@ -222,7 +269,7 @@ export default function Page() {
           margin: 0;
         }
 
-        .connectivity-error a {
+        .sentryExamplePage .connectivity-error a {
           color: #FFFFFF;
           text-decoration: underline;
         }

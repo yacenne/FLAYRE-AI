@@ -12,7 +12,16 @@ export async function POST(request: Request) {
         return Response.json(result);
 
     } catch (error) {
-        // This sends the error to Sentry automatically!
+        // Check if it's a JSON parse error (client error)
+        if (error instanceof SyntaxError || (error as Error).name === "SyntaxError") {
+            console.warn("Invalid JSON received:", error);
+            return Response.json(
+                { error: "Invalid JSON" },
+                { status: 400 }
+            );
+        }
+
+        // For all other errors, send to Sentry (server error)
         Sentry.captureException(error);
 
         console.error("API Error:", error);
