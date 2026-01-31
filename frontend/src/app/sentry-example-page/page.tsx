@@ -21,8 +21,9 @@ export default function Page() {
       try {
         const result = await Sentry.diagnoseSdkConnectivity();
         setIsConnected(result !== "sentry-unreachable");
-      } catch (error) {
-        Sentry.logger.error("Failed to check Sentry connectivity:", error);
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        Sentry.logger.error("Failed to check Sentry connectivity:", { error });
         setIsConnected(false);
       }
     }
