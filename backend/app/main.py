@@ -4,6 +4,8 @@ flayre.ai Backend API
 Production-ready FastAPI application with enterprise-grade architecture.
 """
 
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,6 +15,19 @@ from app.config import settings
 from app.api.v1 import api_router
 from app.core.logging import get_logger, setup_logging
 from app.core.exceptions import FlayreException
+
+# Initialize Sentry for error tracking
+sentry_sdk.init(
+    dsn="https://14bf6d17cc85a467e25be9fbacbe05cf@o4510804719960064.ingest.de.sentry.io/4510804733067344",
+    integrations=[FastApiIntegration()],
+    # Set traces_sample_rate to 1.0 to capture 100% of transactions in development
+    # Lower this in production to reduce load
+    traces_sample_rate=1.0 if settings.debug else 0.1,
+    # Set enable_tracing to True to enable performance monitoring
+    enable_tracing=True,
+    environment=settings.environment,
+    release=f"flayre-backend@{settings.app_version}",
+)
 
 # Initialize logging
 setup_logging()
@@ -80,6 +95,8 @@ app.add_middleware(
 @app.exception_handler(FlayreException)
 async def flayre_exception_handler(request: Request, exc: FlayreException):
     """Handle custom flayre exceptions."""
+    # Report to Sentry for tracking
+    sentry_sdk.capture_exception(exc)
     return JSONResponse(
         status_code=exc.status_code,
         content=exc.to_dict()
@@ -90,6 +107,8 @@ async def flayre_exception_handler(request: Request, exc: FlayreException):
 async def general_exception_handler(request: Request, exc: Exception):
     """Handle unexpected exceptions."""
     logger.error(f"Unexpected error: {exc}", exc_info=True)
+    # Capture exception in Sentry
+    sentry_sdk.capture_exception(exc)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
