@@ -54,6 +54,11 @@ class Settings(BaseSettings):
     polar_webhook_secret: str = ""
     
     # ===========================================
+    # Error Tracking
+    # ===========================================
+    sentry_dsn: str = ""
+    
+    # ===========================================
     # Feature Flags
     # ===========================================
     enable_visual_suggestions: bool = True

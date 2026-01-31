@@ -16,18 +16,19 @@ from app.api.v1 import api_router
 from app.core.logging import get_logger, setup_logging
 from app.core.exceptions import FlayreException
 
-# Initialize Sentry for error tracking
-sentry_sdk.init(
-    dsn="https://14bf6d17cc85a467e25be9fbacbe05cf@o4510804719960064.ingest.de.sentry.io/4510804733067344",
-    integrations=[FastApiIntegration()],
-    # Set traces_sample_rate to 1.0 to capture 100% of transactions in development
-    # Lower this in production to reduce load
-    traces_sample_rate=1.0 if settings.debug else 0.1,
-    # Set enable_tracing to True to enable performance monitoring
-    enable_tracing=True,
-    environment=settings.environment,
-    release=f"flayre-backend@{settings.app_version}",
-)
+# Initialize Sentry for error tracking (only if DSN is configured)
+if settings.sentry_dsn:
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        integrations=[FastApiIntegration()],
+        # Set traces_sample_rate to 1.0 to capture 100% of transactions in development
+        # Lower this in production to reduce load
+        traces_sample_rate=1.0 if settings.debug else 0.1,
+        # Set enable_tracing to True to enable performance monitoring
+        enable_tracing=True,
+        environment=settings.environment,
+        release=f"flayre-backend@{settings.app_version}",
+    )
 
 # Initialize logging
 setup_logging()
