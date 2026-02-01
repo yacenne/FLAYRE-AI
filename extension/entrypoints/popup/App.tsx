@@ -33,6 +33,8 @@ export default function App() {
   }
 
   async function handleAnalyze() {
+    if (usage && usage.analyses_remaining <= 0) return;
+
     setAnalyzing(true);
     setError(null);
     setAnalysis(null);
@@ -165,7 +167,11 @@ export default function App() {
               ))}
             </div>
 
-            <button className="analyze-again-button" onClick={handleAnalyze}>
+            <button
+              className="analyze-again-button"
+              onClick={handleAnalyze}
+              disabled={usage ? usage.analyses_remaining <= 0 : false}
+            >
               Analyze Again
             </button>
           </div>
