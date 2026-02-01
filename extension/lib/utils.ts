@@ -4,15 +4,20 @@
 
 import { Platform } from './types';
 
-export function detectPlatform(): Platform {
-    const url = window.location.href;
+export async function getActiveTabPlatform(): Promise<Platform> {
+    try {
+        const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+        const url = tabs[0]?.url || '';
 
-    if (url.includes('web.whatsapp.com')) {
-        return Platform.WHATSAPP;
-    } else if (url.includes('instagram.com')) {
-        return Platform.INSTAGRAM;
-    } else if (url.includes('discord.com')) {
-        return Platform.DISCORD;
+        if (url.includes('web.whatsapp.com')) {
+            return Platform.WHATSAPP;
+        } else if (url.includes('instagram.com')) {
+            return Platform.INSTAGRAM;
+        } else if (url.includes('discord.com')) {
+            return Platform.DISCORD;
+        }
+    } catch (error) {
+        console.error('Failed to get active tab platform:', error);
     }
 
     return Platform.UNKNOWN;

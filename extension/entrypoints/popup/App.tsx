@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../lib/api';
-import { captureScreenshot, detectPlatform, copyToClipboard } from '../../lib/utils';
+import { captureScreenshot, getActiveTabPlatform, copyToClipboard } from '../../lib/utils';
 import type { AnalyzeResponse, UsageInfo, AIResponse } from '../../lib/types';
 import './App.css';
 
@@ -31,7 +31,7 @@ export default function App() {
 
     try {
       const screenshot = await captureScreenshot();
-      const platform = detectPlatform();
+      const platform = await getActiveTabPlatform();
 
       console.log('[Popup] Analyzing screenshot...');
 
@@ -50,7 +50,8 @@ export default function App() {
 
       // Provide helpful error messages
       if (message.includes('401') || message.includes('Unauthorized')) {
-        setError('Please log in to the web app first (http://localhost:3000)');
+        const webAppUrl = import.meta.env.VITE_WEB_APP_URL || 'http://localhost:3000';
+        setError(`Please log in to the web app first (${webAppUrl})`);
       } else if (message.includes('Failed to fetch') || message.includes('network')) {
         setError('Cannot connect to backend. Check if backend is running.');
       } else if (message.includes('503')) {
@@ -155,7 +156,7 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        <a href="http://localhost:3000" target="_blank" rel="noopener noreferrer">
+        <a href={import.meta.env.VITE_WEB_APP_URL || 'http://localhost:3000'} target="_blank" rel="noopener noreferrer">
           Manage Subscription
         </a>
       </footer>

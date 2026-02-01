@@ -11,7 +11,7 @@ export const STORAGE_KEYS = {
 
 export async function getStorageItem<T>(key: string): Promise<T | null> {
     const result = await browser.storage.local.get(key);
-    return result[key] || null;
+    return (result[key] !== undefined ? result[key] : null) as T | null;
 }
 
 export async function setStorageItem<T>(key: string, value: T): Promise<void> {

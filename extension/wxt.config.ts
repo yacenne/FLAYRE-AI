@@ -11,12 +11,11 @@ export default defineConfig({
     host_permissions: ['<all_urls>'],
   },
   runner: {
-    chromiumArgs: ['--disable-web-security'],
+    chromiumArgs: [],
   },
   dev: {
     server: {
       port: 3002,
-      strictPort: true,
     },
   },
 });

@@ -13,8 +13,8 @@ export enum ToneType {
     CASUAL = 'casual',
     PROFESSIONAL = 'professional',
     FRIENDLY = 'friendly',
-    ASSERTIVE = 'assertive',
-    EMPATHETIC = 'empathetic',
+    DIRECT = 'direct',
+    CONFIDENT = 'confident',
 }
 
 export interface AnalyzeRequest {

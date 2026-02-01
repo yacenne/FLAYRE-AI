@@ -21,7 +21,7 @@ class APIClient {
 
     private async getAccessToken(): Promise<string | null> {
         const result = await browser.storage.local.get('flayre_access_token');
-        return result.flayre_access_token || null;
+        return (result.flayre_access_token as string) || null;
     }
 
     private async request<T>(
@@ -30,9 +30,9 @@ class APIClient {
     ): Promise<T> {
         const accessToken = await this.getAccessToken();
 
-        const headers: HeadersInit = {
+        const headers: Record<string, string> = {
             'Content-Type': 'application/json',
-            ...options.headers,
+            ...(options.headers as Record<string, string>),
         };
 
         if (accessToken) {
@@ -74,17 +74,22 @@ class APIClient {
     async getUsage(): Promise<UsageInfo> {
         try {
             return await this.request<UsageInfo>('/api/v1/analyze/usage');
-        } catch (error) {
-            // If not authenticated, return default usage
-            console.warn('[API] Not authenticated, returning default usage');
-            return {
-                analyses_used: 0,
-                analyses_limit: 10,
-                analyses_remaining: 10,
-                is_pro: false,
-                plan_type: 'free',
-                reset_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-            };
+        } catch (error: any) {
+            // Check for authentication errors (401/403)
+            if (error.status === 401 || error.status === 403 || error.message?.includes('401') || error.message?.includes('403')) {
+                console.warn('[API] Not authenticated, returning default usage');
+                return {
+                    analyses_used: 0,
+                    analyses_limit: 10,
+                    analyses_remaining: 10,
+                    is_pro: false,
+                    plan_type: 'free',
+                    reset_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                };
+            }
+            // Rethrow other errors
+            console.error('[API] Failed to get usage:', error);
+            throw error;
         }
     }
 
