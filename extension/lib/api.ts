@@ -6,9 +6,9 @@ import type {
     AnalyzeRequest,
     AnalyzeResponse,
     UsageInfo,
-    APIError,
     AuthTokens,
 } from './types';
+import { APIError } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://flayre-ai.onrender.com';
 
@@ -50,11 +50,10 @@ class APIClient {
             });
 
             if (!response.ok) {
-                const error: APIError = await response.json().catch(() => ({
+                const errorData = await response.json().catch(() => ({
                     detail: `HTTP Error ${response.status}`,
-                    status: response.status,
                 }));
-                throw new Error(error.detail || `Request failed with status ${response.status}`);
+                throw new APIError(errorData.detail || `Request failed with status ${response.status}`, response.status);
             }
 
             return await response.json();
@@ -74,9 +73,9 @@ class APIClient {
     async getUsage(): Promise<UsageInfo> {
         try {
             return await this.request<UsageInfo>('/api/v1/analyze/usage');
-        } catch (error: any) {
-            // Check for authentication errors (401/403)
-            if (error.status === 401 || error.status === 403 || error.message?.includes('401') || error.message?.includes('403')) {
+        } catch (error: unknown) {
+            // Check for authentication errors (401/403) using typed error
+            if (error instanceof APIError && (error.status === 401 || error.status === 403)) {
                 console.warn('[API] Not authenticated, returning default usage');
                 return {
                     analyses_used: 0,

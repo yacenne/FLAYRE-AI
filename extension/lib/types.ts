@@ -70,9 +70,16 @@ export interface UsageInfo {
     reset_date: string;
 }
 
-export interface APIError {
+export class APIError extends Error {
     detail: string;
     status?: number;
+
+    constructor(detail: string, status?: number) {
+        super(detail);
+        this.name = 'APIError';
+        this.detail = detail;
+        this.status = status;
+    }
 }
 
 export interface AuthTokens {

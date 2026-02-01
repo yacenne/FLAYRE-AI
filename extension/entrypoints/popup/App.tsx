@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../../lib/api';
 import { captureScreenshot, getActiveTabPlatform, copyToClipboard } from '../../lib/utils';
 import type { AnalyzeResponse, UsageInfo, AIResponse } from '../../lib/types';
@@ -10,9 +10,17 @@ export default function App() {
   const [usage, setUsage] = useState<UsageInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     loadUsage();
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+      }
+    };
   }, []);
 
   async function loadUsage() {
@@ -67,7 +75,16 @@ export default function App() {
   function handleCopy(response: AIResponse) {
     copyToClipboard(response.content);
     setCopiedId(response.id);
-    setTimeout(() => setCopiedId(null), 2000);
+
+    // Clear any existing timeout
+    if (copyTimeoutRef.current) {
+      clearTimeout(copyTimeoutRef.current);
+    }
+
+    copyTimeoutRef.current = setTimeout(() => {
+      setCopiedId(null);
+      copyTimeoutRef.current = null;
+    }, 2000);
   }
 
   return (
