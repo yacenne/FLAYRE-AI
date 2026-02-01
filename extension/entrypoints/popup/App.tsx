@@ -104,7 +104,7 @@ export default function App() {
             <button
               className="analyze-button"
               onClick={handleAnalyze}
-              disabled={analyzing || (usage && usage.analyses_remaining <= 0)}
+              disabled={analyzing || (usage ? usage.analyses_remaining <= 0 : false)}
             >
               {analyzing ? 'Analyzing...' : '✨ Analyze Conversation'}
             </button>
