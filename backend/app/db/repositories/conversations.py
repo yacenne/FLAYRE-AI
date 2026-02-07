@@ -218,7 +218,7 @@ class ConversationRepository(BaseRepository[Conversation]):
             raise
         except Exception as e:
             logger.error(f"Error creating conversation: {e}", exc_info=True)
-            raise DatabaseError(f"Failed to create conversation: {str(e)}")
+            raise DatabaseError("Failed to create conversation") from e
     
     async def mark_response_copied(self, response_id: str) -> bool:
         """

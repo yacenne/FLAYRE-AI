@@ -134,8 +134,8 @@ async def analyze_conversation(
             # Still increment usage as analysis was done
             try:
                 await subscription_repo.increment_usage(user_id)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(f"Failed to increment usage for user {user_id}", exc_info=e)
             
             return AnalyzeResponse(
                 id=str(uuid.uuid4()),
@@ -177,7 +177,7 @@ async def analyze_conversation(
         logger.error(f"Analysis error: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Analysis failed: {str(e)}"  # Return actual error for debugging
+            detail="Analysis failed. Please try again later."
         )
 
 

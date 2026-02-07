@@ -20,7 +20,6 @@ A complete software development workflow for coding agents, built on composable 
 ## The Workflow (7 Steps)
 
 ### 1. Brainstorming (Before Writing Code)
-// turbo-all
 
 Before jumping into code:
 1. Ask clarifying questions about the user's REAL goal
