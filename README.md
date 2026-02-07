@@ -27,13 +27,8 @@ flayre/
 │   └── requirements.txt
 │
 ├── frontend/         # Next.js 14 web app
-│   ├── src/app/     # Pages (landing, login, dashboard)
+│   ├── src/app/     # Pages (landing, login, dashboard, analyze)
 │   └── package.json
-│
-├── extension/        # Chrome Extension MV3
-│   ├── background/   # Service worker
-│   ├── popup/        # Extension UI
-│   └── manifest.json
 │
 └── docs/            # Documentation
 ```
@@ -45,7 +40,6 @@ flayre/
 | Backend | FastAPI, Python 3.11+ |
 | Database | Supabase (Postgres + Auth) |
 | Frontend | Next.js 14, TypeScript, Tailwind CSS |
-| Extension | Chrome MV3, Vanilla JS |
 | AI | OpenRouter (Vision AI) |
 | Payments | Polar.sh |
 
@@ -71,12 +65,13 @@ cp .env.example .env.local  # Configure API URL
 npm run dev
 ```
 
-### Extension
+### Using the App
 
-1. Open `chrome://extensions`
-2. Enable "Developer mode"
-3. Click "Load unpacked"
-4. Select the `extension` folder
+1. Navigate to `http://localhost:3000`
+2. Sign up or log in
+3. Go to `/analyze`
+4. Upload or paste a screenshot
+5. Get AI-powered response suggestions!
 
 ## 📡 API Endpoints
 

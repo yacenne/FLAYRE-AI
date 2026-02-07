@@ -32,10 +32,18 @@ class Settings(BaseSettings):
     # ===========================================
     # OpenRouter AI
     # ===========================================
-    openrouter_api_key: str
+    openrouter_api_key: str = ""
     primary_model: str = "moonshotai/kimi-k2:free"
     fast_model: str = "tngtech/deepseek-r1t2-chimera:free"
-    vision_model: str = "bytedance-seed/seed-1.6-flash"
+    vision_model: str = "google/gemini-2.0-flash-exp:free"
+    
+    # ===========================================
+    # Ollama (Local AI)
+    # ===========================================
+    use_ollama: bool = False  # Set to True to use Ollama instead of OpenRouter
+    ollama_url: str = "http://localhost:11434"  # Use https://api.ollama.com for cloud
+    ollama_api_key: str = ""  # API key for Ollama Cloud
+    ollama_vision_model: str = "qwen3-vl:latest"
     
     # ===========================================
     # Supabase
