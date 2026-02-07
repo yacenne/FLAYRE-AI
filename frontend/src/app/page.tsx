@@ -254,8 +254,8 @@ function FeaturesSection() {
     },
     {
       icon: "📱",
-      title: "Chrome Extension",
-      description: "One-click screenshot capture. Zero friction workflow for faster replies."
+      title: "Web App Access",
+      description: "Upload or paste screenshots directly in your browser. Works on desktop and mobile."
     },
   ];
 
@@ -296,8 +296,8 @@ function HowItWorksSection() {
   const steps = [
     {
       step: "01",
-      title: "Capture Screenshot",
-      description: "Click the flayre extension or take a screenshot of any chat conversation.",
+      title: "Upload Screenshot",
+      description: "Drag & drop, paste from clipboard, or upload any chat screenshot.",
       icon: "📸"
     },
     {
@@ -385,7 +385,7 @@ function PricingSection() {
               {[
                 "10 analyses per month",
                 "All 3 response tones",
-                "Chrome extension access",
+                "Web app access",
                 "Basic conversation history",
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3 text-neutral-300">

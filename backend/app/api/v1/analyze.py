@@ -5,7 +5,7 @@ Main AI analysis endpoint for processing screenshots.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.api.deps import (
     CurrentUser,
@@ -71,58 +71,104 @@ async def analyze_conversation(
         )
         
         # Save conversation to database
-        conversation = await conversation_repo.create_with_responses(
-            user_id=user_id,
-            platform=analysis_result.platform,
-            context_summary=analysis_result.context.summary,
-            detected_tone=analysis_result.context.tone,
-            relationship_type=analysis_result.context.relationship_type,
-            visual_elements=[ve.model_dump() for ve in analysis_result.visual_elements],
-            participants=[p.model_dump() for p in analysis_result.participants],
-            responses=[
-                {
-                    "tone": r.tone.value,
-                    "content": r.content
-                }
-                for r in analysis_result.responses
-            ],
-            model_used=analysis_result.model_used
-        )
+        conversation = None
+        db_save_failed = False
         
-        # Increment usage counter
-        await subscription_repo.increment_usage(user_id)
+        try:
+            conversation = await conversation_repo.create_with_responses(
+                user_id=user_id,
+                platform=analysis_result.platform,
+                context_summary=analysis_result.context.summary,
+                detected_tone=analysis_result.context.tone,
+                relationship_type=analysis_result.context.relationship_type,
+                visual_elements=[ve.model_dump() for ve in analysis_result.visual_elements],
+                participants=[p.model_dump() for p in analysis_result.participants],
+                responses=[
+                    {
+                        "tone": r.tone.value,
+                        "content": r.content
+                    }
+                    for r in analysis_result.responses
+                ],
+                model_used=analysis_result.model_used
+            )
+        except Exception as db_error:
+            # Database failed, but AI worked - log and continue with fallback
+            logger.warning(f"Database save failed, returning AI result directly: {db_error}")
+            db_save_failed = True
         
-        logger.info(f"Analysis complete for user {user_id}, conversation {conversation.id}")
+        # Increment usage counter (only once, regardless of DB save outcome)
+        try:
+            await subscription_repo.increment_usage(user_id)
+        except Exception as e:
+            logger.error(f"Failed to increment usage for user {user_id}", exc_info=e)
         
-        return AnalyzeResponse(
-            id=conversation.id,
-            platform=Platform(conversation.platform),
-            context=AnalysisContext(
-                summary=conversation.context_summary or "",
-                tone=conversation.detected_tone or "neutral",
-                relationship_type=conversation.relationship_type or "unknown",
-                key_topics=analysis_result.context.key_topics,
-                emotional_state=analysis_result.context.emotional_state,
-                urgency_level=analysis_result.context.urgency_level
-            ),
-            visual_elements=[
-                VisualElement(**ve) for ve in conversation.visual_elements
-            ],
-            participants=[
-                Participant(**p) for p in conversation.participants
-            ],
-            responses=[
-                AIResponseItem(
-                    id=r.id,
-                    tone=ToneType(r.tone),
-                    content=r.content,
-                    character_count=r.character_count,
-                    was_copied=r.was_copied
-                )
-                for r in conversation.responses
-            ],
-            created_at=conversation.created_at or datetime.now()
-        )
+        # Build response - use DB data if available, otherwise use AI result directly
+        if conversation and not db_save_failed:
+            logger.info(f"Analysis complete for user {user_id}, conversation {conversation.id}")
+            
+            return AnalyzeResponse(
+                id=conversation.id,
+                platform=Platform(conversation.platform),
+                context=AnalysisContext(
+                    summary=conversation.context_summary or "",
+                    tone=conversation.detected_tone or "neutral",
+                    relationship_type=conversation.relationship_type or "unknown",
+                    key_topics=analysis_result.context.key_topics,
+                    emotional_state=analysis_result.context.emotional_state,
+                    urgency_level=analysis_result.context.urgency_level
+                ),
+                visual_elements=[
+                    VisualElement(**ve) for ve in conversation.visual_elements
+                ],
+                participants=[
+                    Participant(**p) for p in conversation.participants
+                ],
+                responses=[
+                    AIResponseItem(
+                        id=r.id,
+                        tone=ToneType(r.tone),
+                        content=r.content,
+                        character_count=r.character_count,
+                        was_copied=r.was_copied
+                    )
+                    for r in conversation.responses
+                ],
+                created_at=conversation.created_at or datetime.now(timezone.utc)
+            )
+        else:
+            # Fallback: return AI result without DB persistence
+            import uuid
+            
+            return AnalyzeResponse(
+                id=str(uuid.uuid4()),
+                platform=Platform(analysis_result.platform),
+                context=AnalysisContext(
+                    summary=analysis_result.context.summary,
+                    tone=analysis_result.context.tone,
+                    relationship_type=analysis_result.context.relationship_type,
+                    key_topics=analysis_result.context.key_topics,
+                    emotional_state=analysis_result.context.emotional_state,
+                    urgency_level=analysis_result.context.urgency_level
+                ),
+                visual_elements=[
+                    VisualElement(**ve.model_dump()) for ve in analysis_result.visual_elements
+                ],
+                participants=[
+                    Participant(**p.model_dump()) for p in analysis_result.participants
+                ],
+                responses=[
+                    AIResponseItem(
+                        id=str(uuid.uuid4()),
+                        tone=r.tone,
+                        content=r.content,
+                        character_count=len(r.content),
+                        was_copied=False
+                    )
+                    for r in analysis_result.responses
+                ],
+                created_at=datetime.now(timezone.utc)
+            )
         
     except AIServiceError as e:
         logger.error(f"AI service error: {e}")
@@ -131,10 +177,10 @@ async def analyze_conversation(
             detail="AI analysis service temporarily unavailable"
         )
     except Exception as e:
-        logger.error(f"Analysis error: {e}")
+        logger.error(f"Analysis error: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to analyze screenshot"
+            detail="Analysis failed. Please try again later."
         )
 
 

@@ -64,7 +64,8 @@ async def analyze_screenshot(
     Raises:
         AIServiceError: If Vision AI request fails
     """
-    logger.info("Starting Vision AI analysis")
+    logger.info(f"Starting Vision AI analysis - use_ollama={settings.use_ollama}, vision_model={settings.vision_model}")
+    logger.info(f"OpenRouter key present: {bool(settings.openrouter_api_key)}, Ollama URL: {settings.ollama_url}")
     
     # Validate and clean base64
     if "," in screenshot_base64:
@@ -78,17 +79,32 @@ async def analyze_screenshot(
         context_hint += f"Additional context: {additional_context}"
     
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        # Choose API endpoint based on settings
+        if settings.use_ollama:
+            api_url = f"{settings.ollama_url}/v1/chat/completions"
+            model = settings.ollama_vision_model
+            headers = {"Content-Type": "application/json"}
+            # Add auth header for Ollama Cloud
+            if settings.ollama_api_key:
+                headers["Authorization"] = f"Bearer {settings.ollama_api_key}"
+            logger.info(f"Using Ollama at {api_url} with model {model}")
+        else:
+            api_url = OPENROUTER_URL
+            model = settings.vision_model
+            headers = {
+                "Authorization": f"Bearer {settings.openrouter_api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": settings.frontend_url,
+                "X-Title": "flayre.ai"
+            }
+            logger.info(f"Using OpenRouter with model {model}")
+        
+        async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(
-                OPENROUTER_URL,
-                headers={
-                    "Authorization": f"Bearer {settings.openrouter_api_key}",
-                    "Content-Type": "application/json",
-                    "HTTP-Referer": settings.frontend_url,
-                    "X-Title": "flayre.ai"
-                },
+                api_url,
+                headers=headers,
                 json={
-                    "model": settings.vision_model,
+                    "model": model,
                     "messages": [
                         {
                             "role": "system",
