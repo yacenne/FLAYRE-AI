@@ -5,7 +5,7 @@ Main AI analysis endpoint for processing screenshots.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.api.deps import (
     CurrentUser,
@@ -71,8 +71,9 @@ async def analyze_conversation(
         )
         
         # Save conversation to database
-        # TEMPORARY: Skip database save to verify AI works
-        # TODO: Fix Supabase RLS policy for conversations table
+        conversation = None
+        db_save_failed = False
+        
         try:
             conversation = await conversation_repo.create_with_responses(
                 user_id=user_id,
@@ -91,10 +92,19 @@ async def analyze_conversation(
                 ],
                 model_used=analysis_result.model_used
             )
-            
-            # Increment usage counter
+        except Exception as db_error:
+            # Database failed, but AI worked - log and continue with fallback
+            logger.warning(f"Database save failed, returning AI result directly: {db_error}")
+            db_save_failed = True
+        
+        # Increment usage counter (only once, regardless of DB save outcome)
+        try:
             await subscription_repo.increment_usage(user_id)
-            
+        except Exception as e:
+            logger.error(f"Failed to increment usage for user {user_id}", exc_info=e)
+        
+        # Build response - use DB data if available, otherwise use AI result directly
+        if conversation and not db_save_failed:
             logger.info(f"Analysis complete for user {user_id}, conversation {conversation.id}")
             
             return AnalyzeResponse(
@@ -124,18 +134,11 @@ async def analyze_conversation(
                     )
                     for r in conversation.responses
                 ],
-                created_at=conversation.created_at or datetime.now()
+                created_at=conversation.created_at or datetime.now(timezone.utc)
             )
-        except Exception as db_error:
-            # Database failed, but AI worked - return result without saving
-            logger.warning(f"Database save failed, returning AI result directly: {db_error}")
+        else:
+            # Fallback: return AI result without DB persistence
             import uuid
-            
-            # Still increment usage as analysis was done
-            try:
-                await subscription_repo.increment_usage(user_id)
-            except Exception as e:
-                logger.error(f"Failed to increment usage for user {user_id}", exc_info=e)
             
             return AnalyzeResponse(
                 id=str(uuid.uuid4()),
@@ -164,7 +167,7 @@ async def analyze_conversation(
                     )
                     for r in analysis_result.responses
                 ],
-                created_at=datetime.now()
+                created_at=datetime.now(timezone.utc)
             )
         
     except AIServiceError as e:
