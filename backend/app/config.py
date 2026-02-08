@@ -33,9 +33,9 @@ class Settings(BaseSettings):
     # OpenRouter AI
     # ===========================================
     openrouter_api_key: str = ""
-    primary_model: str = "moonshotai/kimi-k2:free"
-    fast_model: str = "tngtech/deepseek-r1t2-chimera:free"
-    vision_model: str = "google/gemini-2.0-flash-exp:free"
+    primary_model: str = "bytedance-seed/seed-1.6-flash"
+    fast_model: str = "bytedance-seed/seed-1.6-flash"
+    vision_model: str = "bytedance-seed/seed-1.6-flash"
     
     # ===========================================
     # Ollama (Local AI)
