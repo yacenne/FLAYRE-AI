@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# flayre.ai Frontend
 
-## Getting Started
+> Next.js 16 web application for AI-powered conversation analysis.
 
-First, run the development server:
+## 🏗️ Architecture
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+src/
+├── app/                  # Next.js App Router pages
+│   ├── page.tsx          # Landing page
+│   ├── layout.tsx        # Root layout
+│   ├── globals.css       # Global styles & Tailwind v4 theme
+│   ├── login/            # Authentication page
+│   ├── dashboard/        # User dashboard
+│   ├── analyze/          # Screenshot upload & AI analysis
+│   ├── pricing/          # Pricing plans
+│   ├── history/          # Conversation history
+│   ├── viewer/           # Conversation detail viewer
+│   ├── api/              # API route handlers
+│   ├── error.tsx         # Error boundary
+│   └── global-error.tsx  # Global error boundary
+├── components/           # Shared UI components
+├── context/              # React context providers
+├── lib/                  # Supabase client, utilities
+└── types/                # TypeScript type definitions
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Next.js | 16 | React framework (App Router) |
+| React | 19 | UI library |
+| TypeScript | 5+ | Type safety |
+| Tailwind CSS | 4 | Styling (v4 with `@theme` directive) |
+| Supabase JS | 2.x | Auth & database client |
+| Supabase SSR | 0.8+ | Server-side auth helpers |
+| Zustand | 5.x | State management |
+| Lucide React | — | Icon library |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🏃 Quick Start
 
-## Learn More
+```bash
+# Install dependencies
+npm install
 
-To learn more about Next.js, take a look at the following resources:
+# Configure environment
+cp .env.example .env.local
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Run development server
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Deploy on Vercel
+## 📄 Pages
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Route | Description |
+|-------|-------------|
+| `/` | Landing page with hero, features, and CTA |
+| `/login` | Sign up / sign in with email & password |
+| `/dashboard` | User dashboard with usage stats |
+| `/analyze` | Upload or paste a screenshot for AI analysis |
+| `/pricing` | Free and Pro plan comparison |
+| `/history` | Paginated list of past analyses |
+| `/viewer` | Detailed view of a single analysis with responses |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🔐 Environment Variables
+
+Create `.env.local` from `.env.example`:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
+```
+
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_API_URL` | Backend API URL (local: `http://localhost:8000`, prod: Render URL) |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous/public key |
+
+## 📦 Scripts
+
+```bash
+npm run dev      # Start dev server (hot reload)
+npm run build    # Production build
+npm run start    # Start production server
+npm run lint     # Run ESLint
+```
+
+## 🚀 Deployment (Vercel)
+
+1. Connect your GitHub repo to [Vercel](https://vercel.com)
+2. Set **Root Directory** to `frontend`
+3. Framework preset: **Next.js**
+4. Add environment variables in the Vercel dashboard
+5. Deploy — automatic deploys trigger on push to `main`

@@ -1,6 +1,4 @@
 
-import * as Sentry from "@sentry/nextjs";
-
 export async function POST(request: Request) {
     try {
         const body = await request.json();
@@ -20,9 +18,6 @@ export async function POST(request: Request) {
                 { status: 400 }
             );
         }
-
-        // For all other errors, send to Sentry (server error)
-        Sentry.captureException(error);
 
         console.error("API Error:", error);
         return Response.json(

@@ -23,8 +23,6 @@ class UserSubscription:
     user_id: str
     plan_type: str  # 'free' or 'pro'
     status: str  # 'active', 'cancelled', 'past_due', 'trialing'
-    polar_subscription_id: Optional[str] = None
-    polar_customer_id: Optional[str] = None
     current_period_start: Optional[datetime] = None
     current_period_end: Optional[datetime] = None
     cancel_at_period_end: bool = False
@@ -62,8 +60,6 @@ class SubscriptionRepository(BaseRepository[UserSubscription]):
             user_id=row["user_id"],
             plan_type=row["plan_type"],
             status=row["status"],
-            polar_subscription_id=row.get("polar_subscription_id"),
-            polar_customer_id=row.get("polar_customer_id"),
             current_period_start=row.get("current_period_start"),
             current_period_end=row.get("current_period_end"),
             cancel_at_period_end=row.get("cancel_at_period_end", False),
@@ -136,27 +132,7 @@ class SubscriptionRepository(BaseRepository[UserSubscription]):
             return subscription
         return await self.create_default_subscription(user_id)
     
-    async def get_by_polar_subscription(self, polar_id: str) -> Optional[UserSubscription]:
-        """
-        Get subscription by Polar.sh subscription ID.
-        
-        Used for webhook processing.
-        
-        Args:
-            polar_id: Polar subscription ID
-        
-        Returns:
-            UserSubscription or None
-        """
-        try:
-            response = self._table.select("*").eq(
-                "polar_subscription_id", polar_id
-            ).single().execute()
-            if response.data:
-                return self._to_entity(response.data)
-            return None
-        except Exception:
-            return None
+
     
     async def increment_usage(self, user_id: str) -> UserSubscription:
         """
@@ -190,8 +166,6 @@ class SubscriptionRepository(BaseRepository[UserSubscription]):
     async def upgrade_to_pro(
         self,
         user_id: str,
-        polar_subscription_id: str,
-        polar_customer_id: str,
         period_start: datetime,
         period_end: datetime
     ) -> UserSubscription:
@@ -200,8 +174,6 @@ class SubscriptionRepository(BaseRepository[UserSubscription]):
         
         Args:
             user_id: User UUID
-            polar_subscription_id: Polar subscription ID
-            polar_customer_id: Polar customer ID
             period_start: Billing period start
             period_end: Billing period end
         
@@ -211,8 +183,6 @@ class SubscriptionRepository(BaseRepository[UserSubscription]):
         data = {
             "plan_type": "pro",
             "status": "active",
-            "polar_subscription_id": polar_subscription_id,
-            "polar_customer_id": polar_customer_id,
             "current_period_start": period_start.isoformat(),
             "current_period_end": period_end.isoformat(),
             "monthly_analyses_limit": 999999,  # Unlimited
@@ -255,7 +225,6 @@ class SubscriptionRepository(BaseRepository[UserSubscription]):
         data = {
             "plan_type": "free",
             "status": "active",
-            "polar_subscription_id": None,
             "current_period_start": None,
             "current_period_end": None,
             "monthly_analyses_limit": 10,

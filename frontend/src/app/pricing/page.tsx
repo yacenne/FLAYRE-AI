@@ -193,7 +193,7 @@ export default function PricingPage() {
                             },
                             {
                                 q: "What payment methods do you accept?",
-                                a: "We accept all major credit cards through Polar.sh - Visa, Mastercard, American Express, and more.",
+                                a: "We accept all major credit cards - Visa, Mastercard, American Express, and more.",
                             },
                             {
                                 q: "Is my data secure?",
