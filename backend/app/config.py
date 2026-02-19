@@ -53,18 +53,7 @@ class Settings(BaseSettings):
     supabase_service_key: str  # service role key
     supabase_jwt_secret: str = ""  # JWT secret from Supabase dashboard (Settings > API)
     
-    # ===========================================
-    # Polar.sh Payments
-    # ===========================================
-    polar_access_token: str = ""
-    polar_organization_id: str = ""
-    polar_product_id: str = ""
-    polar_webhook_secret: str = ""
     
-    # ===========================================
-    # Error Tracking
-    # ===========================================
-    sentry_dsn: str = ""
     
     # ===========================================
     # Feature Flags

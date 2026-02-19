@@ -180,7 +180,7 @@ class AIServiceError(FlayreException):
 
 
 class PaymentServiceError(FlayreException):
-    """Error from payment provider (Polar.sh)."""
+    """Error from payment provider."""
     
     def __init__(self, message: str = "Payment service error"):
         super().__init__(

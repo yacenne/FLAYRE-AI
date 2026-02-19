@@ -88,12 +88,12 @@ export default function AnalyzePage() {
         if (!token) return;
 
         try {
-            const res = await fetch(`${apiUrl}/api/v1/billing/subscription`, {
+            const res = await fetch(`${apiUrl}/api/v1/analyze/usage`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (res.ok) {
-                const sub = await res.json();
-                setUsage(sub.usage);
+                const data = await res.json();
+                setUsage(data);
             }
         } catch (err) {
             console.error("Failed to load usage:", err);
@@ -367,7 +367,7 @@ export default function AnalyzePage() {
 
                             <button
                                 onClick={handleAnalyze}
-                                disabled={!image || analyzing || (usage?.analyses_remaining ?? 0) <= 0}
+                                disabled={!image || analyzing || (usage !== null && usage.analyses_remaining <= 0)}
                                 className="flex-1 btn btn-primary btn-lg disabled:opacity-50 disabled:cursor-not-allowed group"
                             >
                                 {analyzing ? (
