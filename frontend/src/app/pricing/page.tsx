@@ -29,39 +29,69 @@ export default function PricingPage() {
                 },
                 body: JSON.stringify({ plan: "pro" })
             });
+            
+            if (!orderRes.ok) {
+                let errorBody: any = {};
+                try { errorBody = await orderRes.json(); } catch(e) {}
+                throw new Error(errorBody.detail || "Failed to create order");
+            }
+            
             const { order_id, amount, key_id } = await orderRes.json();
 
             // 2. Open Razorpay checkout
+            if (!(window as any).Razorpay) {
+                setLoading(false);
+                alert("Payment gateway failed to load. Please refresh the page and try again.");
+                return;
+            }
+            
             const rzp = new (window as any).Razorpay({
               key: key_id,
               amount, 
               order_id,
               name: "Flayre AI",
               handler: async (response: any) => {
-                // 3. Verify
-                await fetch(`${apiUrl}/api/v1/billing/verify`, {
-                  method: "POST",
-                  headers: {
-                      "Content-Type": "application/json",
-                      Authorization: `Bearer ${token}`,
-                  },
-                  body: JSON.stringify({
-                    razorpay_order_id: response.razorpay_order_id,
-                    razorpay_payment_id: response.razorpay_payment_id,
-                    razorpay_signature: response.razorpay_signature,
-                    plan: "pro"
-                  })
-                });
-                router.push("/dashboard?upgraded=true");
+                try {
+                    // 3. Verify
+                    const verifyRes = await fetch(`${apiUrl}/api/v1/billing/verify`, {
+                      method: "POST",
+                      headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${token}`,
+                      },
+                      body: JSON.stringify({
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature,
+                        plan: "pro"
+                      })
+                    });
+                    
+                    if (!verifyRes.ok) {
+                        let errorBody: any = {};
+                        try { errorBody = await verifyRes.json(); } catch(e) {}
+                        throw new Error(errorBody.detail || "Payment verification failed");
+                    }
+                    
+                    // Route ONLY on verified success
+                    router.push("/dashboard?upgraded=true");
+                } catch (verifyErr: any) {
+                    console.error("Verification error:", verifyErr);
+                    alert(`Verification Error: ${verifyErr.message || "Please contact support."}`);
+                    setLoading(false);
+                }
+              },
+              modal: {
+                  ondismiss: () => {
+                      setLoading(false);
+                  }
               }
             });
             rzp.open();
             
-        } catch (err) {
+        } catch (err: any) {
             console.error("Checkout error:", err);
-            // Since rzp.open() happens sync if no error before it, we don't setLoading(false) here
-            // if we successfully opened modal, as the modal handles it.
-            // But if failure before modal, resetting is fine.
+            alert(`Checkout Error: ${err.message || "Failed to initiate checkout. Please try again."}`);
             setLoading(false);
         }
     };

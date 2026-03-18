@@ -88,6 +88,25 @@ class SubscriptionRepository(BaseRepository[UserSubscription]):
         except Exception as e:
             logger.debug(f"Subscription not found for user: {user_id}")
             return None
+            
+    async def get_by_payment_id(self, payment_id: str) -> Optional[UserSubscription]:
+        """
+        Get subscription by Razorpay payment ID (for idempotency).
+        
+        Args:
+            payment_id: Razorpay payment ID
+        
+        Returns:
+            UserSubscription or None
+        """
+        try:
+            response = self._table.select("*").eq("razorpay_payment_id", payment_id).single().execute()
+            if response.data:
+                return self._to_entity(response.data)
+            return None
+        except Exception as e:
+            logger.debug(f"Subscription not found for payment_id: {payment_id}")
+            return None
     
     async def create_default_subscription(self, user_id: str) -> UserSubscription:
         """
@@ -178,25 +197,13 @@ class SubscriptionRepository(BaseRepository[UserSubscription]):
         Returns:
             Updated subscription
         """
-        data = {
+        response = self._table.update({
             "plan_type": "pro",
             "status": "active",
             "monthly_analyses_limit": 999999,  # Unlimited
-            "cancel_at_period_end": False
-        }
-        
-        # Note: self.supabase.table is an underlying client method. The base repo 
-        # normally uses self._table, but we'll adapt to the user's snippet logic
-        # and just add the payment_id and updated_at explicitly.
-        # However, to return a UserSubscription correctly inside the repository pattern,
-        # we'll integrate it with self._table logic.
-        
-        response = self._table.update({
-            "plan_type": "pro",
-            "monthly_analyses_limit": 999999,  # Unlimited
-            "status": "active"
-            # Note: "payment_id" isn't defined in the UserSubscription object initially,
-            # but we can pass it if the DB has it, or just stick to what the user asked:
+            "cancel_at_period_end": False,
+            "razorpay_payment_id": payment_id,
+            "payment_verified_at": datetime.utcnow().isoformat()
         }).eq("user_id", user_id).execute()
         
         if response.data and len(response.data) > 0:

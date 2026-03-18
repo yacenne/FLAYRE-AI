@@ -30,6 +30,10 @@ CREATE TABLE IF NOT EXISTS user_subscriptions (
     polar_subscription_id TEXT UNIQUE,
     polar_customer_id TEXT,
     
+    -- Razorpay integration
+    razorpay_payment_id TEXT UNIQUE,
+    payment_verified_at TIMESTAMPTZ,
+    
     -- Billing dates
     current_period_start TIMESTAMPTZ,
     current_period_end TIMESTAMPTZ,
