@@ -107,6 +107,8 @@ async def verify_payment(
     # Idempotency check
     existing_sub = await subscription_repo.get_by_payment_id(request.razorpay_payment_id)
     if existing_sub:
+        if existing_sub.user_id != user_id:
+            raise HTTPException(status_code=409, detail="Payment already registered to another user")
         # Already processed
         return {"success": True, "plan": existing_sub.plan_type, "note": "Already processed"}
 
@@ -135,9 +137,9 @@ async def verify_payment(
         raise HTTPException(status_code=400, detail="Payment amount mismatch")
 
     # Ensure it's for the right user (from notes set in create_order)
-    notes = payment.get("notes", {})
-    if notes.get("user_id") and notes.get("user_id") != user_id:
-         raise HTTPException(status_code=403, detail="Payment belongs to another user")
+    notes = payment.get("notes") or {}
+    if notes.get("user_id") != user_id:
+         raise HTTPException(status_code=403, detail="Payment belongs to another user or missing user_id in notes")
 
     # Upgrade user to pro
     await subscription_repo.upgrade_to_pro(user_id, request.razorpay_payment_id)

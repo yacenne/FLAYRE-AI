@@ -37,6 +37,10 @@ export default function PricingPage() {
             }
             
             const { order_id, amount, key_id } = await orderRes.json();
+            
+            if (!order_id || !amount || !key_id) {
+                throw new Error("Invalid order response from server (missing keys)");
+            }
 
             // 2. Open Razorpay checkout
             if (!(window as any).Razorpay) {

@@ -119,13 +119,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
                         }
                     }
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Auth initialization error:", error);
-                // Clear stale tokens to prevent infinite retry loops on reload
-                localStorage.removeItem("access_token");
-                localStorage.removeItem("user");
-                setUser(null);
-                setSession(null);
+                
+                // Only clear state on explicit auth errors, not on transient network/timeout errors
+                const isAuthError = error?.name === 'AuthSessionMissingError' || 
+                                    error?.status === 401 || 
+                                    error?.status === 403 ||
+                                    (error?.message && (
+                                        error.message.includes('JWT') || 
+                                        error.message.includes('token expired') ||
+                                        error.message.includes('refresh token')
+                                    ));
+
+                if (isAuthError) {
+                    // Clear stale tokens to prevent infinite retry loops on reload
+                    localStorage.removeItem("access_token");
+                    localStorage.removeItem("user");
+                    setUser(null);
+                    setSession(null);
+                } else {
+                    // Initialize from localStorage if it exists during a timeout
+                    const storedToken = localStorage.getItem("access_token");
+                    const storedUser = localStorage.getItem("user");
+                    if (storedToken && storedUser) {
+                        try {
+                            setUser(JSON.parse(storedUser));
+                        } catch (e) {
+                            console.error("Failed to parse stored user during fallback:", e);
+                        }
+                    }
+                }
             } finally {
                 setIsLoading(false);
             }
