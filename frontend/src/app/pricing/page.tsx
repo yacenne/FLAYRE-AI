@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function PricingPage() {
     const [loading, setLoading] = useState(false);
+    const router = useRouter();
 
     const handleUpgrade = async () => {
         setLoading(true);
@@ -17,26 +19,49 @@ export default function PricingPage() {
 
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-            const response = await fetch(`${apiUrl}/api/v1/billing/checkout`, {
+            
+            // 1. Create order
+            const orderRes = await fetch(`${apiUrl}/api/v1/billing/create-order`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({
-                    success_url: `${window.location.origin}/dashboard?checkout=success`,
-                    cancel_url: `${window.location.origin}/pricing?checkout=cancelled`,
-                }),
+                body: JSON.stringify({ plan: "pro" })
             });
+            const { order_id, amount, key_id } = await orderRes.json();
 
-            const data = await response.json();
-
-            if (data.checkout_url) {
-                window.location.href = data.checkout_url;
-            }
+            // 2. Open Razorpay checkout
+            const rzp = new (window as any).Razorpay({
+              key: key_id,
+              amount, 
+              order_id,
+              name: "Flayre AI",
+              handler: async (response: any) => {
+                // 3. Verify
+                await fetch(`${apiUrl}/api/v1/billing/verify`, {
+                  method: "POST",
+                  headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature,
+                    plan: "pro"
+                  })
+                });
+                router.push("/dashboard?upgraded=true");
+              }
+            });
+            rzp.open();
+            
         } catch (err) {
             console.error("Checkout error:", err);
-        } finally {
+            // Since rzp.open() happens sync if no error before it, we don't setLoading(false) here
+            // if we successfully opened modal, as the modal handles it.
+            // But if failure before modal, resetting is fine.
             setLoading(false);
         }
     };

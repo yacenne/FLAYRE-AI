@@ -51,7 +51,7 @@ function getSupabase(): SupabaseClient {
         supabase = createClient(supabaseUrl, supabaseAnonKey, {
             auth: {
                 persistSession: true,
-                autoRefreshToken: true,
+                autoRefreshToken: false,
                 detectSessionInUrl: true,
             },
         });
@@ -121,15 +121,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 }
             } catch (error) {
                 console.error("Auth initialization error:", error);
-                // Fallback to localStorage on error/timeout
-                const storedUser = localStorage.getItem("user");
-                if (storedUser) {
-                    try {
-                        setUser(JSON.parse(storedUser));
-                    } catch (e) {
-                        console.error("Failed to parse stored user:", e);
-                    }
-                }
+                // Clear stale tokens to prevent infinite retry loops on reload
+                localStorage.removeItem("access_token");
+                localStorage.removeItem("user");
+                setUser(null);
+                setSession(null);
             } finally {
                 setIsLoading(false);
             }

@@ -56,11 +56,6 @@ class Settings(BaseSettings):
     
     
     # ===========================================
-    # Feature Flags
-    # ===========================================
-    enable_visual_suggestions: bool = True
-    
-    # ===========================================
     # Rate Limiting
     # ===========================================
     free_tier_monthly_limit: int = 10
