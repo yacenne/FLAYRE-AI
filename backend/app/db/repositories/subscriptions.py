@@ -88,6 +88,25 @@ class SubscriptionRepository(BaseRepository[UserSubscription]):
         except Exception as e:
             logger.debug(f"Subscription not found for user: {user_id}")
             return None
+            
+    async def get_by_payment_id(self, payment_id: str) -> Optional[UserSubscription]:
+        """
+        Get subscription by Razorpay payment ID (for idempotency).
+        
+        Args:
+            payment_id: Razorpay payment ID
+        
+        Returns:
+            UserSubscription or None
+        """
+        try:
+            response = self._table.select("*").eq("razorpay_payment_id", payment_id).single().execute()
+            if response.data:
+                return self._to_entity(response.data)
+            return None
+        except Exception as e:
+            logger.debug(f"Subscription not found for payment_id: {payment_id}")
+            return None
     
     async def create_default_subscription(self, user_id: str) -> UserSubscription:
         """
@@ -166,33 +185,34 @@ class SubscriptionRepository(BaseRepository[UserSubscription]):
     async def upgrade_to_pro(
         self,
         user_id: str,
-        period_start: datetime,
-        period_end: datetime
+        payment_id: str
     ) -> UserSubscription:
         """
         Upgrade user to Pro plan.
         
         Args:
             user_id: User UUID
-            period_start: Billing period start
-            period_end: Billing period end
+            payment_id: Razorpay payment ID
         
         Returns:
             Updated subscription
         """
-        data = {
-            "plan_type": "pro",
-            "status": "active",
-            "current_period_start": period_start.isoformat(),
-            "current_period_end": period_end.isoformat(),
-            "monthly_analyses_limit": 999999,  # Unlimited
-            "cancel_at_period_end": False
-        }
-        
-        response = self._table.update(data).eq("user_id", user_id).execute()
-        if response.data and len(response.data) > 0:
-            return self._to_entity(response.data[0])
-        raise DatabaseError("Failed to upgrade subscription")
+        try:
+            response = self._table.update({
+                "plan_type": "pro",
+                "status": "active",
+                "monthly_analyses_limit": 999999,  # Unlimited
+                "cancel_at_period_end": False,
+                "razorpay_payment_id": payment_id,
+                "payment_verified_at": datetime.utcnow().isoformat()
+            }).eq("user_id", user_id).execute()
+            
+            if response.data and len(response.data) > 0:
+                return self._to_entity(response.data[0])
+            raise DatabaseError("Failed to upgrade subscription")
+        except Exception as e:
+            logger.error(f"Error upgrading subscription: {e}")
+            raise DatabaseError(f"Upgrade failed: {str(e)}")
     
     async def cancel_subscription(self, user_id: str) -> UserSubscription:
         """

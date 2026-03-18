@@ -30,6 +30,10 @@ CREATE TABLE IF NOT EXISTS user_subscriptions (
     polar_subscription_id TEXT UNIQUE,
     polar_customer_id TEXT,
     
+    -- Razorpay integration
+    razorpay_payment_id TEXT UNIQUE,
+    payment_verified_at TIMESTAMPTZ,
+    
     -- Billing dates
     current_period_start TIMESTAMPTZ,
     current_period_end TIMESTAMPTZ,
@@ -45,6 +49,11 @@ CREATE TABLE IF NOT EXISTS user_subscriptions (
     
     UNIQUE(user_id)
 );
+
+-- Active DB backfill Migrations
+ALTER TABLE user_subscriptions ADD COLUMN IF NOT EXISTS razorpay_payment_id TEXT UNIQUE;
+ALTER TABLE user_subscriptions ADD COLUMN IF NOT EXISTS payment_verified_at TIMESTAMPTZ;
+
 
 -- ============================================
 -- CONVERSATIONS (analysis sessions)
