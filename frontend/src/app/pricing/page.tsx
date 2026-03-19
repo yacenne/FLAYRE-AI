@@ -19,9 +19,9 @@ export default function PricingPage() {
 
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-            
+
             // 1. Create order
-            const orderRes = await fetch(`${apiUrl}/api/v1/billing/create-order`, {
+            const orderRes = await fetch(`${apiUrl}/api/v1/billing/checkout`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -29,15 +29,15 @@ export default function PricingPage() {
                 },
                 body: JSON.stringify({ plan: "pro" })
             });
-            
+
             if (!orderRes.ok) {
                 let errorBody: any = {};
-                try { errorBody = await orderRes.json(); } catch(e) {}
+                try { errorBody = await orderRes.json(); } catch (e) { }
                 throw new Error(errorBody.detail || "Failed to create order");
             }
-            
+
             const { order_id, amount, key_id } = await orderRes.json();
-            
+
             if (!order_id || !amount || !key_id) {
                 throw new Error("Invalid order response from server (missing keys)");
             }
@@ -48,51 +48,51 @@ export default function PricingPage() {
                 alert("Payment gateway failed to load. Please refresh the page and try again.");
                 return;
             }
-            
+
             const rzp = new (window as any).Razorpay({
-              key: key_id,
-              amount, 
-              order_id,
-              name: "Flayre AI",
-              handler: async (response: any) => {
-                try {
-                    // 3. Verify
-                    const verifyRes = await fetch(`${apiUrl}/api/v1/billing/verify`, {
-                      method: "POST",
-                      headers: {
-                          "Content-Type": "application/json",
-                          Authorization: `Bearer ${token}`,
-                      },
-                      body: JSON.stringify({
-                        razorpay_order_id: response.razorpay_order_id,
-                        razorpay_payment_id: response.razorpay_payment_id,
-                        razorpay_signature: response.razorpay_signature,
-                        plan: "pro"
-                      })
-                    });
-                    
-                    if (!verifyRes.ok) {
-                        let errorBody: any = {};
-                        try { errorBody = await verifyRes.json(); } catch(e) {}
-                        throw new Error(errorBody.detail || "Payment verification failed");
+                key: key_id,
+                amount,
+                order_id,
+                name: "Flayre AI",
+                handler: async (response: any) => {
+                    try {
+                        // 3. Verify
+                        const verifyRes = await fetch(`${apiUrl}/api/v1/billing/verify`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                Authorization: `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature,
+                                plan: "pro"
+                            })
+                        });
+
+                        if (!verifyRes.ok) {
+                            let errorBody: any = {};
+                            try { errorBody = await verifyRes.json(); } catch (e) { }
+                            throw new Error(errorBody.detail || "Payment verification failed");
+                        }
+
+                        // Route ONLY on verified success
+                        router.push("/dashboard?upgraded=true");
+                    } catch (verifyErr: any) {
+                        console.error("Verification error:", verifyErr);
+                        alert(`Verification Error: ${verifyErr.message || "Please contact support."}`);
+                        setLoading(false);
                     }
-                    
-                    // Route ONLY on verified success
-                    router.push("/dashboard?upgraded=true");
-                } catch (verifyErr: any) {
-                    console.error("Verification error:", verifyErr);
-                    alert(`Verification Error: ${verifyErr.message || "Please contact support."}`);
-                    setLoading(false);
+                },
+                modal: {
+                    ondismiss: () => {
+                        setLoading(false);
+                    }
                 }
-              },
-              modal: {
-                  ondismiss: () => {
-                      setLoading(false);
-                  }
-              }
             });
             rzp.open();
-            
+
         } catch (err: any) {
             console.error("Checkout error:", err);
             alert(`Checkout Error: ${err.message || "Failed to initiate checkout. Please try again."}`);
