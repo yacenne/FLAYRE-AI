@@ -21,7 +21,7 @@ export default function PricingPage() {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
             // 1. Create order
-            const orderRes = await fetch(`${apiUrl}/api/v1/billing/checkout`, {
+            const orderRes = await fetch(`${apiUrl}/api/v1/billing/create-order`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
