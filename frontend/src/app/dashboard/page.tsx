@@ -94,7 +94,7 @@ export default function DashboardPage() {
     };
 
     // Show loading while checking auth
-    if (authLoading || loading) {
+    if (authLoading) {
         return (
             <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
                 <div className="text-center">
