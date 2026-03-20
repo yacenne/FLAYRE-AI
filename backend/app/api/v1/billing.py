@@ -2,7 +2,7 @@
 Billing endpoints — Razorpay Integration for Flayre.ai
 """
 
-import hmac, hashlib, os
+import hmac, hashlib, os, logging
 import razorpay
 from pydantic import BaseModel, HttpUrl
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,16 +11,26 @@ from fastapi.concurrency import run_in_threadpool
 from app.api.deps import get_current_user_id, get_subscription_repo
 from app.db.repositories import SubscriptionRepository
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 RZP_KEY = os.getenv("RAZORPAY_KEY_ID", "")
 RZP_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
 
-if not RZP_KEY or not RZP_SECRET:
-    raise RuntimeError("RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables must be set")
+# Lazy init — don't crash on import if keys are missing
+rz: razorpay.Client | None = None
 
-# Razorpay client
-rz = razorpay.Client(auth=(RZP_KEY, RZP_SECRET))
+
+def _require_razorpay() -> razorpay.Client:
+    """Fail-fast helper called at request time (not import time)."""
+    global rz
+    if rz is None:
+        if not RZP_KEY or not RZP_SECRET:
+            logger.warning("RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET not set — billing endpoints will return 503")
+            raise HTTPException(status_code=503, detail="Payment gateway not configured")
+        rz = razorpay.Client(auth=(RZP_KEY, RZP_SECRET))
+    return rz
+
 
 PLANS = {
     "pro": 49900,   # ₹499 in paise
@@ -77,9 +87,10 @@ async def create_order(
     if not amount:
         raise HTTPException(status_code=400, detail="Invalid plan")
 
+    client = _require_razorpay()
     try:
         order = await run_in_threadpool(
-            lambda: rz.order.create({
+            lambda: client.order.create({
                 "amount": amount,
                 "currency": "INR",
                 "receipt": f"flayre_{user_id[:8]}",
@@ -112,6 +123,8 @@ async def verify_payment(
         # Already processed
         return {"success": True, "plan": existing_sub.plan_type, "note": "Already processed"}
 
+    client = _require_razorpay()
+
     # Verify Razorpay signature
     body = f"{request.razorpay_order_id}|{request.razorpay_payment_id}"
     expected = hmac.new(
@@ -125,7 +138,7 @@ async def verify_payment(
 
     # Fetch payment from gateway to verify status and amount
     try:
-        payment = await run_in_threadpool(lambda: rz.payment.fetch(request.razorpay_payment_id))
+        payment = await run_in_threadpool(lambda: client.payment.fetch(request.razorpay_payment_id))
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Payment gateway error: {str(e)}")
 
@@ -160,9 +173,10 @@ async def create_checkout_session(
 
     amount = PLANS.get(request.plan, PLANS["pro"])
     
+    client = _require_razorpay()
     try:
         order = await run_in_threadpool(
-            lambda: rz.order.create({
+            lambda: client.order.create({
                 "amount": amount,
                 "currency": "INR",
                 "receipt": f"flayre_{user_id[:8]}",
