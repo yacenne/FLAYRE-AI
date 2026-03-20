@@ -19,16 +19,16 @@ RZP_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
 
 # Lazy init — don't crash on import if keys are missing
 rz: razorpay.Client | None = None
-if RZP_KEY and RZP_SECRET:
-    rz = razorpay.Client(auth=(RZP_KEY, RZP_SECRET))
-else:
-    logger.warning("RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET not set — billing endpoints will return 503")
 
 
 def _require_razorpay() -> razorpay.Client:
     """Fail-fast helper called at request time (not import time)."""
+    global rz
     if rz is None:
-        raise HTTPException(status_code=503, detail="Payment gateway not configured")
+        if not RZP_KEY or not RZP_SECRET:
+            logger.warning("RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET not set — billing endpoints will return 503")
+            raise HTTPException(status_code=503, detail="Payment gateway not configured")
+        rz = razorpay.Client(auth=(RZP_KEY, RZP_SECRET))
     return rz
 
 
@@ -97,8 +97,6 @@ async def create_order(
                 "notes": {"user_id": user_id, "plan": request.plan}
             })
         )
-    except HTTPException:
-        raise
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Payment gateway error: {str(e)}")
 
@@ -125,6 +123,8 @@ async def verify_payment(
         # Already processed
         return {"success": True, "plan": existing_sub.plan_type, "note": "Already processed"}
 
+    client = _require_razorpay()
+
     # Verify Razorpay signature
     body = f"{request.razorpay_order_id}|{request.razorpay_payment_id}"
     expected = hmac.new(
@@ -137,11 +137,8 @@ async def verify_payment(
         raise HTTPException(status_code=400, detail="Invalid payment signature")
 
     # Fetch payment from gateway to verify status and amount
-    client = _require_razorpay()
     try:
         payment = await run_in_threadpool(lambda: client.payment.fetch(request.razorpay_payment_id))
-    except HTTPException:
-        raise
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Payment gateway error: {str(e)}")
 
@@ -186,8 +183,6 @@ async def create_checkout_session(
                 "notes": {"user_id": user_id, "plan": request.plan}
             })
         )
-    except HTTPException:
-        raise
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Payment gateway error: {str(e)}")
 
