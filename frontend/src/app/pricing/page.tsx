@@ -36,7 +36,7 @@ export default function PricingPage() {
                 throw new Error(errorBody.detail || "Failed to create order");
             }
 
-            const { order_id, amount, key_id } = await orderRes.json();
+            const { order_id, amount, currency, key_id } = await orderRes.json();
 
             if (!order_id || !amount || !key_id) {
                 throw new Error("Invalid order response from server (missing keys)");
@@ -52,6 +52,7 @@ export default function PricingPage() {
             const rzp = new (window as any).Razorpay({
                 key: key_id,
                 amount,
+                currency: currency || "INR",
                 order_id,
                 name: "Flayre AI",
                 handler: async (response: any) => {
@@ -203,7 +204,7 @@ export default function PricingPage() {
                                     </div>
                                 </div>
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-5xl font-bold text-white">$9.99</span>
+                                    <span className="text-5xl font-bold text-white">₹499</span>
                                     <span className="text-white/70">/month</span>
                                 </div>
                             </div>

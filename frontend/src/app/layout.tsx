@@ -36,13 +36,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.variable}>
-      <head>
+      <body className="antialiased">
         <Script
           src="https://checkout.razorpay.com/v1/checkout.js"
           strategy="beforeInteractive"
         />
-      </head>
-      <body className="antialiased">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
