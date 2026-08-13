@@ -55,14 +55,10 @@ export function loadRazorpayScript(): Promise<boolean> {
             return;
         }
 
+        // Remove any existing stale or failed script elements
         const existingScript = document.getElementById("razorpay-sdk");
         if (existingScript) {
-            existingScript.addEventListener("load", () => resolve(true));
-            existingScript.addEventListener("error", () => {
-                existingScript.remove();
-                resolve(false);
-            });
-            return;
+            existingScript.remove();
         }
 
         const script = document.createElement("script");

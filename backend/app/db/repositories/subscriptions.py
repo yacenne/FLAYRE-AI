@@ -193,6 +193,7 @@ class SubscriptionRepository(BaseRepository[UserSubscription]):
         user_id: str,
         payment_id: Optional[str] = None,
         order_id: Optional[str] = None,
+        customer_id: Optional[str] = None,
     ) -> UserSubscription:
         """
         Upgrade user to Pro plan and record payment details.
@@ -201,6 +202,7 @@ class SubscriptionRepository(BaseRepository[UserSubscription]):
             user_id: User UUID
             payment_id: Optional Razorpay payment ID
             order_id: Optional Razorpay order ID
+            customer_id: Optional Razorpay customer ID
         
         Returns:
             Updated subscription
@@ -221,6 +223,8 @@ class SubscriptionRepository(BaseRepository[UserSubscription]):
                 update_data["razorpay_payment_id"] = payment_id
             if order_id:
                 update_data["razorpay_order_id"] = order_id
+            if customer_id:
+                update_data["razorpay_customer_id"] = customer_id
             
             response = self._table.update(update_data).eq("user_id", user_id).execute()
             

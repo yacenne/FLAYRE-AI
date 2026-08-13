@@ -164,11 +164,19 @@ async def verify_razorpay_payment(
         order_notes = order.get("notes", {})
         order_user_id = order_notes.get("user_id") if isinstance(order_notes, dict) else None
 
-        if order_user_id and order_user_id != user_id:
+        if not order_user_id or order_user_id != user_id:
             logger.error(f"User ID mismatch: order notes user_id {order_user_id} != auth user_id {user_id}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Payment validation failed: user identity mismatch."
+            )
+
+        order_amount = order.get("amount")
+        if order_amount != settings.razorpay_pro_plan_amount:
+            logger.error(f"Order amount mismatch: {order_amount} != {settings.razorpay_pro_plan_amount}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Payment validation failed: order amount mismatch."
             )
 
         payment_order_id = payment.get("order_id")
@@ -195,11 +203,14 @@ async def verify_razorpay_payment(
                 detail="Payment validation failed: amount mismatch."
             )
 
+        customer_id = payment.get("customer_id")
+
         # 5. Execute upgrade in database
         updated_subscription = await subscription_repo.upgrade_to_pro(
             user_id=user_id,
             payment_id=payload.razorpay_payment_id,
-            order_id=payload.razorpay_order_id
+            order_id=payload.razorpay_order_id,
+            customer_id=customer_id,
         )
 
         logger.info(
@@ -276,12 +287,14 @@ async def razorpay_webhook(
             user_id = notes.get("user_id") if isinstance(notes, dict) else None
             payment_id = payment_entity.get("id")
             order_id = payment_entity.get("order_id")
+            customer_id = payment_entity.get("customer_id")
 
             if user_id:
                 await subscription_repo.upgrade_to_pro(
                     user_id=user_id,
                     payment_id=payment_id,
-                    order_id=order_id
+                    order_id=order_id,
+                    customer_id=customer_id,
                 )
                 logger.info(f"Upgraded user {user_id} via Razorpay Webhook: {event_type}")
 
