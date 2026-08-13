@@ -26,13 +26,10 @@ CREATE TABLE IF NOT EXISTS user_subscriptions (
     plan_type TEXT NOT NULL DEFAULT 'free' CHECK (plan_type IN ('free', 'pro')),
     status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'cancelled', 'past_due', 'trialing')),
     
-    -- Polar.sh integration
-    polar_subscription_id TEXT UNIQUE,
-    polar_customer_id TEXT,
-    
     -- Razorpay integration
-    razorpay_payment_id TEXT UNIQUE,
-    payment_verified_at TIMESTAMPTZ,
+    razorpay_order_id TEXT,
+    razorpay_payment_id TEXT,
+    razorpay_customer_id TEXT,
     
     -- Billing dates
     current_period_start TIMESTAMPTZ,
@@ -50,9 +47,6 @@ CREATE TABLE IF NOT EXISTS user_subscriptions (
     UNIQUE(user_id)
 );
 
--- Active DB backfill Migrations
-ALTER TABLE user_subscriptions ADD COLUMN IF NOT EXISTS razorpay_payment_id TEXT UNIQUE;
-ALTER TABLE user_subscriptions ADD COLUMN IF NOT EXISTS payment_verified_at TIMESTAMPTZ;
 
 
 -- ============================================

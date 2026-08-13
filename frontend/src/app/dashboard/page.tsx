@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth, getAccessToken } from "@/context/AuthContext";
+import { initiateProUpgrade } from "@/lib/razorpay";
 
 interface Subscription {
     plan_type: string;
@@ -30,6 +31,9 @@ export default function DashboardPage() {
     const [subscription, setSubscription] = useState<Subscription | null>(null);
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
+    const [upgrading, setUpgrading] = useState(false);
+    const [upgradeError, setUpgradeError] = useState<string | null>(null);
+    const [upgradeSuccess, setUpgradeSuccess] = useState<string | null>(null);
 
     // Redirect if not authenticated
     useEffect(() => {
@@ -76,6 +80,36 @@ export default function DashboardPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleUpgrade = async () => {
+        setUpgradeError(null);
+        setUpgradeSuccess(null);
+        setUpgrading(true);
+
+        const token = getAccessToken();
+        if (!token) {
+            router.push("/login?redirect=/dashboard");
+            return;
+        }
+
+        await initiateProUpgrade({
+            token,
+            userEmail: user?.email,
+            userName: user?.full_name,
+            onSuccess: (data) => {
+                setUpgrading(false);
+                setUpgradeSuccess("🎉 Upgrade successful! You are now on flayre.ai Pro.");
+                fetchData(); // Refresh subscription data
+            },
+            onError: (errMessage) => {
+                setUpgrading(false);
+                setUpgradeError(errMessage);
+            },
+            onDismiss: () => {
+                setUpgrading(false);
+            },
+        });
     };
 
     const handleLogout = async () => {
@@ -126,7 +160,7 @@ export default function DashboardPage() {
                         </Link>
 
                         <div className="flex items-center gap-4">
-                            <span className="text-neutral-600">{user?.email}</span>
+                            <span className="text-neutral-600 font-medium">{user?.email}</span>
                             <button onClick={handleLogout} className="btn btn-ghost text-sm">
                                 Logout
                             </button>
@@ -136,14 +170,41 @@ export default function DashboardPage() {
             </header>
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Upgrade Notifications */}
+                {upgradeError && (
+                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center justify-between">
+                        <span>{upgradeError}</span>
+                        <button onClick={() => setUpgradeError(null)} className="text-red-500 hover:text-red-700 font-bold">×</button>
+                    </div>
+                )}
+                {upgradeSuccess && (
+                    <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-800 text-sm font-medium flex items-center justify-between">
+                        <span>{upgradeSuccess}</span>
+                        <button onClick={() => setUpgradeSuccess(null)} className="text-green-600 hover:text-green-800 font-bold">×</button>
+                    </div>
+                )}
+
                 {/* Welcome Section */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-neutral-900 mb-2">
-                        Welcome back{user?.full_name ? `, ${user.full_name}` : ""}! 👋
-                    </h1>
-                    <p className="text-neutral-600">
-                        Ready to craft the perfect response? Here's your dashboard.
-                    </p>
+                <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-neutral-900 mb-2">
+                            Welcome back{user?.full_name ? `, ${user.full_name}` : ""}! 👋
+                        </h1>
+                        <p className="text-neutral-600">
+                            Ready to craft the perfect response? Here's your dashboard.
+                        </p>
+                    </div>
+
+                    {!subscription?.is_pro && (
+                        <button
+                            onClick={handleUpgrade}
+                            disabled={upgrading}
+                            className="btn btn-primary bg-gradient-hero border-0 text-white font-bold shadow-md hover:opacity-95 transition disabled:opacity-50 flex items-center gap-2 cursor-pointer self-start sm:self-auto"
+                        >
+                            <span>⭐</span>
+                            {upgrading ? "Opening Checkout..." : "Upgrade to Pro (₹499)"}
+                        </button>
+                    )}
                 </div>
 
                 {/* Stats Grid */}
@@ -153,7 +214,7 @@ export default function DashboardPage() {
                         <div className="flex items-center justify-between mb-4">
                             <span className="text-neutral-600">Analyses Used</span>
                             {subscription?.is_pro && (
-                                <span className="badge badge-pro text-xs">PRO</span>
+                                <span className="badge badge-pro text-xs font-semibold">PRO UNLIMITED</span>
                             )}
                         </div>
                         <div className="flex items-end gap-2">
@@ -189,7 +250,7 @@ export default function DashboardPage() {
                     {/* Plan Card */}
                     <div className="card">
                         <span className="text-neutral-600 block mb-4">Current Plan</span>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 mb-4">
                             <div
                                 className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${subscription?.is_pro
                                     ? "bg-gradient-hero text-white"
@@ -207,10 +268,18 @@ export default function DashboardPage() {
                                 </p>
                             </div>
                         </div>
-                        {!subscription?.is_pro && (
-                            <Link href="/pricing" className="btn btn-primary w-full mt-4">
-                                Upgrade to Pro
-                            </Link>
+                        {!subscription?.is_pro ? (
+                            <button
+                                onClick={handleUpgrade}
+                                disabled={upgrading}
+                                className="btn btn-primary w-full mt-2 font-bold cursor-pointer disabled:opacity-50"
+                            >
+                                {upgrading ? "Processing..." : "Upgrade to Pro"}
+                            </button>
+                        ) : (
+                            <div className="mt-2 text-xs text-green-600 font-medium flex items-center gap-1">
+                                <span>✓</span> Pro Membership Active
+                            </div>
                         )}
                     </div>
 

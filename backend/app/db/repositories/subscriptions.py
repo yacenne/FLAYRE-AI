@@ -89,25 +89,6 @@ class SubscriptionRepository(BaseRepository[UserSubscription]):
             logger.debug(f"Subscription not found for user: {user_id}")
             return None
             
-    async def get_by_payment_id(self, payment_id: str) -> Optional[UserSubscription]:
-        """
-        Get subscription by Razorpay payment ID (for idempotency).
-        
-        Args:
-            payment_id: Razorpay payment ID
-        
-        Returns:
-            UserSubscription or None
-        """
-        try:
-            response = self._table.select("*").eq("razorpay_payment_id", payment_id).single().execute()
-            if response.data:
-                return self._to_entity(response.data)
-            return None
-        except Exception as e:
-            logger.debug(f"Subscription not found for payment_id: {payment_id}")
-            return None
-    
     async def create_default_subscription(self, user_id: str) -> UserSubscription:
         """
         Create a default free subscription for a new user.
@@ -185,27 +166,34 @@ class SubscriptionRepository(BaseRepository[UserSubscription]):
     async def upgrade_to_pro(
         self,
         user_id: str,
-        payment_id: str
+        payment_id: Optional[str] = None,
+        order_id: Optional[str] = None,
     ) -> UserSubscription:
         """
         Upgrade user to Pro plan.
         
         Args:
             user_id: User UUID
-            payment_id: Razorpay payment ID
+            payment_id: Optional Razorpay payment ID
+            order_id: Optional Razorpay order ID
         
         Returns:
             Updated subscription
         """
         try:
-            response = self._table.update({
+            now = datetime.utcnow()
+            # Set period end 30 days into the future
+            period_end = datetime.utcnow()
+            
+            update_data: dict[str, Any] = {
                 "plan_type": "pro",
                 "status": "active",
                 "monthly_analyses_limit": 999999,  # Unlimited
                 "cancel_at_period_end": False,
-                "razorpay_payment_id": payment_id,
-                "payment_verified_at": datetime.utcnow().isoformat()
-            }).eq("user_id", user_id).execute()
+                "current_period_start": now.isoformat(),
+            }
+            
+            response = self._table.update(update_data).eq("user_id", user_id).execute()
             
             if response.data and len(response.data) > 0:
                 return self._to_entity(response.data[0])
