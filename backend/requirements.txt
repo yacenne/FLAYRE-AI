@@ -1,27 +1,27 @@
 # flayre.ai Backend Dependencies
+# Pinned versions for reproducible builds
 
 # FastAPI & Server
-fastapi
-uvicorn[standard]
-gunicorn
-pydantic[email]
-pydantic-settings
+fastapi==0.115.8
+uvicorn[standard]==0.34.0
+gunicorn==23.0.0
+pydantic[email]==2.10.6
+pydantic-settings==2.7.1
 
 # Database
-supabase
+supabase==2.13.0
 
 # HTTP Client
-httpx
+httpx==0.28.1
 
 # Authentication
-python-jose[cryptography]
-passlib[bcrypt]
+python-jose[cryptography]==3.4.0
+passlib[bcrypt]==1.7.4
 
 # Utilities
-python-multipart
-python-dotenv
-email-validator
+python-multipart==0.0.20
+python-dotenv==1.0.1
+email-validator==2.2.0
 
 # Payment Gateway
-razorpay
-
+razorpay==2.0.1

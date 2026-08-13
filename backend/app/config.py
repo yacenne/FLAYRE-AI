@@ -56,8 +56,9 @@ class Settings(BaseSettings):
     # ===========================================
     # Razorpay Payment Gateway
     # ===========================================
-    razorpay_key_id: str = "rzp_live_TPDxEhEtdqtNpP"
-    razorpay_key_secret: str = "TFdnHeQMC722QFZ7y7yb5peP"
+    razorpay_key_id: str = ""
+    razorpay_key_secret: str = ""
+    razorpay_webhook_secret: str = ""
     razorpay_pro_plan_amount: int = 49900  # Amount in paise (49900 = ₹499 INR)
     razorpay_currency: str = "INR"
     

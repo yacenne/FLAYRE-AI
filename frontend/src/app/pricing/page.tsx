@@ -1,51 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth, getAccessToken } from "@/context/AuthContext";
-import { initiateProUpgrade } from "@/lib/razorpay";
+import { useAuth } from "@/context/AuthContext";
+import { useProUpgrade } from "@/hooks/useProUpgrade";
 
 export default function PricingPage() {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
-
-    const router = useRouter();
-    const { user, isAuthenticated } = useAuth();
-
-    const handleUpgrade = async () => {
-        setError(null);
-        setSuccess(null);
-        setLoading(true);
-
-        const token = getAccessToken();
-
-        if (!token || !isAuthenticated) {
-            window.location.href = "/login?redirect=/pricing&plan=pro";
-            return;
-        }
-
-        await initiateProUpgrade({
-            token,
-            userEmail: user?.email,
-            userName: user?.full_name,
-            onSuccess: (data) => {
-                setLoading(false);
-                setSuccess("🎉 Success! You have upgraded to flayre.ai Pro!");
-                setTimeout(() => {
-                    router.push("/dashboard");
-                }, 1500);
-            },
-            onError: (errMessage) => {
-                setLoading(false);
-                setError(errMessage);
-            },
-            onDismiss: () => {
-                setLoading(false);
-            },
-        });
-    };
+    const { isAuthenticated } = useAuth();
+    const { loading, error, success, handleUpgrade, clearError, clearSuccess } = useProUpgrade({
+        redirectPath: "/pricing",
+    });
 
     return (
         <div className="min-h-screen bg-gradient-dark">
@@ -85,15 +48,37 @@ export default function PricingPage() {
                     </p>
                 </div>
 
-                {/* Notifications */}
+                {/* Accessible Notifications */}
                 {error && (
-                    <div className="max-w-md mx-auto mb-8 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-300 text-center text-sm">
-                        {error}
+                    <div
+                        role="alert"
+                        aria-live="polite"
+                        className="max-w-md mx-auto mb-8 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-300 text-sm flex items-center justify-between"
+                    >
+                        <span>{error}</span>
+                        <button
+                            onClick={clearError}
+                            aria-label="Dismiss error notification"
+                            className="text-red-400 hover:text-red-200 font-bold text-lg ml-2"
+                        >
+                            ×
+                        </button>
                     </div>
                 )}
                 {success && (
-                    <div className="max-w-md mx-auto mb-8 p-4 bg-green-500/10 border border-green-500/30 rounded-xl text-green-300 text-center text-sm font-medium">
-                        {success}
+                    <div
+                        role="status"
+                        aria-live="polite"
+                        className="max-w-md mx-auto mb-8 p-4 bg-green-500/10 border border-green-500/30 rounded-xl text-green-300 text-sm font-medium flex items-center justify-between"
+                    >
+                        <span>{success}</span>
+                        <button
+                            onClick={clearSuccess}
+                            aria-label="Dismiss success notification"
+                            className="text-green-400 hover:text-green-200 font-bold text-lg ml-2"
+                        >
+                            ×
+                        </button>
                     </div>
                 )}
 

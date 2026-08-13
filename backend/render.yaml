@@ -36,8 +36,10 @@ services:
       - key: SUPABASE_SERVICE_KEY
         sync: false
       - key: RAZORPAY_KEY_ID
-        value: rzp_live_TPDxEhEtdqtNpP
+        sync: false
       - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
         sync: false
       - key: RAZORPAY_PRO_PLAN_AMOUNT
         value: "49900"

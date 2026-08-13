@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS user_subscriptions (
     
     -- Razorpay integration
     razorpay_order_id TEXT,
-    razorpay_payment_id TEXT,
+    razorpay_payment_id TEXT UNIQUE,
     razorpay_customer_id TEXT,
     
     -- Billing dates

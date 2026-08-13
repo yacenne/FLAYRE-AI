@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth, getAccessToken } from "@/context/AuthContext";
-import { initiateProUpgrade } from "@/lib/razorpay";
+import { useProUpgrade } from "@/hooks/useProUpgrade";
 
 interface Subscription {
     plan_type: string;
@@ -31,25 +31,9 @@ export default function DashboardPage() {
     const [subscription, setSubscription] = useState<Subscription | null>(null);
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
-    const [upgrading, setUpgrading] = useState(false);
-    const [upgradeError, setUpgradeError] = useState<string | null>(null);
-    const [upgradeSuccess, setUpgradeSuccess] = useState<string | null>(null);
-
-    // Redirect if not authenticated
-    useEffect(() => {
-        if (!authLoading && !isAuthenticated) {
-            router.push("/login?redirect=/dashboard");
-        }
-    }, [isAuthenticated, authLoading, router]);
 
     // Fetch data when authenticated
-    useEffect(() => {
-        if (isAuthenticated) {
-            fetchData();
-        }
-    }, [isAuthenticated]);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
         const token = getAccessToken();
 
@@ -80,37 +64,34 @@ export default function DashboardPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    const handleUpgrade = async () => {
-        setUpgradeError(null);
-        setUpgradeSuccess(null);
-        setUpgrading(true);
+    // Custom upgrade hook
+    const {
+        loading: upgrading,
+        error: upgradeError,
+        success: upgradeSuccess,
+        handleUpgrade,
+        clearError,
+        clearSuccess,
+    } = useProUpgrade({
+        redirectPath: "/dashboard",
+        onCompleted: fetchData,
+    });
 
-        const token = getAccessToken();
-        if (!token) {
+    // Redirect if not authenticated
+    useEffect(() => {
+        if (!authLoading && !isAuthenticated) {
             router.push("/login?redirect=/dashboard");
-            return;
         }
+    }, [isAuthenticated, authLoading, router]);
 
-        await initiateProUpgrade({
-            token,
-            userEmail: user?.email,
-            userName: user?.full_name,
-            onSuccess: (data) => {
-                setUpgrading(false);
-                setUpgradeSuccess("🎉 Upgrade successful! You are now on flayre.ai Pro.");
-                fetchData(); // Refresh subscription data
-            },
-            onError: (errMessage) => {
-                setUpgrading(false);
-                setUpgradeError(errMessage);
-            },
-            onDismiss: () => {
-                setUpgrading(false);
-            },
-        });
-    };
+    // Fetch data on load
+    useEffect(() => {
+        if (isAuthenticated) {
+            fetchData();
+        }
+    }, [isAuthenticated, fetchData]);
 
     const handleLogout = async () => {
         await logout();
@@ -170,17 +151,37 @@ export default function DashboardPage() {
             </header>
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Upgrade Notifications */}
+                {/* Accessible Upgrade Notifications */}
                 {upgradeError && (
-                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center justify-between">
+                    <div
+                        role="alert"
+                        aria-live="polite"
+                        className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center justify-between"
+                    >
                         <span>{upgradeError}</span>
-                        <button onClick={() => setUpgradeError(null)} className="text-red-500 hover:text-red-700 font-bold">×</button>
+                        <button
+                            onClick={clearError}
+                            aria-label="Dismiss error notification"
+                            className="text-red-500 hover:text-red-700 font-bold text-lg ml-2"
+                        >
+                            ×
+                        </button>
                     </div>
                 )}
                 {upgradeSuccess && (
-                    <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-800 text-sm font-medium flex items-center justify-between">
+                    <div
+                        role="status"
+                        aria-live="polite"
+                        className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-800 text-sm font-medium flex items-center justify-between"
+                    >
                         <span>{upgradeSuccess}</span>
-                        <button onClick={() => setUpgradeSuccess(null)} className="text-green-600 hover:text-green-800 font-bold">×</button>
+                        <button
+                            onClick={clearSuccess}
+                            aria-label="Dismiss success notification"
+                            className="text-green-600 hover:text-green-800 font-bold text-lg ml-2"
+                        >
+                            ×
+                        </button>
                     </div>
                 )}
 

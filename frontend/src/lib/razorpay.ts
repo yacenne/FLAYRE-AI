@@ -41,6 +41,7 @@ declare global {
 
 /**
  * Dynamically load the Razorpay SDK script.
+ * Handles stale/failed script elements gracefully.
  */
 export function loadRazorpayScript(): Promise<boolean> {
     return new Promise((resolve) => {
@@ -57,7 +58,10 @@ export function loadRazorpayScript(): Promise<boolean> {
         const existingScript = document.getElementById("razorpay-sdk");
         if (existingScript) {
             existingScript.addEventListener("load", () => resolve(true));
-            existingScript.addEventListener("error", () => resolve(false));
+            existingScript.addEventListener("error", () => {
+                existingScript.remove();
+                resolve(false);
+            });
             return;
         }
 
@@ -66,7 +70,10 @@ export function loadRazorpayScript(): Promise<boolean> {
         script.src = "https://checkout.razorpay.com/v1/checkout.js";
         script.async = true;
         script.onload = () => resolve(true);
-        script.onerror = () => resolve(false);
+        script.onerror = () => {
+            script.remove();
+            resolve(false);
+        };
         document.body.appendChild(script);
     });
 }
@@ -120,12 +127,16 @@ export async function initiateProUpgrade({
         }
 
         const { order_id, amount, currency, key_id } = orderData;
-        const razorpayKey = key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_live_TPDxEhEtdqtNpP";
+        const razorpayKey = key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+
+        if (!razorpayKey) {
+            throw new Error("Razorpay Key ID is not configured. Please contact support.");
+        }
 
         // 2. Load SDK
         const isLoaded = await loadRazorpayScript();
         if (!isLoaded) {
-            throw new Error("Failed to load Razorpay SDK. Please check your internet connection.");
+            throw new Error("Failed to load Razorpay SDK script. Please check your internet connection.");
         }
 
         // 3. Configure Razorpay modal
@@ -162,12 +173,18 @@ export async function initiateProUpgrade({
                     const verifyData = await verifyRes.json();
 
                     if (!verifyRes.ok) {
-                        throw new Error(verifyData.detail || "Payment verification failed");
+                        throw new Error(verifyData.detail || "Server verification failed");
                     }
 
                     onSuccess(verifyData);
                 } catch (err: any) {
-                    onError(err.message || "Payment verification failed.");
+                    const paymentIdInfo = response.razorpay_payment_id
+                        ? ` (Payment ID: ${response.razorpay_payment_id})`
+                        : "";
+                    const detail = err.message || "Server verification failed";
+                    onError(
+                        `Your payment succeeded on Razorpay${paymentIdInfo}, but server verification failed: ${detail}. If your plan is not upgraded shortly, please contact support@flayre.ai with your Payment ID.`
+                    );
                 }
             },
             modal: {
