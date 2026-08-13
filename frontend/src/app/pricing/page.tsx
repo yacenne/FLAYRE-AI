@@ -1,105 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { useProUpgrade } from "@/hooks/useProUpgrade";
 
 export default function PricingPage() {
-    const [loading, setLoading] = useState(false);
-    const router = useRouter();
-
-    const handleUpgrade = async () => {
-        setLoading(true);
-        const token = localStorage.getItem("access_token");
-
-        if (!token) {
-            window.location.href = "/login?plan=pro";
-            return;
-        }
-
-        try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-            // 1. Create order
-            const orderRes = await fetch(`${apiUrl}/api/v1/billing/create-order`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ plan: "pro" })
-            });
-
-            if (!orderRes.ok) {
-                let errorBody: any = {};
-                try { errorBody = await orderRes.json(); } catch (e) { }
-                throw new Error(errorBody.detail || "Failed to create order");
-            }
-
-            const { order_id, amount, currency, key_id } = await orderRes.json();
-
-            if (!order_id || !amount || !key_id) {
-                throw new Error("Invalid order response from server (missing keys)");
-            }
-
-            // 2. Open Razorpay checkout
-            if (!(window as any).Razorpay) {
-                setLoading(false);
-                alert("Payment gateway failed to load. Please refresh the page and try again.");
-                return;
-            }
-
-            const rzp = new (window as any).Razorpay({
-                key: key_id,
-                amount,
-                currency: currency || "INR",
-                order_id,
-                name: "Flayre AI",
-                handler: async (response: any) => {
-                    try {
-                        // 3. Verify
-                        const verifyRes = await fetch(`${apiUrl}/api/v1/billing/verify`, {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                Authorization: `Bearer ${token}`,
-                            },
-                            body: JSON.stringify({
-                                razorpay_order_id: response.razorpay_order_id,
-                                razorpay_payment_id: response.razorpay_payment_id,
-                                razorpay_signature: response.razorpay_signature,
-                                plan: "pro"
-                            })
-                        });
-
-                        if (!verifyRes.ok) {
-                            let errorBody: any = {};
-                            try { errorBody = await verifyRes.json(); } catch (e) { }
-                            throw new Error(errorBody.detail || "Payment verification failed");
-                        }
-
-                        // Route ONLY on verified success
-                        router.push("/dashboard?upgraded=true");
-                    } catch (verifyErr: any) {
-                        console.error("Verification error:", verifyErr);
-                        alert(`Verification Error: ${verifyErr.message || "Please contact support."}`);
-                        setLoading(false);
-                    }
-                },
-                modal: {
-                    ondismiss: () => {
-                        setLoading(false);
-                    }
-                }
-            });
-            rzp.open();
-
-        } catch (err: any) {
-            console.error("Checkout error:", err);
-            alert(`Checkout Error: ${err.message || "Failed to initiate checkout. Please try again."}`);
-            setLoading(false);
-        }
-    };
+    const { isAuthenticated } = useAuth();
+    const { loading, error, success, handleUpgrade, clearError, clearSuccess } = useProUpgrade({
+        redirectPath: "/pricing",
+    });
 
     return (
         <div className="min-h-screen bg-gradient-dark">
@@ -114,73 +23,115 @@ export default function PricingPage() {
                             <span className="text-xl font-bold text-white">flayre.ai</span>
                         </Link>
 
-                        <Link href="/login" className="btn btn-primary">
-                            Get Started
-                        </Link>
+                        {isAuthenticated ? (
+                            <Link href="/dashboard" className="btn btn-primary">
+                                Go to Dashboard
+                            </Link>
+                        ) : (
+                            <Link href="/login" className="btn btn-primary">
+                                Get Started
+                            </Link>
+                        )}
                     </div>
                 </div>
             </header>
 
             <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
                 {/* Heading */}
-                <div className="text-center mb-16">
+                <div className="text-center mb-12">
                     <span className="badge badge-pro mb-4">Simple Pricing</span>
                     <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
                         Start Free, Scale When Ready
                     </h1>
                     <p className="text-lg text-neutral-300 max-w-2xl mx-auto">
-                        No hidden fees. No complicated tiers. Just one simple upgrade when you need more.
+                        No hidden fees. Pay with Razorpay (UPI, Credit/Debit Cards, NetBanking).
                     </p>
                 </div>
+
+                {/* Accessible Notifications */}
+                {error && (
+                    <div
+                        role="alert"
+                        aria-live="polite"
+                        className="max-w-md mx-auto mb-8 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-300 text-sm flex items-center justify-between"
+                    >
+                        <span>{error}</span>
+                        <button
+                            onClick={clearError}
+                            aria-label="Dismiss error notification"
+                            className="text-red-400 hover:text-red-200 font-bold text-lg ml-2"
+                        >
+                            ×
+                        </button>
+                    </div>
+                )}
+                {success && (
+                    <div
+                        role="status"
+                        aria-live="polite"
+                        className="max-w-md mx-auto mb-8 p-4 bg-green-500/10 border border-green-500/30 rounded-xl text-green-300 text-sm font-medium flex items-center justify-between"
+                    >
+                        <span>{success}</span>
+                        <button
+                            onClick={clearSuccess}
+                            aria-label="Dismiss success notification"
+                            className="text-green-400 hover:text-green-200 font-bold text-lg ml-2"
+                        >
+                            ×
+                        </button>
+                    </div>
+                )}
 
                 {/* Pricing Cards */}
                 <div className="grid md:grid-cols-2 gap-8">
                     {/* Free Tier */}
-                    <div className="card bg-neutral-800/50 border-neutral-700">
-                        <div className="mb-8">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-12 h-12 rounded-xl bg-neutral-700 flex items-center justify-center text-2xl">
-                                    🆓
+                    <div className="card bg-neutral-800/50 border-neutral-700 flex flex-col justify-between">
+                        <div>
+                            <div className="mb-8">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-12 h-12 rounded-xl bg-neutral-700 flex items-center justify-center text-2xl">
+                                        🆓
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-white">Free</h2>
+                                        <p className="text-neutral-400">Perfect to get started</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h2 className="text-2xl font-bold text-white">Free</h2>
-                                    <p className="text-neutral-400">Perfect to get started</p>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-5xl font-bold text-white">₹0</span>
+                                    <span className="text-neutral-400">/forever</span>
                                 </div>
                             </div>
-                            <div className="flex items-baseline gap-1">
-                                <span className="text-5xl font-bold text-white">$0</span>
-                                <span className="text-neutral-400">/forever</span>
-                            </div>
+
+                            <ul className="space-y-4 mb-8">
+                                {[
+                                    { text: "10 analyses per month", included: true },
+                                    { text: "All 3 response tones", included: true },
+                                    { text: "Chrome extension", included: true },
+                                    { text: "Basic history (7 days)", included: true },
+                                    { text: "Unlimited analyses", included: false },
+                                    { text: "Priority processing", included: false },
+                                    { text: "Email support", included: false },
+                                ].map((item, i) => (
+                                    <li key={i} className="flex items-center gap-3">
+                                        {item.included ? (
+                                            <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        ) : (
+                                            <svg className="w-5 h-5 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        )}
+                                        <span className={item.included ? "text-neutral-300" : "text-neutral-500"}>
+                                            {item.text}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
                         </div>
 
-                        <ul className="space-y-4 mb-8">
-                            {[
-                                { text: "10 analyses per month", included: true },
-                                { text: "All 3 response tones", included: true },
-                                { text: "Chrome extension", included: true },
-                                { text: "Basic history (7 days)", included: true },
-                                { text: "Unlimited analyses", included: false },
-                                { text: "Priority processing", included: false },
-                                { text: "Email support", included: false },
-                            ].map((item, i) => (
-                                <li key={i} className="flex items-center gap-3">
-                                    {item.included ? (
-                                        <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                    ) : (
-                                        <svg className="w-5 h-5 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    )}
-                                    <span className={item.included ? "text-neutral-300" : "text-neutral-500"}>
-                                        {item.text}
-                                    </span>
-                                </li>
-                            ))}
-                        </ul>
-
-                        <Link href="/login" className="btn btn-secondary w-full">
+                        <Link href="/login" className="btn btn-secondary w-full text-center">
                             Get Started Free
                         </Link>
                     </div>
@@ -188,52 +139,55 @@ export default function PricingPage() {
                     {/* Pro Tier */}
                     <div className="relative">
                         {/* Popular Badge */}
-                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-hero rounded-full px-4 py-1.5 shadow-lg">
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-hero rounded-full px-4 py-1.5 shadow-lg z-10">
                             <span className="text-white text-sm font-semibold">⭐ Most Popular</span>
                         </div>
 
-                        <div className="card bg-gradient-to-br from-purple-600 to-pink-500 border-0 h-full">
-                            <div className="mb-8">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
-                                        ⭐
+                        <div className="card bg-gradient-to-br from-purple-600 to-pink-500 border-0 h-full flex flex-col justify-between">
+                            <div>
+                                <div className="mb-8">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
+                                            ⭐
+                                        </div>
+                                        <div>
+                                            <h2 className="text-2xl font-bold text-white">Pro</h2>
+                                            <p className="text-white/80">For power users</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h2 className="text-2xl font-bold text-white">Pro</h2>
-                                        <p className="text-white/80">For power users</p>
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-5xl font-bold text-white">₹499</span>
+                                        <span className="text-white/70">/month</span>
                                     </div>
                                 </div>
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-5xl font-bold text-white">₹499</span>
-                                    <span className="text-white/70">/month</span>
-                                </div>
-                            </div>
 
-                            <ul className="space-y-4 mb-8">
-                                {[
-                                    "Unlimited analyses",
-                                    "All 3 response tones",
-                                    "Chrome extension",
-                                    "Full conversation history",
-                                    "Priority AI processing",
-                                    "Advanced context detection",
-                                    "Email support",
-                                ].map((item, i) => (
-                                    <li key={i} className="flex items-center gap-3">
-                                        <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                        <span className="text-white">{item}</span>
-                                    </li>
-                                ))}
-                            </ul>
+
+                                <ul className="space-y-4 mb-8">
+                                    {[
+                                        "Unlimited AI conversation analyses",
+                                        "All 3 response tones (Warm, Direct, Playful)",
+                                        "Chrome extension full access",
+                                        "Full conversation history",
+                                        "Priority AI processing",
+                                        "Advanced context & emotion detection",
+                                        "Direct Razorpay instant checkout",
+                                    ].map((item, i) => (
+                                        <li key={i} className="flex items-center gap-3">
+                                            <svg className="w-5 h-5 text-white flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span className="text-white">{item}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
 
                             <button
                                 onClick={handleUpgrade}
                                 disabled={loading}
-                                className="btn bg-white text-purple-600 hover:bg-neutral-100 w-full font-bold disabled:opacity-50"
+                                className="btn bg-white text-purple-600 hover:bg-neutral-100 w-full font-bold shadow-lg disabled:opacity-50 transition cursor-pointer"
                             >
-                                {loading ? "Processing..." : "Upgrade to Pro"}
+                                {loading ? "Opening Checkout..." : "Upgrade with Razorpay"}
                             </button>
                         </div>
                     </div>
@@ -248,20 +202,20 @@ export default function PricingPage() {
                     <div className="grid md:grid-cols-2 gap-6">
                         {[
                             {
+                                q: "What payment methods do you accept via Razorpay?",
+                                a: "Razorpay supports UPI (GPay, PhonePe, Paytm, BHIM), Credit/Debit Cards (Visa, Mastercard, RuPay), NetBanking, and Wallets.",
+                            },
+                            {
                                 q: "Can I cancel anytime?",
-                                a: "Yes! You can cancel your Pro subscription at any time. You'll keep access until the end of your billing period.",
+                                a: "Yes! You can manage or cancel your Pro subscription at any time with no lock-in contract.",
                             },
                             {
-                                q: "What payment methods do you accept?",
-                                a: "We accept all major credit cards - Visa, Mastercard, American Express, and more.",
-                            },
-                            {
-                                q: "Is my data secure?",
-                                a: "Absolutely. Screenshots are processed and immediately deleted. We never store your conversation content.",
+                                q: "Is my payment secure?",
+                                a: "100% secure. Payments are processed through Razorpay's PCI-DSS Level 1 compliant gateway.",
                             },
                             {
                                 q: "Do I need a credit card for the free tier?",
-                                a: "No! The free tier is completely free with no credit card required. Just sign up and start using.",
+                                a: "No! The free tier is completely free with no payment method required.",
                             },
                         ].map((faq, i) => (
                             <div key={i} className="bg-neutral-800/50 rounded-xl p-6 border border-neutral-700">

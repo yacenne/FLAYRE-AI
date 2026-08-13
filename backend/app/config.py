@@ -53,7 +53,14 @@ class Settings(BaseSettings):
     supabase_service_key: str  # service role key
     supabase_jwt_secret: str = ""  # JWT secret from Supabase dashboard (Settings > API)
     
-    
+    # ===========================================
+    # Razorpay Payment Gateway
+    # ===========================================
+    razorpay_key_id: str = ""
+    razorpay_key_secret: str = ""
+    razorpay_webhook_secret: str = ""
+    razorpay_pro_plan_amount: int = 49900  # Amount in paise (49900 = ₹499 INR)
+    razorpay_currency: str = "INR"
     
     # ===========================================
     # Rate Limiting
