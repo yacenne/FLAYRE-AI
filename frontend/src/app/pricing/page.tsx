@@ -3,43 +3,29 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { api } from "@/lib/api";
 
 export default function PricingPage() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+    const { isAuthenticated } = useAuth();
 
     const handleUpgrade = async () => {
-        setLoading(true);
-        const token = localStorage.getItem("access_token");
-
-        if (!token) {
-            window.location.href = "/login?plan=pro";
+        if (!isAuthenticated) {
+            router.push("/login?plan=pro");
             return;
         }
 
+        setLoading(true);
+
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
             // 1. Create order
-            const orderRes = await fetch(`${apiUrl}/api/v1/billing/create-order`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ plan: "pro" })
-            });
-
-            if (!orderRes.ok) {
-                let errorBody: any = {};
-                try { errorBody = await orderRes.json(); } catch (e) { }
-                throw new Error(errorBody.detail || "Failed to create order");
-            }
-
-            const { order_id, amount, currency, key_id } = await orderRes.json();
+            const orderData = await api.billing.createOrder("pro");
+            const { order_id, amount, currency, key_id } = orderData;
 
             if (!order_id || !amount || !key_id) {
-                throw new Error("Invalid order response from server (missing keys)");
+                throw new Error("Invalid order response from server");
             }
 
             // 2. Open Razorpay checkout
@@ -58,27 +44,14 @@ export default function PricingPage() {
                 handler: async (response: any) => {
                     try {
                         // 3. Verify
-                        const verifyRes = await fetch(`${apiUrl}/api/v1/billing/verify`, {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                Authorization: `Bearer ${token}`,
-                            },
-                            body: JSON.stringify({
-                                razorpay_order_id: response.razorpay_order_id,
-                                razorpay_payment_id: response.razorpay_payment_id,
-                                razorpay_signature: response.razorpay_signature,
-                                plan: "pro"
-                            })
+                        await api.billing.verifyPayment({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            plan: "pro",
                         });
 
-                        if (!verifyRes.ok) {
-                            let errorBody: any = {};
-                            try { errorBody = await verifyRes.json(); } catch (e) { }
-                            throw new Error(errorBody.detail || "Payment verification failed");
-                        }
-
-                        // Route ONLY on verified success
+                        // Route on verified success
                         router.push("/dashboard?upgraded=true");
                     } catch (verifyErr: any) {
                         console.error("Verification error:", verifyErr);
@@ -89,11 +62,10 @@ export default function PricingPage() {
                 modal: {
                     ondismiss: () => {
                         setLoading(false);
-                    }
-                }
+                    },
+                },
             });
             rzp.open();
-
         } catch (err: any) {
             console.error("Checkout error:", err);
             alert(`Checkout Error: ${err.message || "Failed to initiate checkout. Please try again."}`);
@@ -157,7 +129,7 @@ export default function PricingPage() {
                             {[
                                 { text: "10 analyses per month", included: true },
                                 { text: "All 3 response tones", included: true },
-                                { text: "Chrome extension", included: true },
+                                { text: "Web application access", included: true },
                                 { text: "Basic history (7 days)", included: true },
                                 { text: "Unlimited analyses", included: false },
                                 { text: "Priority processing", included: false },
@@ -204,7 +176,7 @@ export default function PricingPage() {
                                     </div>
                                 </div>
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-5xl font-bold text-white">₹499</span>
+                                    <span className="text-5xl font-bold text-white">₹4.99</span>
                                     <span className="text-white/70">/month</span>
                                 </div>
                             </div>
@@ -213,7 +185,7 @@ export default function PricingPage() {
                                 {[
                                     "Unlimited analyses",
                                     "All 3 response tones",
-                                    "Chrome extension",
+                                    "Web application access",
                                     "Full conversation history",
                                     "Priority AI processing",
                                     "Advanced context detection",
@@ -253,15 +225,15 @@ export default function PricingPage() {
                             },
                             {
                                 q: "What payment methods do you accept?",
-                                a: "We accept all major credit cards - Visa, Mastercard, American Express, and more.",
+                                a: "We accept UPI, all major credit/debit cards, NetBanking, and popular wallets via Razorpay.",
                             },
                             {
                                 q: "Is my data secure?",
-                                a: "Absolutely. Screenshots are processed and immediately deleted. We never store your conversation content.",
+                                a: "Absolutely. Screenshots are processed securely and your privacy is protected.",
                             },
                             {
                                 q: "Do I need a credit card for the free tier?",
-                                a: "No! The free tier is completely free with no credit card required. Just sign up and start using.",
+                                a: "No! The free tier is completely free with no payment info required. Just sign up and start using.",
                             },
                         ].map((faq, i) => (
                             <div key={i} className="bg-neutral-800/50 rounded-xl p-6 border border-neutral-700">

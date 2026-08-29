@@ -8,20 +8,18 @@
 src/
 ├── app/                  # Next.js App Router pages
 │   ├── page.tsx          # Landing page
-│   ├── layout.tsx        # Root layout
+│   ├── layout.tsx        # Root layout & global providers
 │   ├── globals.css       # Global styles & Tailwind v4 theme
-│   ├── login/            # Authentication page
-│   ├── dashboard/        # User dashboard
+│   ├── login/            # Authentication page (sign in & sign up)
+│   ├── dashboard/        # User dashboard & analytics
 │   ├── analyze/          # Screenshot upload & AI analysis
-│   ├── pricing/          # Pricing plans
-│   ├── history/          # Conversation history
-│   ├── viewer/           # Conversation detail viewer
-│   ├── api/              # API route handlers
-│   ├── error.tsx         # Error boundary
-│   └── global-error.tsx  # Global error boundary
-├── components/           # Shared UI components
-├── context/              # React context providers
-├── lib/                  # Supabase client, utilities
+│   ├── pricing/          # Pricing plans & Razorpay checkout
+│   ├── history/          # Conversation history & pagination
+│   ├── auth/callback/    # OAuth redirect handler
+│   ├── error.tsx         # Styled error boundary
+│   └── global-error.tsx  # Global root error handler
+├── context/              # React AuthContext (Supabase auth & session)
+├── lib/                  # Unified typed API client & Supabase helpers
 └── types/                # TypeScript type definitions
 ```
 
@@ -32,10 +30,9 @@ src/
 | Next.js | 16 | React framework (App Router) |
 | React | 19 | UI library |
 | TypeScript | 5+ | Type safety |
-| Tailwind CSS | 4 | Styling (v4 with `@theme` directive) |
+| Tailwind CSS | 4 | Styling (v4 `@theme` tokens) |
 | Supabase JS | 2.x | Auth & database client |
 | Supabase SSR | 0.8+ | Server-side auth helpers |
-| Zustand | 5.x | State management |
 | Lucide React | — | Icon library |
 
 ## 🏃 Quick Start
@@ -57,13 +54,13 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 | Route | Description |
 |-------|-------------|
-| `/` | Landing page with hero, features, and CTA |
-| `/login` | Sign up / sign in with email & password |
-| `/dashboard` | User dashboard with usage stats |
-| `/analyze` | Upload or paste a screenshot for AI analysis |
-| `/pricing` | Free and Pro plan comparison |
-| `/history` | Paginated list of past analyses |
-| `/viewer` | Detailed view of a single analysis with responses |
+| `/` | Landing page with hero, features, how it works, and CTA |
+| `/login` | Sign up / sign in with email & password or Google |
+| `/dashboard` | User dashboard with usage stats, recent analyses, and plan status |
+| `/analyze` | Upload or paste a screenshot for AI conversation analysis |
+| `/pricing` | Free vs Pro plan comparison with Razorpay upgrade flow |
+| `/history` | Paginated list of past conversation analyses |
+| `/auth/callback` | OAuth redirect and token session exchange handler |
 
 ## 🔐 Environment Variables
 
@@ -77,7 +74,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
 
 | Variable | Description |
 |----------|-------------|
-| `NEXT_PUBLIC_API_URL` | Backend API URL (local: `http://localhost:8000`, prod: Render URL) |
+| `NEXT_PUBLIC_API_URL` | Backend API URL (local: `http://localhost:8000`, prod: `https://flayre-ai.onrender.com`) |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous/public key |
 

@@ -48,40 +48,49 @@ class Settings(BaseSettings):
     # ===========================================
     # Supabase
     # ===========================================
-    supabase_url: str
-    supabase_key: str  # anon key
-    supabase_service_key: str  # service role key
+    supabase_url: str = ""
+    supabase_key: str = ""  # anon key
+    supabase_service_key: str = ""  # service role key
     supabase_jwt_secret: str = ""  # JWT secret from Supabase dashboard (Settings > API)
-    
-    
-    
+
+    # ===========================================
+    # Razorpay (Payments)
+    # ===========================================
+    razorpay_key_id: str = ""
+    razorpay_key_secret: str = ""
+
     # ===========================================
     # Rate Limiting
     # ===========================================
     free_tier_monthly_limit: int = 10
     pro_tier_monthly_limit: int = 999999  # Effectively unlimited
-    
+
     # ===========================================
     # Computed Properties
     # ===========================================
     @property
     def is_production(self) -> bool:
         return self.environment == "production"
-    
+
     @property
     def allowed_origins(self) -> list[str]:
-        """CORS allowed origins based on environment."""
+        """CORS allowed origins."""
         origins = [
             self.frontend_url,
             "http://localhost:3000",
             "http://127.0.0.1:3000",
+            "http://localhost:8000",
+            "https://flayreai.vercel.app",
+            "https://flayre-ai.onrender.com",
         ]
         if not self.is_production:
             origins.extend([
                 "http://localhost:3001",
                 "http://localhost:5173",
+                "http://127.0.0.1:5173",
             ])
-        return origins
+        # Filter out empty strings and duplicates
+        return list(dict.fromkeys(filter(None, origins)))
 
 
 @lru_cache

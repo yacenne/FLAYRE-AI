@@ -3,35 +3,13 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth, getAccessToken } from "@/context/AuthContext";
-
-interface AnalysisContext {
-    summary: string;
-    tone: string;
-    emotional_state: string;
-}
-
-interface AIResponse {
-    id: string;
-    tone: string;
-    content: string;
-    character_count: number;
-}
-
-interface AnalyzeResponse {
-    context: AnalysisContext;
-    responses: AIResponse[];
-}
-
-interface UsageInfo {
-    analyses_used: number;
-    analyses_limit: number;
-    analyses_remaining: number;
-}
+import { useAuth } from "@/context/AuthContext";
+import { api } from "@/lib/api";
+import type { AnalyzeResponse, AIResponse, UsageInfo } from "@/types";
 
 export default function AnalyzePage() {
     const router = useRouter();
-    const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+    const { isAuthenticated, isLoading: authLoading } = useAuth();
 
     const [image, setImage] = useState<string | null>(null);
     const [imageFile, setImageFile] = useState<File | null>(null);
@@ -46,6 +24,15 @@ export default function AnalyzePage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const dropZoneRef = useRef<HTMLDivElement>(null);
 
+    const loadUsage = useCallback(async () => {
+        try {
+            const data = await api.analyze.getUsage();
+            setUsage(data);
+        } catch (err) {
+            console.error("Failed to load usage:", err);
+        }
+    }, []);
+
     // Redirect if not authenticated
     useEffect(() => {
         if (!authLoading && !isAuthenticated) {
@@ -58,7 +45,24 @@ export default function AnalyzePage() {
         if (isAuthenticated) {
             loadUsage();
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, loadUsage]);
+
+    const handleFile = useCallback((file: File) => {
+        if (!file.type.startsWith("image/")) {
+            setError("Please upload an image file");
+            return;
+        }
+
+        setImageFile(file);
+        setError(null);
+        setAnalysis(null);
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            setImage(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+    }, []);
 
     // Handle paste from clipboard
     useEffect(() => {
@@ -80,42 +84,7 @@ export default function AnalyzePage() {
 
         document.addEventListener("paste", handlePaste);
         return () => document.removeEventListener("paste", handlePaste);
-    }, []);
-
-    const loadUsage = async () => {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const token = getAccessToken();
-        if (!token) return;
-
-        try {
-            const res = await fetch(`${apiUrl}/api/v1/analyze/usage`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setUsage(data);
-            }
-        } catch (err) {
-            console.error("Failed to load usage:", err);
-        }
-    };
-
-    const handleFile = useCallback((file: File) => {
-        if (!file.type.startsWith("image/")) {
-            setError("Please upload an image file");
-            return;
-        }
-
-        setImageFile(file);
-        setError(null);
-        setAnalysis(null);
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            setImage(e.target?.result as string);
-        };
-        reader.readAsDataURL(file);
-    }, []);
+    }, [handleFile]);
 
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -151,31 +120,15 @@ export default function AnalyzePage() {
         setAnalyzing(true);
         setError(null);
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const token = getAccessToken();
-
         try {
             // Convert image to base64 without the data URL prefix
-            const base64 = image.split(",")[1];
+            const base64 = image.includes(",") ? image.split(",")[1] : image;
 
-            const res = await fetch(`${apiUrl}/api/v1/analyze`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    screenshot: base64,
-                    platform: platform,
-                }),
+            const result = await api.analyze.analyzeScreenshot({
+                screenshot: base64,
+                platform,
             });
 
-            if (!res.ok) {
-                const data = await res.json().catch(() => ({}));
-                throw new Error(data.detail || `Analysis failed (${res.status})`);
-            }
-
-            const result = await res.json();
             setAnalysis(result);
             await loadUsage();
         } catch (err) {
@@ -313,6 +266,7 @@ export default function AnalyzePage() {
                                     <button
                                         onClick={(e) => { e.stopPropagation(); clearImage(); }}
                                         className="absolute top-4 right-4 w-10 h-10 rounded-full bg-red-500/90 hover:bg-red-500 text-white flex items-center justify-center transition shadow-lg"
+                                        title="Remove screenshot"
                                     >
                                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -411,9 +365,16 @@ export default function AnalyzePage() {
                                         <span className="badge badge-primary">
                                             {analysis.context.tone}
                                         </span>
-                                        <span className="badge badge-pro">
-                                            {analysis.context.emotional_state}
-                                        </span>
+                                        {analysis.context.emotional_state && (
+                                            <span className="badge badge-pro">
+                                                {analysis.context.emotional_state}
+                                            </span>
+                                        )}
+                                        {analysis.context.relationship_type && (
+                                            <span className="badge bg-white/10 text-neutral-300">
+                                                {analysis.context.relationship_type}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
 

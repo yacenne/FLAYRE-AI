@@ -1,159 +1,109 @@
 // ============================================================================
-// TYPE DEFINITIONS
+// flayre.ai - Type Definitions
 // ============================================================================
 
 export type Platform =
   | 'whatsapp'
-  | 'imessage'
-  | 'linkedin'
-  | 'twitter'
   | 'instagram'
   | 'discord'
-  | 'reddit'
-  | 'slack'
   | 'telegram'
-  | 'email'
-  | 'unknown';
+  | 'imessage'
+  | 'other';
 
-export type RelationshipType =
-  | 'stranger'
-  | 'acquaintance'
-  | 'friend'
-  | 'close_friend'
-  | 'romantic_interest'
-  | 'partner'
-  | 'family'
-  | 'colleague'
-  | 'boss'
-  | 'subordinate'
-  | 'client'
-  | 'unknown';
-
-export type ConversationMood =
-  | 'casual'
-  | 'serious'
-  | 'tense'
-  | 'playful'
-  | 'professional'
-  | 'intimate'
-  | 'confrontational';
-
-export type VisualContentType = 'image' | 'gif' | 'meme' | 'sticker' | 'emoji_combo' | 'none';
-
-// Input Types
-export interface Message {
-  sender: string;
-  content: string;
-  isUser: boolean;
-}
-
-export interface ConversationInput {
-  rawText?: string;
-  screenshotBase64?: string;
-  platformHint?: Platform;
-  userNameHint?: string;
-}
-
-export interface GenerateRequest {
-  conversation: ConversationInput;
-  userIntent: string;
-  additionalContext?: string;
-  generateVariations?: boolean;
-}
+export type ToneType = 'warm' | 'direct' | 'playful';
 
 // Analysis Types
-export interface ParticipantAnalysis {
-  name: string;
-  apparentMood: string;
-  communicationStyle: string;
-  currentStance: string;
+export interface AnalysisContext {
+  summary: string;
+  tone: string;
+  relationship_type?: string;
+  key_topics?: string[];
+  emotional_state?: string;
+  urgency_level?: string;
 }
 
-export interface ContextAnalysis {
-  detectedPlatform: Platform;
-  platformConfidence: number;
-  participants: ParticipantAnalysis[];
-  userIdentified: boolean;
-  userName?: string;
-  relationshipType: RelationshipType;
-  relationshipConfidence: number;
-  powerDynamic: string;
-  conversationMood: ConversationMood;
-  emotionalTemperature: string;
-  lastMessageIntent: string;
-  subtext: string;
-  criticalFactors: string[];
-  potentialLandmines: string[];
-  opportunities: string[];
+export interface AIResponse {
+  id: string;
+  tone: string;
+  content: string;
+  character_count: number;
+  was_copied?: boolean;
 }
 
-// Visual Types
-export interface GIFSuggestion {
-  url: string;
-  previewUrl: string;
-  title: string;
-  source: 'giphy' | 'tenor';
-  relevanceExplanation: string;
-  emotionalMatch: string;
-  riskLevel: 'safe' | 'moderate' | 'risky';
+export interface AnalyzeRequest {
+  screenshot: string; // Base64 encoded screenshot without data URL prefix
+  platform?: Platform | string;
+  context?: string;
 }
 
-export interface EmojiSuggestion {
-  emojis: string;
-  placement: 'standalone' | 'end_of_message' | 'reaction';
-  meaning: string;
+export interface AnalyzeResponse {
+  id: string;
+  platform: Platform | string;
+  context: AnalysisContext;
+  responses: AIResponse[];
+  created_at: string;
 }
 
-export interface VisualSuggestions {
-  recommendedType: VisualContentType;
-  recommendationReason: string;
-  gifSuggestions?: GIFSuggestion[];
-  emojiSuggestions?: EmojiSuggestion[];
-  visualOnly: boolean;
-  suggestedTextWithVisual?: string;
+export interface UsageInfo {
+  analyses_used: number;
+  analyses_limit: number;
+  analyses_remaining: number;
 }
 
-// Output Types
-export interface GeneratedResponse {
-  responseText: string;
-  reasoning: string;
-  toneDescription: string;
-  expectedOutcome: string;
-  visualSuggestions?: VisualSuggestions;
+// Conversation History Types
+export interface Conversation {
+  id: string;
+  platform: string;
+  context_summary?: string;
+  detected_tone?: string;
+  relationship_type?: string;
+  created_at: string;
 }
 
-export interface ResponseVariation {
-  responseText: string;
-  approach: string;
-  tradeOff: string;
+export interface ConversationListResponse {
+  items: Conversation[];
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages?: number;
+  has_more?: boolean;
 }
 
-export interface GenerateResult {
-  analysis: ContextAnalysis;
-  primaryResponse: GeneratedResponse;
-  variations?: ResponseVariation[];
-  processingTimeMs: number;
+// Billing & Subscription Types
+export interface SubscriptionInfo {
+  plan_type: string;
+  is_pro: boolean;
+  usage: UsageInfo;
 }
 
-// Screenshot Types
-export interface ScreenshotPage {
-    imageBase64: string;
-    pageNumber: number;
-  }
-  
-  export interface DetectedVisual {
-    type: string;
-    description: string;
-    position: string;
-    sender?: string;
-    emotionalTone: string;
-    memeTemplate?: string;
-    textInImage?: string;
-  }
-  
-  export interface ScreenshotAnalysisResult {
-    extractedText: string;
-    detectedVisuals: DetectedVisual[];
-    pageCount: number;
-    confidence: number;
-  }
+export interface CreateOrderRequest {
+  plan: 'pro' | string;
+}
+
+export interface CreateOrderResponse {
+  order_id: string;
+  amount: number;
+  currency: string;
+  key_id: string;
+}
+
+export interface VerifyPaymentRequest {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+  plan?: string;
+}
+
+export interface VerifyPaymentResponse {
+  success: boolean;
+  plan: string;
+  note?: string;
+}
+
+// Auth Types
+export interface AuthUser {
+  id: string;
+  email: string;
+  full_name?: string;
+  avatar_url?: string;
+}

@@ -1,35 +1,39 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth, getAccessToken } from "@/context/AuthContext";
-
-interface Subscription {
-    plan_type: string;
-    is_pro: boolean;
-    usage: {
-        analyses_used: number;
-        analyses_limit: number;
-        analyses_remaining: number;
-    };
-}
-
-interface Conversation {
-    id: string;
-    platform: string;
-    context_summary: string;
-    detected_tone: string;
-    created_at: string;
-}
+import { useAuth } from "@/context/AuthContext";
+import { api } from "@/lib/api";
+import type { SubscriptionInfo, Conversation } from "@/types";
 
 export default function DashboardPage() {
     const router = useRouter();
     const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
 
-    const [subscription, setSubscription] = useState<Subscription | null>(null);
+    const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const fetchData = useCallback(async () => {
+        try {
+            const [subData, convData] = await Promise.allSettled([
+                api.billing.getSubscription(),
+                api.conversations.list(1, 5),
+            ]);
+
+            if (subData.status === "fulfilled") {
+                setSubscription(subData.value);
+            }
+            if (convData.status === "fulfilled") {
+                setConversations(convData.value.items || []);
+            }
+        } catch (err) {
+            console.error("Failed to fetch dashboard data:", err);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     // Redirect if not authenticated
     useEffect(() => {
@@ -43,54 +47,23 @@ export default function DashboardPage() {
         if (isAuthenticated) {
             fetchData();
         }
-    }, [isAuthenticated]);
-
-    const fetchData = async () => {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const token = getAccessToken();
-
-        if (!token) {
-            setLoading(false);
-            return;
-        }
-
-        try {
-            // Fetch subscription
-            const subRes = await fetch(`${apiUrl}/api/v1/billing/subscription`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (subRes.ok) {
-                setSubscription(await subRes.json());
-            }
-
-            // Fetch conversations
-            const convRes = await fetch(`${apiUrl}/api/v1/conversations?per_page=5`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (convRes.ok) {
-                const data = await convRes.json();
-                setConversations(data.items || []);
-            }
-        } catch (err) {
-            console.error("Failed to fetch data:", err);
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [isAuthenticated, fetchData]);
 
     const handleLogout = async () => {
         await logout();
         router.push("/");
     };
 
-    const getPlatformEmoji = (platform: string) => {
+    const getPlatformEmoji = (platform?: string) => {
         const emojis: Record<string, string> = {
             whatsapp: "💬",
             instagram: "📸",
             discord: "🎮",
+            telegram: "✈️",
+            imessage: "💬",
             other: "💭",
         };
-        return emojis[platform.toLowerCase()] || "💭";
+        return emojis[platform?.toLowerCase() || ""] || "💭";
     };
 
     // Show loading while checking auth
@@ -107,7 +80,6 @@ export default function DashboardPage() {
         );
     }
 
-    // Don't render if not authenticated (will redirect)
     if (!isAuthenticated) {
         return null;
     }
@@ -126,7 +98,7 @@ export default function DashboardPage() {
                         </Link>
 
                         <div className="flex items-center gap-4">
-                            <span className="text-neutral-600">{user?.email}</span>
+                            <span className="text-neutral-600 text-sm">{user?.email}</span>
                             <button onClick={handleLogout} className="btn btn-ghost text-sm">
                                 Logout
                             </button>
@@ -191,10 +163,11 @@ export default function DashboardPage() {
                         <span className="text-neutral-600 block mb-4">Current Plan</span>
                         <div className="flex items-center gap-3">
                             <div
-                                className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${subscription?.is_pro
-                                    ? "bg-gradient-hero text-white"
-                                    : "bg-neutral-100"
-                                    }`}
+                                className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${
+                                    subscription?.is_pro
+                                        ? "bg-gradient-hero text-white"
+                                        : "bg-neutral-100"
+                                }`}
                             >
                                 {subscription?.is_pro ? "⭐" : "🆓"}
                             </div>
@@ -242,7 +215,9 @@ export default function DashboardPage() {
                         </Link>
                     </div>
 
-                    {conversations.length > 0 ? (
+                    {loading ? (
+                        <div className="py-8 text-center text-neutral-500">Loading recent analyses...</div>
+                    ) : conversations.length > 0 ? (
                         <div className="space-y-4">
                             {conversations.map((conv) => (
                                 <div
@@ -257,9 +232,11 @@ export default function DashboardPage() {
                                             <span className="font-medium text-neutral-900 capitalize">
                                                 {conv.platform}
                                             </span>
-                                            <span className="badge badge-primary text-xs capitalize">
-                                                {conv.detected_tone || "neutral"}
-                                            </span>
+                                            {conv.detected_tone && (
+                                                <span className="badge badge-primary text-xs capitalize">
+                                                    {conv.detected_tone}
+                                                </span>
+                                            )}
                                         </div>
                                         <p className="text-sm text-neutral-600 truncate">
                                             {conv.context_summary || "Conversation analysis"}
