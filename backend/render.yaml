@@ -24,9 +24,9 @@ services:
       - key: OPENROUTER_API_KEY
         sync: false
       - key: PRIMARY_MODEL
-        value: moonshotai/kimi-k2:free
+        value: bytedance-seed/seed-1.6-flash
       - key: FAST_MODEL
-        value: tngtech/deepseek-r1t2-chimera:free
+        value: bytedance-seed/seed-1.6-flash
       - key: VISION_MODEL
         value: bytedance-seed/seed-1.6-flash
       - key: SUPABASE_URL
@@ -34,6 +34,8 @@ services:
       - key: SUPABASE_KEY
         sync: false
       - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
         sync: false
       - key: RAZORPAY_KEY_ID
         sync: false

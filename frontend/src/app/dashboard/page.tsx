@@ -3,81 +3,37 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth, getAccessToken } from "@/context/AuthContext";
-import { useProUpgrade } from "@/hooks/useProUpgrade";
-
-interface Subscription {
-    plan_type: string;
-    is_pro: boolean;
-    usage: {
-        analyses_used: number;
-        analyses_limit: number;
-        analyses_remaining: number;
-    };
-}
-
-interface Conversation {
-    id: string;
-    platform: string;
-    context_summary: string;
-    detected_tone: string;
-    created_at: string;
-}
+import { useAuth } from "@/context/AuthContext";
+import { api } from "@/lib/api";
+import type { SubscriptionInfo, Conversation } from "@/types";
 
 export default function DashboardPage() {
     const router = useRouter();
     const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
 
-    const [subscription, setSubscription] = useState<Subscription | null>(null);
+    const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Fetch data when authenticated
     const fetchData = useCallback(async () => {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const token = getAccessToken();
-
-        if (!token) {
-            setLoading(false);
-            return;
-        }
-
         try {
-            // Fetch subscription
-            const subRes = await fetch(`${apiUrl}/api/v1/billing/subscription`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (subRes.ok) {
-                setSubscription(await subRes.json());
-            }
+            const [subData, convData] = await Promise.allSettled([
+                api.billing.getSubscription(),
+                api.conversations.list(1, 5),
+            ]);
 
-            // Fetch conversations
-            const convRes = await fetch(`${apiUrl}/api/v1/conversations?per_page=5`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (convRes.ok) {
-                const data = await convRes.json();
-                setConversations(data.items || []);
+            if (subData.status === "fulfilled") {
+                setSubscription(subData.value);
+            }
+            if (convData.status === "fulfilled") {
+                setConversations(convData.value.items || []);
             }
         } catch (err) {
-            console.error("Failed to fetch data:", err);
+            console.error("Failed to fetch dashboard data:", err);
         } finally {
             setLoading(false);
         }
     }, []);
-
-    // Custom upgrade hook
-    const {
-        loading: upgrading,
-        error: upgradeError,
-        success: upgradeSuccess,
-        handleUpgrade,
-        clearError,
-        clearSuccess,
-    } = useProUpgrade({
-        redirectPath: "/dashboard",
-        onCompleted: fetchData,
-    });
 
     // Redirect if not authenticated
     useEffect(() => {
@@ -86,7 +42,7 @@ export default function DashboardPage() {
         }
     }, [isAuthenticated, authLoading, router]);
 
-    // Fetch data on load
+    // Fetch data when authenticated
     useEffect(() => {
         if (isAuthenticated) {
             fetchData();
@@ -98,14 +54,16 @@ export default function DashboardPage() {
         router.push("/");
     };
 
-    const getPlatformEmoji = (platform: string) => {
+    const getPlatformEmoji = (platform?: string) => {
         const emojis: Record<string, string> = {
             whatsapp: "💬",
             instagram: "📸",
             discord: "🎮",
+            telegram: "✈️",
+            imessage: "💬",
             other: "💭",
         };
-        return emojis[platform.toLowerCase()] || "💭";
+        return emojis[platform?.toLowerCase() || ""] || "💭";
     };
 
     // Show loading while checking auth
@@ -122,7 +80,6 @@ export default function DashboardPage() {
         );
     }
 
-    // Don't render if not authenticated (will redirect)
     if (!isAuthenticated) {
         return null;
     }
@@ -141,7 +98,7 @@ export default function DashboardPage() {
                         </Link>
 
                         <div className="flex items-center gap-4">
-                            <span className="text-neutral-600 font-medium">{user?.email}</span>
+                            <span className="text-neutral-600 text-sm">{user?.email}</span>
                             <button onClick={handleLogout} className="btn btn-ghost text-sm">
                                 Logout
                             </button>
@@ -151,61 +108,14 @@ export default function DashboardPage() {
             </header>
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Accessible Upgrade Notifications */}
-                {upgradeError && (
-                    <div
-                        role="alert"
-                        aria-live="polite"
-                        className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center justify-between"
-                    >
-                        <span>{upgradeError}</span>
-                        <button
-                            onClick={clearError}
-                            aria-label="Dismiss error notification"
-                            className="text-red-500 hover:text-red-700 font-bold text-lg ml-2"
-                        >
-                            ×
-                        </button>
-                    </div>
-                )}
-                {upgradeSuccess && (
-                    <div
-                        role="status"
-                        aria-live="polite"
-                        className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-800 text-sm font-medium flex items-center justify-between"
-                    >
-                        <span>{upgradeSuccess}</span>
-                        <button
-                            onClick={clearSuccess}
-                            aria-label="Dismiss success notification"
-                            className="text-green-600 hover:text-green-800 font-bold text-lg ml-2"
-                        >
-                            ×
-                        </button>
-                    </div>
-                )}
-
                 {/* Welcome Section */}
-                <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold text-neutral-900 mb-2">
-                            Welcome back{user?.full_name ? `, ${user.full_name}` : ""}! 👋
-                        </h1>
-                        <p className="text-neutral-600">
-                            Ready to craft the perfect response? Here's your dashboard.
-                        </p>
-                    </div>
-
-                    {!subscription?.is_pro && (
-                        <button
-                            onClick={handleUpgrade}
-                            disabled={upgrading}
-                            className="btn btn-primary bg-gradient-hero border-0 text-white font-bold shadow-md hover:opacity-95 transition disabled:opacity-50 flex items-center gap-2 cursor-pointer self-start sm:self-auto"
-                        >
-                            <span>⭐</span>
-                            {upgrading ? "Opening Checkout..." : "Upgrade to Pro (₹499)"}
-                        </button>
-                    )}
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-neutral-900 mb-2">
+                        Welcome back{user?.full_name ? `, ${user.full_name}` : ""}! 👋
+                    </h1>
+                    <p className="text-neutral-600">
+                        Ready to craft the perfect response? Here's your dashboard.
+                    </p>
                 </div>
 
                 {/* Stats Grid */}
@@ -215,7 +125,7 @@ export default function DashboardPage() {
                         <div className="flex items-center justify-between mb-4">
                             <span className="text-neutral-600">Analyses Used</span>
                             {subscription?.is_pro && (
-                                <span className="badge badge-pro text-xs font-semibold">PRO UNLIMITED</span>
+                                <span className="badge badge-pro text-xs">PRO</span>
                             )}
                         </div>
                         <div className="flex items-end gap-2">
@@ -251,12 +161,13 @@ export default function DashboardPage() {
                     {/* Plan Card */}
                     <div className="card">
                         <span className="text-neutral-600 block mb-4">Current Plan</span>
-                        <div className="flex items-center gap-3 mb-4">
+                        <div className="flex items-center gap-3">
                             <div
-                                className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${subscription?.is_pro
-                                    ? "bg-gradient-hero text-white"
-                                    : "bg-neutral-100"
-                                    }`}
+                                className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${
+                                    subscription?.is_pro
+                                        ? "bg-gradient-hero text-white"
+                                        : "bg-neutral-100"
+                                }`}
                             >
                                 {subscription?.is_pro ? "⭐" : "🆓"}
                             </div>
@@ -269,18 +180,10 @@ export default function DashboardPage() {
                                 </p>
                             </div>
                         </div>
-                        {!subscription?.is_pro ? (
-                            <button
-                                onClick={handleUpgrade}
-                                disabled={upgrading}
-                                className="btn btn-primary w-full mt-2 font-bold cursor-pointer disabled:opacity-50"
-                            >
-                                {upgrading ? "Processing..." : "Upgrade to Pro"}
-                            </button>
-                        ) : (
-                            <div className="mt-2 text-xs text-green-600 font-medium flex items-center gap-1">
-                                <span>✓</span> Pro Membership Active
-                            </div>
+                        {!subscription?.is_pro && (
+                            <Link href="/pricing" className="btn btn-primary w-full mt-4">
+                                Upgrade to Pro
+                            </Link>
                         )}
                     </div>
 
@@ -312,7 +215,9 @@ export default function DashboardPage() {
                         </Link>
                     </div>
 
-                    {conversations.length > 0 ? (
+                    {loading ? (
+                        <div className="py-8 text-center text-neutral-500">Loading recent analyses...</div>
+                    ) : conversations.length > 0 ? (
                         <div className="space-y-4">
                             {conversations.map((conv) => (
                                 <div
@@ -327,9 +232,11 @@ export default function DashboardPage() {
                                             <span className="font-medium text-neutral-900 capitalize">
                                                 {conv.platform}
                                             </span>
-                                            <span className="badge badge-primary text-xs capitalize">
-                                                {conv.detected_tone || "neutral"}
-                                            </span>
+                                            {conv.detected_tone && (
+                                                <span className="badge badge-primary text-xs capitalize">
+                                                    {conv.detected_tone}
+                                                </span>
+                                            )}
                                         </div>
                                         <p className="text-sm text-neutral-600 truncate">
                                             {conv.context_summary || "Conversation analysis"}

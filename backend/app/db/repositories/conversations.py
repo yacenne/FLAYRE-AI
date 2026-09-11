@@ -50,11 +50,11 @@ class Conversation:
 
 class ConversationRepository(BaseRepository[Conversation]):
     """Repository for conversation operations."""
-    
+
     @property
     def table_name(self) -> str:
         return "conversations"
-    
+
     def _to_entity(self, row: dict[str, Any]) -> Conversation:
         return Conversation(
             id=row["id"],
@@ -63,12 +63,12 @@ class ConversationRepository(BaseRepository[Conversation]):
             context_summary=row.get("context_summary"),
             detected_tone=row.get("detected_tone"),
             relationship_type=row.get("relationship_type"),
-            visual_elements=row.get("visual_elements", []),
-            participants=row.get("participants", []),
+            visual_elements=row.get("visual_elements") or [],
+            participants=row.get("participants") or [],
             screenshot_url=row.get("screenshot_url"),
             created_at=row.get("created_at")
         )
-    
+
     async def get_user_conversations(
         self,
         user_id: str,
@@ -77,14 +77,6 @@ class ConversationRepository(BaseRepository[Conversation]):
     ) -> List[Conversation]:
         """
         Get paginated conversations for a user.
-        
-        Args:
-            user_id: User UUID
-            limit: Max results
-            offset: Pagination offset
-        
-        Returns:
-            List of conversations (newest first)
         """
         try:
             response = self._table.select("*").eq(
@@ -94,39 +86,32 @@ class ConversationRepository(BaseRepository[Conversation]):
             ).range(
                 offset, offset + limit - 1
             ).execute()
-            
-            return [self._to_entity(row) for row in response.data]
+
+            return [self._to_entity(row) for row in (response.data or [])]
         except Exception as e:
             logger.error(f"Error fetching conversations: {e}")
             raise DatabaseError("Failed to fetch conversations")
-    
+
     async def get_with_responses(self, conversation_id: str) -> Optional[Conversation]:
         """
         Get conversation with all AI responses.
-        
-        Args:
-            conversation_id: Conversation UUID
-        
-        Returns:
-            Conversation with responses populated
         """
         try:
-            # Get conversation
             conv_response = self._table.select("*").eq(
                 "id", conversation_id
             ).single().execute()
-            
+
             if not conv_response.data:
                 return None
-            
+
             conversation = self._to_entity(conv_response.data)
-            
+
             # Get responses
             resp_table = self.client.table("ai_responses")
             resp_response = resp_table.select("*").eq(
                 "conversation_id", conversation_id
-            ).execute()
-            
+            ).order("created_at", desc=False).execute()
+
             if resp_response.data:
                 conversation.responses = [
                     AIResponse(
@@ -144,12 +129,12 @@ class ConversationRepository(BaseRepository[Conversation]):
                     )
                     for r in resp_response.data
                 ]
-            
+
             return conversation
         except Exception as e:
             logger.error(f"Error fetching conversation with responses: {e}")
             raise DatabaseError("Failed to fetch conversation")
-    
+
     async def create_with_responses(
         self,
         user_id: str,
@@ -164,72 +149,51 @@ class ConversationRepository(BaseRepository[Conversation]):
         model_used: Optional[str] = None
     ) -> Conversation:
         """
-        Create a conversation with AI responses in one transaction.
-        
-        Args:
-            user_id: User UUID
-            platform: Chat platform
-            context_summary: AI-generated context summary
-            detected_tone: Detected conversation tone
-            relationship_type: Detected relationship type
-            visual_elements: List of detected visual elements
-            participants: List of conversation participants
-            responses: List of AI response suggestions
-            screenshot_url: Optional screenshot storage URL
-            model_used: AI model used for analysis
-        
-        Returns:
-            Created conversation with responses
+        Create a conversation record and its associated AI responses in a single flow.
         """
         try:
-            # Create conversation
             conv_data = {
                 "user_id": user_id,
                 "platform": platform,
                 "context_summary": context_summary,
                 "detected_tone": detected_tone,
                 "relationship_type": relationship_type,
-                "visual_elements": visual_elements,
-                "participants": participants,
+                "visual_elements": visual_elements or [],
+                "participants": participants or [],
                 "screenshot_url": screenshot_url
             }
-            
+
             conv_response = self._table.insert(conv_data).execute()
             if not conv_response.data or len(conv_response.data) == 0:
                 raise DatabaseError("Failed to create conversation")
-            
+
             conversation = self._to_entity(conv_response.data[0])
-            
-            # Create responses
-            resp_table = self.client.table("ai_responses")
-            for resp in responses:
-                resp_data = {
-                    "conversation_id": conversation.id,
-                    "tone": resp["tone"],
-                    "content": resp["content"],
-                    "character_count": len(resp["content"]),
-                    "model_used": model_used
-                }
-                resp_table.insert(resp_data).execute()
-            
-            # Fetch complete conversation
+
+            # Batch insert responses if any
+            if responses:
+                resp_table = self.client.table("ai_responses")
+                batch_responses = [
+                    {
+                        "conversation_id": conversation.id,
+                        "tone": resp["tone"],
+                        "content": resp["content"],
+                        "character_count": len(resp["content"]),
+                        "model_used": model_used
+                    }
+                    for resp in responses
+                ]
+                resp_table.insert(batch_responses).execute()
+
+            # Return complete conversation entity
             return await self.get_with_responses(conversation.id)
         except DatabaseError:
             raise
         except Exception as e:
             logger.error(f"Error creating conversation: {e}", exc_info=True)
             raise DatabaseError("Failed to create conversation") from e
-    
+
     async def mark_response_copied(self, response_id: str) -> bool:
-        """
-        Mark a response as copied by user.
-        
-        Args:
-            response_id: AI response UUID
-        
-        Returns:
-            True if updated
-        """
+        """Mark a response as copied by user."""
         try:
             resp_table = self.client.table("ai_responses")
             response = resp_table.update({
@@ -239,22 +203,13 @@ class ConversationRepository(BaseRepository[Conversation]):
         except Exception as e:
             logger.error(f"Error marking response copied: {e}")
             return False
-    
+
     async def delete_user_conversation(
         self,
         user_id: str,
         conversation_id: str
     ) -> bool:
-        """
-        Delete a conversation (with ownership check).
-        
-        Args:
-            user_id: User UUID (for ownership verification)
-            conversation_id: Conversation UUID
-        
-        Returns:
-            True if deleted
-        """
+        """Delete a conversation with user ownership check."""
         try:
             response = self._table.delete().match({
                 "id": conversation_id,
@@ -264,17 +219,9 @@ class ConversationRepository(BaseRepository[Conversation]):
         except Exception as e:
             logger.error(f"Error deleting conversation: {e}")
             raise DatabaseError("Failed to delete conversation")
-    
+
     async def count_user_conversations(self, user_id: str) -> int:
-        """
-        Count total conversations for a user.
-        
-        Args:
-            user_id: User UUID
-        
-        Returns:
-            Total count
-        """
+        """Count total conversations for a user."""
         try:
             response = self._table.select(
                 "id", count="exact"

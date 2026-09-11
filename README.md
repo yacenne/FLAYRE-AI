@@ -33,10 +33,9 @@ flayre.ai/
 │
 ├── frontend/             # Next.js 16 web app
 │   ├── src/
-│   │   ├── app/          # Pages (landing, login, dashboard, analyze, pricing, history, viewer)
-│   │   ├── components/   # Shared UI components
-│   │   ├── context/      # React context providers
-│   │   ├── lib/          # Supabase client, utilities
+│   │   ├── app/          # Pages (landing, login, dashboard, analyze, pricing, history, auth)
+│   │   ├── context/      # React context providers (Supabase auth)
+│   │   ├── lib/          # Typed API client, Supabase utilities
 │   │   └── types/        # TypeScript type definitions
 │   └── package.json
 │
@@ -50,7 +49,6 @@ flayre.ai/
 | Backend | FastAPI, Python 3.11+, Pydantic v2 |
 | Database | Supabase (Postgres + Auth) |
 | Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS v4 |
-| State | Zustand |
 | Icons | Lucide React |
 | AI (Cloud) | OpenRouter (bytedance-seed/seed-1.6-flash) |
 | AI (Local) | Ollama (optional, qwen3-vl) |

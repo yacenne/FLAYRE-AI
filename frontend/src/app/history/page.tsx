@@ -1,18 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth, getAccessToken } from "@/context/AuthContext";
-
-interface Conversation {
-    id: string;
-    platform: string;
-    context_summary: string;
-    detected_tone: string;
-    relationship_type: string;
-    created_at: string;
-}
+import { useAuth } from "@/context/AuthContext";
+import { api } from "@/lib/api";
+import type { Conversation } from "@/types";
 
 interface PaginationInfo {
     page: number;
@@ -31,6 +24,26 @@ export default function HistoryPage() {
     const [error, setError] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
 
+    const fetchConversations = useCallback(async (page: number) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const data = await api.conversations.list(page, 10);
+            setConversations(data.items || []);
+            setPagination({
+                page: data.page,
+                per_page: data.per_page,
+                total: data.total,
+                total_pages: data.total_pages || Math.ceil(data.total / data.per_page) || 1,
+            });
+        } catch (err) {
+            console.error("Failed to fetch conversations:", err);
+            setError("Failed to load conversation history");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     // Redirect if not authenticated
     useEffect(() => {
         if (!authLoading && !isAuthenticated) {
@@ -43,51 +56,18 @@ export default function HistoryPage() {
         if (isAuthenticated) {
             fetchConversations(currentPage);
         }
-    }, [isAuthenticated, currentPage]);
+    }, [isAuthenticated, currentPage, fetchConversations]);
 
-    const fetchConversations = async (page: number) => {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const token = getAccessToken();
-
-        if (!token) {
-            setLoading(false);
-            return;
-        }
-
-        try {
-            setLoading(true);
-            const response = await fetch(`${apiUrl}/api/v1/conversations?page=${page}&per_page=10`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setConversations(data.items || []);
-                setPagination({
-                    page: data.page,
-                    per_page: data.per_page,
-                    total: data.total,
-                    total_pages: data.total_pages,
-                });
-            } else {
-                setError("Failed to load conversation history");
-            }
-        } catch (err) {
-            console.error("Failed to fetch conversations:", err);
-            setError("Failed to load conversation history");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const getPlatformEmoji = (platform: string) => {
+    const getPlatformEmoji = (platform?: string) => {
         const emojis: Record<string, string> = {
             whatsapp: "💬",
             instagram: "📸",
             discord: "🎮",
+            telegram: "✈️",
+            imessage: "💬",
             other: "💭",
         };
-        return emojis[platform?.toLowerCase()] || "💭";
+        return emojis[platform?.toLowerCase() || ""] || "💭";
     };
 
     const formatDate = (dateString: string) => {
@@ -153,7 +133,7 @@ export default function HistoryPage() {
                             {conversations.map((conv) => (
                                 <div
                                     key={conv.id}
-                                    className="bg-white rounded-xl border border-neutral-200 p-6 hover:shadow-md transition cursor-pointer"
+                                    className="bg-white rounded-xl border border-neutral-200 p-6 hover:shadow-md transition"
                                 >
                                     <div className="flex items-start gap-4">
                                         <div className="w-12 h-12 rounded-xl bg-neutral-100 flex items-center justify-center text-2xl">

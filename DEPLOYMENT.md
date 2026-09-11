@@ -29,6 +29,8 @@ Go to the **Environment** tab and ensure these are set:
 | `SUPABASE_KEY` | anon key |
 | `SUPABASE_SERVICE_KEY` | service role key |
 | `SUPABASE_JWT_SECRET` | JWT secret (Settings > API) |
+| `RAZORPAY_KEY_ID` | `rzp_live_xxx` (from Razorpay Live Mode) |
+| `RAZORPAY_KEY_SECRET` | Live Key Secret |
 
 ---
 

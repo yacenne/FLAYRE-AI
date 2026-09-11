@@ -1,24 +1,22 @@
 """
 API Dependencies
 
-FastAPI dependency injection for authentication, repositories, and services.
+FastAPI dependency injection for database clients, repositories, and authentication.
 """
 
 from typing import Optional, Annotated
-from fastapi import Depends, HTTPException, status, Header
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from supabase import Client
 
 from app.config import settings, get_settings, Settings
 from app.db.supabase import get_supabase_client, get_supabase_admin, get_authenticated_client
 from app.db.repositories import UserRepository, SubscriptionRepository, ConversationRepository
-from app.core.security import decode_access_token
-from app.core.exceptions import AuthenticationError, InvalidTokenError
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-# Security scheme
+# Security scheme (Bearer token)
 security = HTTPBearer(auto_error=False)
 
 
@@ -36,12 +34,12 @@ def get_config() -> Settings:
 # ===========================================
 
 def get_db() -> Client:
-    """Get Supabase client (anon key)."""
+    """Get Supabase client with anonymous key (respects RLS)."""
     return get_supabase_client()
 
 
 def get_admin_db() -> Client:
-    """Get Supabase admin client (service key)."""
+    """Get Supabase admin client with service role key (bypasses RLS)."""
     return get_supabase_admin()
 
 
@@ -57,9 +55,7 @@ def get_user_repo(db: Client = Depends(get_db)) -> UserRepository:
 def get_subscription_repo(db: Client = Depends(get_admin_db)) -> SubscriptionRepository:
     """
     Get subscription repository instance with admin client.
-    
-    Uses admin client to bypass RLS for subscription creation/updates,
-    which is safe since endpoints are already protected by authentication.
+    Bypasses RLS for subscription tracking operations.
     """
     return SubscriptionRepository(db)
 
@@ -77,16 +73,7 @@ async def get_current_user_id(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ) -> str:
     """
-    Extract and validate user ID from JWT token using Supabase.
-    
-    Uses Supabase client to verify the token - this is the recommended approach
-    as Supabase handles all JWT validation internally.
-    
-    Raises:
-        HTTPException: If token is missing or invalid
-    
-    Returns:
-        User ID string
+    Extract and validate user ID from JWT Bearer token using Supabase Auth.
     """
     if not credentials:
         raise HTTPException(
@@ -94,14 +81,13 @@ async def get_current_user_id(
             detail="Authentication required",
             headers={"WWW-Authenticate": "Bearer"}
         )
-    
+
     token = credentials.credentials
-    
+
     try:
-        # Use Supabase service client to verify the token
         admin_client = get_supabase_admin()
         user_response = admin_client.auth.get_user(token)
-        
+
         if not user_response or not user_response.user:
             logger.warning("[AUTH] Token verification failed - no user returned")
             raise HTTPException(
@@ -109,11 +95,9 @@ async def get_current_user_id(
                 detail="Invalid or expired token",
                 headers={"WWW-Authenticate": "Bearer"}
             )
-        
-        user_id = user_response.user.id
-        logger.info(f"[AUTH] User verified: {user_id}")
-        return user_id
-        
+
+        return user_response.user.id
+
     except HTTPException:
         raise
     except Exception as e:
@@ -130,12 +114,10 @@ async def get_current_user_optional(
 ) -> Optional[str]:
     """
     Get user ID if authenticated, None otherwise.
-    
-    Use for endpoints that work with or without auth.
     """
     if not credentials:
         return None
-    
+
     try:
         token = credentials.credentials
         admin_client = get_supabase_admin()
@@ -149,21 +131,19 @@ async def get_authenticated_db(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ) -> Client:
     """
-    Get Supabase client authenticated with user's token.
-    
-    Use for operations that should respect RLS.
+    Get Supabase client authenticated with user's access token.
     """
     if not credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required"
         )
-    
+
     return get_authenticated_client(credentials.credentials)
 
 
 # ===========================================
-# Subscription Check Dependencies
+# Subscription Quota Check Dependency
 # ===========================================
 
 async def check_usage_limit(
@@ -172,17 +152,10 @@ async def check_usage_limit(
 ) -> str:
     """
     Check if user has remaining analysis quota.
-    Creates a default subscription if one doesn't exist.
-    
-    Raises:
-        HTTPException: If usage limit exceeded
-    
-    Returns:
-        User ID (for chaining dependencies)
+    Creates default subscription if user doesn't have one yet.
     """
-    # This will create a free subscription if the user doesn't have one
     subscription = await subscription_repo.get_or_create_subscription(user_id)
-    
+
     if not subscription.can_analyze:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -194,12 +167,12 @@ async def check_usage_limit(
                 "is_pro": subscription.is_pro
             }
         )
-    
+
     return user_id
 
 
 # ===========================================
-# Type Aliases for Cleaner Routes
+# Type Aliases for Clean Route Signatures
 # ===========================================
 
 CurrentUser = Annotated[str, Depends(get_current_user_id)]

@@ -6,7 +6,7 @@ Database operations for user subscriptions and usage tracking.
 
 from typing import Optional, Any
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 from supabase import Client
 
 from app.db.repositories.base import BaseRepository
@@ -23,9 +23,6 @@ class UserSubscription:
     user_id: str
     plan_type: str  # 'free' or 'pro'
     status: str  # 'active', 'cancelled', 'past_due', 'trialing'
-    razorpay_order_id: Optional[str] = None
-    razorpay_payment_id: Optional[str] = None
-    razorpay_customer_id: Optional[str] = None
     current_period_start: Optional[datetime] = None
     current_period_end: Optional[datetime] = None
     cancel_at_period_end: bool = False
@@ -34,15 +31,15 @@ class UserSubscription:
     last_reset_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    
+
     @property
     def is_pro(self) -> bool:
         return self.plan_type == "pro" and self.status == "active"
-    
+
     @property
     def analyses_remaining(self) -> int:
         return max(0, self.monthly_analyses_limit - self.monthly_analyses_used)
-    
+
     @property
     def can_analyze(self) -> bool:
         if self.is_pro:
@@ -52,20 +49,17 @@ class UserSubscription:
 
 class SubscriptionRepository(BaseRepository[UserSubscription]):
     """Repository for subscription operations."""
-    
+
     @property
     def table_name(self) -> str:
         return "user_subscriptions"
-    
+
     def _to_entity(self, row: dict[str, Any]) -> UserSubscription:
         return UserSubscription(
             id=row["id"],
             user_id=row["user_id"],
             plan_type=row["plan_type"],
             status=row["status"],
-            razorpay_order_id=row.get("razorpay_order_id"),
-            razorpay_payment_id=row.get("razorpay_payment_id"),
-            razorpay_customer_id=row.get("razorpay_customer_id"),
             current_period_start=row.get("current_period_start"),
             current_period_end=row.get("current_period_end"),
             cancel_at_period_end=row.get("cancel_at_period_end", False),
@@ -75,57 +69,31 @@ class SubscriptionRepository(BaseRepository[UserSubscription]):
             created_at=row.get("created_at"),
             updated_at=row.get("updated_at")
         )
-    
+
     async def get_by_user_id(self, user_id: str) -> Optional[UserSubscription]:
-        """
-        Get subscription by user ID.
-        
-        Args:
-            user_id: User UUID
-        
-        Returns:
-            UserSubscription or None
-        """
+        """Get subscription by user ID."""
         try:
             response = self._table.select("*").eq("user_id", user_id).single().execute()
             if response.data:
                 return self._to_entity(response.data)
             return None
         except Exception as e:
-            logger.debug(f"Subscription not found for user: {user_id}")
+            logger.debug(f"Subscription not found for user: {user_id} - {e}")
             return None
 
     async def get_by_payment_id(self, payment_id: str) -> Optional[UserSubscription]:
-        """
-        Get subscription by Razorpay payment ID for idempotency check.
-        
-        Args:
-            payment_id: Razorpay payment ID
-        
-        Returns:
-            UserSubscription or None
-        """
+        """Get subscription by Razorpay payment ID (for idempotency)."""
         try:
-            if not payment_id:
-                return None
-            response = self._table.select("*").eq("razorpay_payment_id", payment_id).execute()
-            if response.data and len(response.data) > 0:
-                return self._to_entity(response.data[0])
+            response = self._table.select("*").eq("razorpay_payment_id", payment_id).single().execute()
+            if response.data:
+                return self._to_entity(response.data)
             return None
         except Exception as e:
-            logger.debug(f"Subscription not found for payment_id: {payment_id}")
+            logger.debug(f"Subscription not found for payment_id: {payment_id} - {e}")
             return None
-            
+
     async def create_default_subscription(self, user_id: str) -> UserSubscription:
-        """
-        Create a default free subscription for a new user.
-        
-        Args:
-            user_id: User UUID
-        
-        Returns:
-            Created subscription
-        """
+        """Create a default free subscription for a new user."""
         try:
             data = {
                 "user_id": user_id,
@@ -143,127 +111,83 @@ class SubscriptionRepository(BaseRepository[UserSubscription]):
         except Exception as e:
             logger.error(f"Error creating default subscription: {e}")
             raise DatabaseError(f"Failed to create subscription: {e}")
-    
+
     async def get_or_create_subscription(self, user_id: str) -> UserSubscription:
-        """
-        Get subscription, creating a default one if it doesn't exist.
-        
-        Args:
-            user_id: User UUID
-        
-        Returns:
-            UserSubscription (existing or newly created)
-        """
+        """Get subscription, creating a default one if it doesn't exist."""
         subscription = await self.get_by_user_id(user_id)
         if subscription:
             return subscription
         return await self.create_default_subscription(user_id)
-    
+
     async def increment_usage(self, user_id: str) -> UserSubscription:
-        """
-        Increment the monthly usage counter.
-        
-        Args:
-            user_id: User UUID
-        
-        Returns:
-            Updated subscription
-        """
+        """Increment the monthly usage counter."""
         try:
-            # Get current subscription
             sub = await self.get_by_user_id(user_id)
             if not sub:
                 raise DatabaseError("Subscription not found")
-            
-            # Increment usage
+
             new_count = sub.monthly_analyses_used + 1
             response = self._table.update({
                 "monthly_analyses_used": new_count
             }).eq("user_id", user_id).execute()
-            
+
             if response.data and len(response.data) > 0:
                 return self._to_entity(response.data[0])
             raise DatabaseError("Failed to update usage")
         except Exception as e:
             logger.error(f"Error incrementing usage: {e}")
             raise DatabaseError("Failed to update usage")
-    
+
     async def upgrade_to_pro(
         self,
         user_id: str,
-        payment_id: Optional[str] = None,
-        order_id: Optional[str] = None,
-        customer_id: Optional[str] = None,
+        payment_id: str
     ) -> UserSubscription:
-        """
-        Upgrade user to Pro plan and record payment details.
-        
-        Args:
-            user_id: User UUID
-            payment_id: Optional Razorpay payment ID
-            order_id: Optional Razorpay order ID
-            customer_id: Optional Razorpay customer ID
-        
-        Returns:
-            Updated subscription
-        """
+        """Upgrade user to Pro plan."""
+        update_data = {
+            "plan_type": "pro",
+            "status": "active",
+            "monthly_analyses_limit": 999999,  # Unlimited
+            "cancel_at_period_end": False,
+            "razorpay_payment_id": payment_id,
+            "payment_verified_at": datetime.now(timezone.utc).isoformat()
+        }
         try:
-            now = datetime.utcnow()
-            period_end = now + timedelta(days=30)
-            
-            update_data: dict[str, Any] = {
-                "plan_type": "pro",
-                "status": "active",
-                "monthly_analyses_limit": 999999,  # Unlimited
-                "cancel_at_period_end": False,
-                "current_period_start": now.isoformat(),
-                "current_period_end": period_end.isoformat(),
-            }
-            if payment_id:
-                update_data["razorpay_payment_id"] = payment_id
-            if order_id:
-                update_data["razorpay_order_id"] = order_id
-            if customer_id:
-                update_data["razorpay_customer_id"] = customer_id
-            
             response = self._table.update(update_data).eq("user_id", user_id).execute()
-            
             if response.data and len(response.data) > 0:
                 return self._to_entity(response.data[0])
             raise DatabaseError("Failed to upgrade subscription")
         except Exception as e:
+            # Fallback if optional payment tracking columns are missing in user's Supabase schema
+            if "column" in str(e).lower() or "pgrst204" in str(e).lower():
+                logger.warning(f"Columns missing in user_subscriptions, falling back to core fields: {e}")
+                try:
+                    fallback_data = {
+                        "plan_type": "pro",
+                        "status": "active",
+                        "monthly_analyses_limit": 999999,
+                        "cancel_at_period_end": False,
+                    }
+                    response = self._table.update(fallback_data).eq("user_id", user_id).execute()
+                    if response.data and len(response.data) > 0:
+                        return self._to_entity(response.data[0])
+                except Exception as fallback_err:
+                    logger.error(f"Fallback upgrade failed: {fallback_err}")
+                    raise DatabaseError(f"Upgrade failed: {str(fallback_err)}")
+
             logger.error(f"Error upgrading subscription: {e}")
             raise DatabaseError(f"Upgrade failed: {str(e)}")
 
-    
     async def cancel_subscription(self, user_id: str) -> UserSubscription:
-        """
-        Cancel subscription at period end.
-        
-        Args:
-            user_id: User UUID
-        
-        Returns:
-            Updated subscription
-        """
-        data = {
-            "cancel_at_period_end": True
-        }
+        """Cancel subscription at period end."""
+        data = {"cancel_at_period_end": True}
         response = self._table.update(data).eq("user_id", user_id).execute()
         if response.data and len(response.data) > 0:
             return self._to_entity(response.data[0])
         raise DatabaseError("Failed to cancel subscription")
-    
+
     async def downgrade_to_free(self, user_id: str) -> UserSubscription:
-        """
-        Downgrade to free plan (when subscription expires).
-        
-        Args:
-            user_id: User UUID
-        
-        Returns:
-            Updated subscription
-        """
+        """Downgrade to free plan."""
         data = {
             "plan_type": "free",
             "status": "active",

@@ -1,7 +1,7 @@
 """
 flayre.ai Backend API
 
-Production-ready FastAPI application with enterprise-grade architecture.
+Production-ready FastAPI application with clean, modular architecture.
 """
 
 from contextlib import asynccontextmanager
@@ -14,8 +14,7 @@ from app.api.v1 import api_router
 from app.core.logging import get_logger, setup_logging
 from app.core.exceptions import FlayreException
 
-
-# Initialize logging
+# Initialize logging configuration
 setup_logging()
 logger = get_logger(__name__)
 
@@ -24,26 +23,17 @@ logger = get_logger(__name__)
 async def lifespan(app: FastAPI):
     """
     Application lifespan events.
-    
-    Startup: Initialize resources, log configuration
-    Shutdown: Cleanup resources
     """
-    # Startup
-    logger.info(f"Starting {settings.app_name} v{settings.app_version}")
-    logger.info(f"Environment: {settings.environment}")
-    logger.info(f"Debug mode: {settings.debug}")
-    logger.info(f"Vision Model: {settings.vision_model}")
-    
+    logger.info(f"Starting {settings.app_name} v{settings.app_version} in [{settings.environment}] mode")
+    logger.info(f"AI Vision Model: {settings.vision_model} (Ollama: {settings.use_ollama})")
     yield
-    
-    # Shutdown
     logger.info("Shutting down flayre.ai API")
 
 
-# Create FastAPI app
+# Create FastAPI application
 app = FastAPI(
     title=settings.app_name,
-    description="AI-powered conversation assistant that analyzes chat screenshots and suggests smart responses.",
+    description="AI-powered conversation assistant API that analyzes chat screenshots and suggests smart responses.",
     version=settings.app_version,
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
@@ -56,18 +46,8 @@ app = FastAPI(
 # ===========================================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        settings.frontend_url,
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:8000",
-        "https://*.vercel.app",
-        "https://flayreai.vercel.app",
-        "https://flayre-ai.onrender.com",
-        # Chrome extension origins - allow all extensions
-        "*",
-    ],
-    allow_origin_regex=r"chrome-extension://.*",
+    allow_origins=settings.allowed_origins,
+    allow_origin_regex=r"(https://.*\.vercel\.app|chrome-extension://.*)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -80,7 +60,7 @@ app.add_middleware(
 # ===========================================
 @app.exception_handler(FlayreException)
 async def flayre_exception_handler(request: Request, exc: FlayreException):
-    """Handle custom flayre exceptions."""
+    """Handle custom application exceptions."""
     return JSONResponse(
         status_code=exc.status_code,
         content=exc.to_dict()
@@ -89,8 +69,8 @@ async def flayre_exception_handler(request: Request, exc: FlayreException):
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
-    """Handle unexpected exceptions."""
-    logger.error(f"Unexpected error: {exc}", exc_info=True)
+    """Handle unhandled server exceptions."""
+    logger.error(f"Unhandled exception on {request.url.path}: {exc}", exc_info=True)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
@@ -106,7 +86,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 # ===========================================
 @app.get("/", tags=["Health"])
 async def root():
-    """Root endpoint with API info."""
+    """Root endpoint returning API status."""
     return {
         "name": settings.app_name,
         "version": settings.app_version,
@@ -117,7 +97,7 @@ async def root():
 
 @app.get("/health", tags=["Health"])
 async def health_check():
-    """Health check endpoint for monitoring."""
+    """Health check endpoint for monitoring uptime."""
     return {
         "status": "healthy",
         "environment": settings.environment
@@ -125,16 +105,6 @@ async def health_check():
 
 
 # ===========================================
-# Include API Router
+# Include API v1 Router
 # ===========================================
 app.include_router(api_router)
-
-
-# ===========================================
-# Legacy Routes (for backwards compatibility)
-# ===========================================
-# These redirect to the new v1 API structure
-
-@app.get("/api/health", tags=["Legacy"], include_in_schema=False)
-async def legacy_health():
-    return {"status": "healthy"}

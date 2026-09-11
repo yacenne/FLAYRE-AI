@@ -1,7 +1,7 @@
 """
 Conversations Endpoints
 
-CRUD operations for conversation history.
+CRUD operations for conversation history and AI response tracking.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
@@ -21,7 +21,6 @@ from app.models.conversation import (
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
-
 router = APIRouter()
 
 
@@ -33,27 +32,27 @@ async def list_conversations(
     conversation_repo: ConversationRepository = Depends(get_conversation_repo)
 ):
     """
-    Get paginated list of user's conversations.
+    Get paginated list of user's conversation history.
     """
     offset = (page - 1) * per_page
-    
+
     conversations = await conversation_repo.get_user_conversations(
         user_id=user_id,
-        limit=per_page + 1,  # Fetch one extra to check if there's more
+        limit=per_page + 1,  # Fetch one extra to check if there is a next page
         offset=offset
     )
-    
+
     has_more = len(conversations) > per_page
     if has_more:
         conversations = conversations[:per_page]
-    
+
     total = await conversation_repo.count_user_conversations(user_id)
-    
+
     return ConversationListResponse(
         items=[
             ConversationListItem(
                 id=c.id,
-                platform=Platform(c.platform),
+                platform=Platform(c.platform) if c.platform in [p.value for p in Platform] else Platform.OTHER,
                 context_summary=c.context_summary,
                 detected_tone=c.detected_tone,
                 created_at=c.created_at
@@ -74,39 +73,41 @@ async def get_conversation(
     conversation_repo: ConversationRepository = Depends(get_conversation_repo)
 ):
     """
-    Get a single conversation with all responses.
+    Get a single conversation record with its full list of AI responses.
     """
     conversation = await conversation_repo.get_with_responses(conversation_id)
-    
+
     if not conversation:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Conversation not found"
         )
-    
+
     # Verify ownership
     if conversation.user_id != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied"
         )
-    
+
     return ConversationResponse(
         id=conversation.id,
-        platform=Platform(conversation.platform),
+        platform=Platform(conversation.platform) if conversation.platform in [p.value for p in Platform] else Platform.OTHER,
         context_summary=conversation.context_summary,
         detected_tone=conversation.detected_tone,
         relationship_type=conversation.relationship_type,
         visual_elements=[
-            VisualElement(**ve) for ve in conversation.visual_elements
+            VisualElement(**ve) if isinstance(ve, dict) else ve
+            for ve in (conversation.visual_elements or [])
         ],
         participants=[
-            Participant(**p) for p in conversation.participants
+            Participant(**p) if isinstance(p, dict) else p
+            for p in (conversation.participants or [])
         ],
         responses=[
             AIResponseItem(
                 id=r.id,
-                tone=ToneType(r.tone),
+                tone=ToneType(r.tone) if r.tone in [t.value for t in ToneType] else ToneType.DIRECT,
                 content=r.content,
                 character_count=r.character_count,
                 was_copied=r.was_copied
@@ -124,19 +125,19 @@ async def delete_conversation(
     conversation_repo: ConversationRepository = Depends(get_conversation_repo)
 ):
     """
-    Delete a conversation.
+    Delete a conversation by ID.
     """
     deleted = await conversation_repo.delete_user_conversation(
         user_id=user_id,
         conversation_id=conversation_id
     )
-    
+
     if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Conversation not found"
         )
-    
+
     return None
 
 
@@ -148,17 +149,15 @@ async def mark_response_copied(
     conversation_repo: ConversationRepository = Depends(get_conversation_repo)
 ):
     """
-    Mark a response as copied (for analytics).
+    Mark a response suggestion as copied by the user (analytics).
     """
-    # Verify ownership first
     conversation = await conversation_repo.get_by_id(conversation_id)
-    
+
     if not conversation or conversation.user_id != user_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Conversation not found"
         )
-    
+
     await conversation_repo.mark_response_copied(response_id)
-    
     return {"message": "Response marked as copied"}
