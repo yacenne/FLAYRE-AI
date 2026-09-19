@@ -1,468 +1,108 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { AlertCircle, ArrowLeft, Check, Clipboard, FileImage, LoaderCircle, Sparkles, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
-import type { AnalyzeResponse, AIResponse, UsageInfo } from "@/types";
+import type { AIResponse, AnalyzeResponse, UsageInfo } from "@/types";
+import { BrandMark, Button, Card, Label } from "@/components/ui";
 
-export default function AnalyzePage() {
-    const router = useRouter();
-    const { isAuthenticated, isLoading: authLoading } = useAuth();
+const platforms = ["whatsapp","instagram","discord","telegram","imessage","other"];
 
-    const [image, setImage] = useState<string | null>(null);
-    const [imageFile, setImageFile] = useState<File | null>(null);
-    const [platform, setPlatform] = useState("whatsapp");
-    const [analyzing, setAnalyzing] = useState(false);
-    const [analysis, setAnalysis] = useState<AnalyzeResponse | null>(null);
-    const [usage, setUsage] = useState<UsageInfo | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [copiedId, setCopiedId] = useState<string | null>(null);
-    const [isDragging, setIsDragging] = useState(false);
+function LoadingScreen(){return <div className="flex min-h-screen items-center justify-center bg-[#fafafa]"><div className="text-sm text-[#777]">Loading flayre…</div></div>}
 
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const dropZoneRef = useRef<HTMLDivElement>(null);
+export default function AnalyzePage(){
+ const router=useRouter();
+ const {isAuthenticated,isLoading:authLoading}=useAuth();
+ const [image,setImage]=useState<string|null>(null);
+ const [file,setFile]=useState<File|null>(null);
+ const [platform,setPlatform]=useState("whatsapp");
+ const [analyzing,setAnalyzing]=useState(false);
+ const [analysis,setAnalysis]=useState<AnalyzeResponse|null>(null);
+ const [usage,setUsage]=useState<UsageInfo|null>(null);
+ const [error,setError]=useState<string|null>(null);
+ const [copied,setCopied]=useState<string|null>(null);
+ const inputRef=useRef<HTMLInputElement>(null);
 
-    const loadUsage = useCallback(async () => {
-        try {
-            const data = await api.analyze.getUsage();
-            setUsage(data);
-        } catch (err) {
-            console.error("Failed to load usage:", err);
-        }
-    }, []);
+ const loadUsage=useCallback(async()=>{try{setUsage(await api.analyze.getUsage())}catch{}},[]);
+ useEffect(()=>{if(!authLoading&&!isAuthenticated)router.push("/login?redirect=/analyze")},[authLoading,isAuthenticated,router]);
+ useEffect(()=>{if(isAuthenticated)loadUsage()},[isAuthenticated,loadUsage]);
 
-    // Redirect if not authenticated
-    useEffect(() => {
-        if (!authLoading && !isAuthenticated) {
-            router.push("/login?redirect=/analyze");
-        }
-    }, [isAuthenticated, authLoading, router]);
+ const setSelectedFile=(next:File|null)=>{
+   if(!next)return;
+   if(!next.type.startsWith("image/")){setError("Please choose an image.");return;}
+   setFile(next); setError(null); setAnalysis(null);
+   const reader=new FileReader(); reader.onload=()=>setImage(String(reader.result)); reader.readAsDataURL(next);
+ };
+ useEffect(()=>{
+   const onPaste=(e:ClipboardEvent)=>{const item=[...(e.clipboardData?.items??[])].find(x=>x.type.startsWith("image/")); if(item){e.preventDefault();setSelectedFile(item.getAsFile())}};
+   document.addEventListener("paste",onPaste); return()=>document.removeEventListener("paste",onPaste);
+ },[]);
 
-    // Load usage on mount
-    useEffect(() => {
-        if (isAuthenticated) {
-            loadUsage();
-        }
-    }, [isAuthenticated, loadUsage]);
+ const analyze=async()=>{
+   if(!image||!file)return setError("Add a screenshot first.");
+   if(usage&&usage.analyses_remaining<=0)return setError("You have used your monthly analyses. Upgrade to Pro for unlimited use.");
+   setAnalyzing(true);setError(null);
+   try{
+    const base64=image.includes(",")?image.split(",")[1]:image;
+    setAnalysis(await api.analyze.analyzeScreenshot({screenshot:base64,platform}));
+    await loadUsage();
+   }catch(e){setError(e instanceof Error?e.message:"Analysis failed. Please try again.")}finally{setAnalyzing(false)}
+ };
+ const copy=async(r:AIResponse)=>{await navigator.clipboard.writeText(r.content);setCopied(r.id);setTimeout(()=>setCopied(null),1800)};
+ if(authLoading)return <LoadingScreen/>; if(!isAuthenticated)return null;
 
-    const handleFile = useCallback((file: File) => {
-        if (!file.type.startsWith("image/")) {
-            setError("Please upload an image file");
-            return;
-        }
+ return <div className="min-h-screen bg-[#fafafa]">
+  <header className="border-b border-[#e7e7e7] bg-white">
+   <div className="page-width flex h-16 items-center justify-between">
+    <Link href="/dashboard"><BrandMark/></Link>
+    <div className="flex items-center gap-2 text-sm text-[#777]">{usage&&<span>{usage.analyses_remaining}/{usage.analyses_limit===999999?"∞":usage.analyses_limit} left</span>}<Link href="/dashboard" className="rounded-lg px-3 py-2 hover:bg-[#f4f4f4]">Dashboard</Link></div>
+   </div>
+  </header>
 
-        setImageFile(file);
-        setError(null);
-        setAnalysis(null);
+  <main className="page-width py-8">
+   <div className="mb-7 flex items-center gap-3"><Link href="/dashboard" className="text-[#888] hover:text-[#111]"><ArrowLeft size={18}/></Link><div><h1 className="text-2xl font-semibold tracking-[-0.02em]">Analyze conversation</h1><p className="mt-1 text-sm text-[#777]">Drop in a screenshot. Flayre handles the rest.</p></div></div>
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            setImage(e.target?.result as string);
-        };
-        reader.readAsDataURL(file);
-    }, []);
-
-    // Handle paste from clipboard
-    useEffect(() => {
-        const handlePaste = (e: ClipboardEvent) => {
-            const items = e.clipboardData?.items;
-            if (!items) return;
-
-            for (const item of items) {
-                if (item.type.startsWith("image/")) {
-                    e.preventDefault();
-                    const file = item.getAsFile();
-                    if (file) {
-                        handleFile(file);
-                    }
-                    break;
-                }
-            }
-        };
-
-        document.addEventListener("paste", handlePaste);
-        return () => document.removeEventListener("paste", handlePaste);
-    }, [handleFile]);
-
-    const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-
-        const file = e.dataTransfer.files[0];
-        if (file) {
-            handleFile(file);
-        }
-    }, [handleFile]);
-
-    const handleDragOver = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(true);
-    }, []);
-
-    const handleDragLeave = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-    }, []);
-
-    const handleAnalyze = async () => {
-        if (!image || !imageFile) {
-            setError("Please upload a screenshot first");
-            return;
-        }
-
-        if (usage && usage.analyses_remaining <= 0) {
-            setError("No analyses remaining. Please upgrade to Pro!");
-            return;
-        }
-
-        setAnalyzing(true);
-        setError(null);
-
-        try {
-            // Convert image to base64 without the data URL prefix
-            const base64 = image.includes(",") ? image.split(",")[1] : image;
-
-            const result = await api.analyze.analyzeScreenshot({
-                screenshot: base64,
-                platform,
-            });
-
-            setAnalysis(result);
-            await loadUsage();
-        } catch (err) {
-            const message = err instanceof Error ? err.message : "Analysis failed";
-            setError(message);
-        } finally {
-            setAnalyzing(false);
-        }
-    };
-
-    const handleCopy = async (response: AIResponse) => {
-        try {
-            await navigator.clipboard.writeText(response.content);
-            setCopiedId(response.id);
-            setTimeout(() => setCopiedId(null), 2000);
-        } catch (err) {
-            console.error("Failed to copy:", err);
-        }
-    };
-
-    const clearImage = () => {
-        setImage(null);
-        setImageFile(null);
-        setAnalysis(null);
-        setError(null);
-    };
-
-    const getToneIcon = (tone: string) => {
-        const icons: Record<string, string> = {
-            warm: "💜",
-            direct: "⚡",
-            playful: "🎈",
-        };
-        return icons[tone.toLowerCase()] || "💬";
-    };
-
-    const getToneGradient = (tone: string) => {
-        const gradients: Record<string, string> = {
-            warm: "from-purple-500 to-pink-500",
-            direct: "from-blue-500 to-cyan-500",
-            playful: "from-orange-500 to-yellow-500",
-        };
-        return gradients[tone.toLowerCase()] || "from-gray-500 to-gray-600";
-    };
-
-    // Loading state
-    if (authLoading) {
-        return (
-            <div className="min-h-screen bg-gradient-dark flex items-center justify-center">
-                <div className="text-center">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-hero flex items-center justify-center animate-pulse mx-auto mb-4">
-                        <span className="text-2xl">🔥</span>
-                    </div>
-                    <p className="text-neutral-400">Loading...</p>
-                </div>
-            </div>
-        );
-    }
-
-    if (!isAuthenticated) {
-        return null;
-    }
-
-    return (
-        <div className="min-h-screen bg-gradient-dark">
-            {/* Header */}
-            <header className="glass-dark border-b border-white/10 sticky top-0 z-50">
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex items-center justify-between">
-                        <Link href="/dashboard" className="flex items-center gap-2">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-hero flex items-center justify-center">
-                                <span className="text-xl">🔥</span>
-                            </div>
-                            <span className="text-xl font-bold text-white">flayre.ai</span>
-                        </Link>
-
-                        {usage && (
-                            <div className="flex items-center gap-3">
-                                <div className="glass rounded-full px-4 py-2">
-                                    <span className="text-white font-semibold">
-                                        {usage.analyses_remaining}
-                                    </span>
-                                    <span className="text-neutral-400 ml-1">
-                                        / {usage.analyses_limit === 999999 ? "∞" : usage.analyses_limit} left
-                                    </span>
-                                </div>
-                                <Link href="/dashboard" className="btn btn-ghost text-sm text-white">
-                                    Dashboard
-                                </Link>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </header>
-
-            <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Page Title */}
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
-                        Analyze Conversation
-                    </h1>
-                    <p className="text-neutral-400">
-                        Upload or paste a screenshot to get AI-powered response suggestions
-                    </p>
-                </div>
-
-                <div className="grid lg:grid-cols-2 gap-8">
-                    {/* Left Column - Upload Area */}
-                    <div className="space-y-6">
-                        {/* Upload Zone */}
-                        <div
-                            ref={dropZoneRef}
-                            onDrop={handleDrop}
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            onClick={() => !image && fileInputRef.current?.click()}
-                            className={`relative rounded-2xl border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden
-                ${isDragging
-                                    ? "border-purple-400 bg-purple-500/20 scale-[1.02]"
-                                    : image
-                                        ? "border-white/20 bg-white/5"
-                                        : "border-white/20 bg-white/5 hover:border-purple-400 hover:bg-purple-500/10"
-                                }
-              `}
-                            style={{ minHeight: "400px" }}
-                        >
-                            {image ? (
-                                <div className="relative h-full">
-                                    <img
-                                        src={image}
-                                        alt="Screenshot"
-                                        className="w-full h-full object-contain rounded-xl"
-                                        style={{ maxHeight: "500px" }}
-                                    />
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); clearImage(); }}
-                                        className="absolute top-4 right-4 w-10 h-10 rounded-full bg-red-500/90 hover:bg-red-500 text-white flex items-center justify-center transition shadow-lg"
-                                        title="Remove screenshot"
-                                    >
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
-                                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500/30 to-pink-500/30 flex items-center justify-center mb-6 backdrop-blur-sm">
-                                        <svg className="w-10 h-10 text-purple-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                    </div>
-                                    <p className="text-xl font-semibold text-white mb-2">
-                                        Drop screenshot here
-                                    </p>
-                                    <p className="text-neutral-400 text-center mb-4">
-                                        or click to browse files
-                                    </p>
-                                    <div className="flex items-center gap-2 text-sm text-neutral-500">
-                                        <kbd className="px-2 py-1 rounded bg-white/10 text-neutral-300 font-mono">
-                                            Ctrl+V
-                                        </kbd>
-                                        <span>to paste from clipboard</span>
-                                    </div>
-                                </div>
-                            )}
-
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-                                className="hidden"
-                            />
-                        </div>
-
-                        {/* Platform & Analyze */}
-                        <div className="flex flex-col sm:flex-row gap-4">
-                            <select
-                                value={platform}
-                                onChange={(e) => setPlatform(e.target.value)}
-                                className="flex-1 glass rounded-xl px-4 py-3 text-white bg-white/5 border border-white/10 focus:border-purple-400 focus:outline-none transition"
-                            >
-                                <option value="whatsapp">💬 WhatsApp</option>
-                                <option value="instagram">📸 Instagram</option>
-                                <option value="discord">🎮 Discord</option>
-                                <option value="telegram">✈️ Telegram</option>
-                                <option value="imessage">💬 iMessage</option>
-                                <option value="other">💭 Other</option>
-                            </select>
-
-                            <button
-                                onClick={handleAnalyze}
-                                disabled={!image || analyzing || (usage !== null && usage.analyses_remaining <= 0)}
-                                className="flex-1 btn btn-primary btn-lg disabled:opacity-50 disabled:cursor-not-allowed group"
-                            >
-                                {analyzing ? (
-                                    <>
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        <span>Analyzing...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <span>✨ Analyze</span>
-                                        <svg className="w-5 h-5 group-hover:translate-x-1 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                        </svg>
-                                    </>
-                                )}
-                            </button>
-                        </div>
-
-                        {/* Error Message */}
-                        {error && (
-                            <div className="rounded-xl bg-red-500/20 border border-red-500/30 p-4 text-red-300 flex items-start gap-3">
-                                <span className="text-xl">⚠️</span>
-                                <p>{error}</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Right Column - Results */}
-                    <div className="space-y-6">
-                        {analysis ? (
-                            <>
-                                {/* Context Card */}
-                                <div className="glass rounded-2xl p-6 border border-white/10">
-                                    <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                                        <span>📊</span> Context Analysis
-                                    </h3>
-                                    <p className="text-neutral-300 mb-4 leading-relaxed">
-                                        {analysis.context.summary}
-                                    </p>
-                                    <div className="flex flex-wrap gap-2">
-                                        <span className="badge badge-primary">
-                                            {analysis.context.tone}
-                                        </span>
-                                        {analysis.context.emotional_state && (
-                                            <span className="badge badge-pro">
-                                                {analysis.context.emotional_state}
-                                            </span>
-                                        )}
-                                        {analysis.context.relationship_type && (
-                                            <span className="badge bg-white/10 text-neutral-300">
-                                                {analysis.context.relationship_type}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Response Cards */}
-                                <div className="space-y-4">
-                                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                                        <span>✨</span> Suggested Responses
-                                    </h3>
-
-                                    {analysis.responses.map((response) => (
-                                        <div
-                                            key={response.id}
-                                            className="group glass rounded-xl p-5 border border-white/10 hover:border-purple-500/50 transition-all duration-300"
-                                        >
-                                            <div className="flex items-center justify-between mb-3">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xl">{getToneIcon(response.tone)}</span>
-                                                    <span className={`font-semibold text-transparent bg-clip-text bg-gradient-to-r ${getToneGradient(response.tone)} capitalize`}>
-                                                        {response.tone}
-                                                    </span>
-                                                </div>
-                                                <span className="text-xs text-neutral-500">
-                                                    {response.character_count} chars
-                                                </span>
-                                            </div>
-
-                                            <p className="text-white text-lg leading-relaxed mb-4">
-                                                {response.content}
-                                            </p>
-
-                                            <button
-                                                onClick={() => handleCopy(response)}
-                                                className={`w-full py-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2
-                          ${copiedId === response.id
-                                                        ? "bg-green-500 text-white"
-                                                        : "bg-white/10 hover:bg-white/20 text-white"
-                                                    }`}
-                                            >
-                                                {copiedId === response.id ? (
-                                                    <>
-                                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                        </svg>
-                                                        Copied!
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                                        </svg>
-                                                        Copy Response
-                                                    </>
-                                                )}
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Analyze Again */}
-                                <button
-                                    onClick={clearImage}
-                                    className="w-full btn btn-secondary"
-                                >
-                                    🔄 Start New Analysis
-                                </button>
-                            </>
-                        ) : (
-                            /* Empty State */
-                            <div className="glass rounded-2xl p-8 border border-white/10 text-center h-full flex flex-col items-center justify-center" style={{ minHeight: "500px" }}>
-                                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center mb-6">
-                                    <span className="text-5xl">💬</span>
-                                </div>
-                                <h3 className="text-xl font-semibold text-white mb-2">
-                                    Ready to Analyze
-                                </h3>
-                                <p className="text-neutral-400 max-w-sm">
-                                    Upload a screenshot of your conversation and get AI-powered response suggestions in 3 different tones
-                                </p>
-                                <div className="mt-6 flex flex-wrap justify-center gap-2">
-                                    <span className="badge badge-primary">💜 Warm</span>
-                                    <span className="badge badge-primary">⚡ Direct</span>
-                                    <span className="badge badge-primary">🎈 Playful</span>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </main>
+   <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
+    <Card className="p-6">
+      <Label>Screenshot</Label>
+      {!image ? (
+        <button onClick={()=>inputRef.current?.click()} className="flex min-h-[430px] w-full flex-col items-center justify-center rounded-2xl border border-dashed border-[#d7d7d7] bg-[#fcfcfc] text-center transition hover:border-[#a8a8a8] hover:bg-[#f8f8f8]">
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-[#e2e2e2] bg-white"><Upload size={20} className="text-[#555]"/></div>
+          <div className="text-sm font-medium">Drop screenshot here or browse</div>
+          <div className="mt-2 text-xs text-[#999]">You can also paste with Ctrl/Cmd + V</div>
+          <div className="mt-5 flex items-center gap-2 text-[11px] text-[#999]"><FileImage size={14}/> PNG, JPG, WEBP</div>
+        </button>
+      ) : (
+        <div className="relative overflow-hidden rounded-2xl border border-[#e6e6e6] bg-[#f6f6f6] p-3">
+          <img src={image} alt="Selected chat screenshot" className="mx-auto max-h-[560px] w-auto max-w-full rounded-xl object-contain"/>
+          <button onClick={()=>{setImage(null);setFile(null);setAnalysis(null);setError(null)}} aria-label="Remove screenshot" className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-md"><X size={16}/></button>
         </div>
-    );
+      )}
+
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={e=>setSelectedFile(e.target.files?.[0]??null)}/>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-[180px_1fr]">
+       <select value={platform} onChange={e=>setPlatform(e.target.value)} className="rounded-xl border border-[#dedede] bg-white px-3 py-3 text-sm outline-none focus:border-[#999]">
+         {platforms.map(p=><option key={p} value={p}>{p[0].toUpperCase()+p.slice(1)}</option>)}
+       </select>
+       <Button onClick={analyze} disabled={!image||analyzing||Boolean(usage&&usage.analyses_remaining<=0)} className="w-full py-3">
+         {analyzing?<><LoaderCircle size={16} className="animate-spin"/>Analyzing…</>:<><Sparkles size={16}/>Analyze screenshot</>}
+       </Button>
+      </div>
+      {error&&<div className="mt-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"><AlertCircle size={17} className="mt-0.5 shrink-0"/><span>{error}</span></div>}
+    </Card>
+
+    <div className="space-y-4">
+      {!analysis&&!analyzing&&<Card className="p-6"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f3f3f3]"><Sparkles size={18}/></div><h2 className="mt-5 text-lg font-semibold">Your replies will appear here</h2><p className="mt-2 text-sm leading-6 text-[#777]">Flayre will summarize the conversation, identify the tone, and suggest a few replies you can actually send.</p></Card>}
+      {analyzing&&<Card className="p-6"><div className="flex items-center gap-3 text-sm font-medium"><LoaderCircle size={18} className="animate-spin"/>Reading the conversation…</div><div className="mt-5 h-3 rounded-full bg-[#f0f0f0]"/><div className="mt-3 h-3 w-4/5 rounded-full bg-[#f0f0f0]"/></Card>}
+      {analysis&&<><Card className="p-5"><Label>Context</Label><p className="text-sm leading-6 text-[#333]">{analysis.context.summary}</p><div className="mt-4 flex flex-wrap gap-2">{[analysis.context.tone,analysis.context.emotional_state,analysis.context.relationship_type].filter(Boolean).map(x=><span key={x} className="rounded-full bg-[#f3f3f3] px-2.5 py-1 text-xs text-[#666] capitalize">{x}</span>)}</div></Card>
+      <div><div className="mb-3 flex items-center justify-between"><Label>Suggested replies</Label><span className="text-xs text-[#999]">Pick one and copy</span></div>
+      <div className="space-y-3">{analysis.responses.map(r=><Card key={r.id} className="p-4 transition hover:border-[#cfcfcf]"><div className="flex items-center justify-between"><span className="text-xs font-medium text-[#777] capitalize">{r.tone}</span><span className="text-[11px] text-[#aaa]">{r.character_count} chars</span></div><p className="mt-3 text-sm leading-6 text-[#222]">{r.content}</p><button onClick={()=>copy(r)} className="mt-4 inline-flex items-center gap-2 rounded-lg border border-[#dedede] px-3 py-2 text-xs font-medium text-[#444] hover:bg-[#f6f6f6]">{copied===r.id?<><Check size={14}/>Copied</>:<><Clipboard size={14}/>Copy</>}</button></Card>)}</div></div></>}
+    </div>
+   </div>
+  </main>
+ </div>
 }
