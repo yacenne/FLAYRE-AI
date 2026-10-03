@@ -1,468 +1,472 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
-import type { AnalyzeResponse, AIResponse, UsageInfo } from "@/types";
+import { Sidebar } from "@/components/Sidebar";
+import { Navbar } from "@/components/Navbar";
+import { useToast } from "@/components/Toast";
+import type { AnalyzeResponse, AIResponse, UsageInfo, Platform } from "@/types";
+import {
+  UploadCloud,
+  Sparkles,
+  Copy,
+  Check,
+  X,
+  Heart,
+  Zap,
+  Smile,
+  MessageSquare,
+  FileImage,
+  RefreshCw,
+  Camera,
+} from "lucide-react";
 
 export default function AnalyzePage() {
-    const router = useRouter();
-    const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { showToast } = useToast();
 
-    const [image, setImage] = useState<string | null>(null);
-    const [imageFile, setImageFile] = useState<File | null>(null);
-    const [platform, setPlatform] = useState("whatsapp");
-    const [analyzing, setAnalyzing] = useState(false);
-    const [analysis, setAnalysis] = useState<AnalyzeResponse | null>(null);
-    const [usage, setUsage] = useState<UsageInfo | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [copiedId, setCopiedId] = useState<string | null>(null);
-    const [isDragging, setIsDragging] = useState(false);
+  const [image, setImage] = useState<string | null>(null);
+  const [platform, setPlatform] = useState<Platform>("whatsapp");
+  const [additionalContext, setAdditionalContext] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<AnalyzeResponse | null>(null);
+  const [usage, setUsage] = useState<UsageInfo | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const dropZoneRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const loadUsage = useCallback(async () => {
-        try {
-            const data = await api.analyze.getUsage();
-            setUsage(data);
-        } catch (err) {
-            console.error("Failed to load usage:", err);
-        }
-    }, []);
+  const loadUsage = useCallback(async () => {
+    try {
+      const data = await api.analyze.getUsage();
+      setUsage(data);
+    } catch (err) {
+      console.error("Failed to load usage:", err);
+    }
+  }, []);
 
-    // Redirect if not authenticated
-    useEffect(() => {
-        if (!authLoading && !isAuthenticated) {
-            router.push("/login?redirect=/analyze");
-        }
-    }, [isAuthenticated, authLoading, router]);
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push("/login?redirect=/analyze");
+    }
+  }, [isAuthenticated, authLoading, router]);
 
-    // Load usage on mount
-    useEffect(() => {
-        if (isAuthenticated) {
-            loadUsage();
-        }
-    }, [isAuthenticated, loadUsage]);
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadUsage();
+    }
+  }, [isAuthenticated, loadUsage]);
 
-    const handleFile = useCallback((file: File) => {
-        if (!file.type.startsWith("image/")) {
-            setError("Please upload an image file");
-            return;
-        }
+  const handleFile = useCallback((file: File) => {
+    if (!file.type.startsWith("image/")) {
+      showToast("Please upload a valid image file (PNG, JPG, WebP)", "error");
+      return;
+    }
 
-        setImageFile(file);
-        setError(null);
-        setAnalysis(null);
+    if (file.size > 10 * 1024 * 1024) {
+      showToast("Image size must be under 10MB", "error");
+      return;
+    }
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            setImage(e.target?.result as string);
-        };
-        reader.readAsDataURL(file);
-    }, []);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImage(e.target?.result as string);
+      setAnalysis(null);
+    };
+    reader.readAsDataURL(file);
+  }, [showToast]);
 
-    // Handle paste from clipboard
-    useEffect(() => {
-        const handlePaste = (e: ClipboardEvent) => {
-            const items = e.clipboardData?.items;
-            if (!items) return;
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
 
-            for (const item of items) {
-                if (item.type.startsWith("image/")) {
-                    e.preventDefault();
-                    const file = item.getAsFile();
-                    if (file) {
-                        handleFile(file);
-                    }
-                    break;
-                }
-            }
-        };
-
-        document.addEventListener("paste", handlePaste);
-        return () => document.removeEventListener("paste", handlePaste);
-    }, [handleFile]);
-
-    const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-
-        const file = e.dataTransfer.files[0];
-        if (file) {
+      for (const item of items) {
+        if (item.type.startsWith("image/")) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) {
             handleFile(file);
+            showToast("Screenshot pasted from clipboard!", "info");
+          }
+          break;
         }
-    }, [handleFile]);
-
-    const handleDragOver = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(true);
-    }, []);
-
-    const handleDragLeave = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-    }, []);
-
-    const handleAnalyze = async () => {
-        if (!image || !imageFile) {
-            setError("Please upload a screenshot first");
-            return;
-        }
-
-        if (usage && usage.analyses_remaining <= 0) {
-            setError("No analyses remaining. Please upgrade to Pro!");
-            return;
-        }
-
-        setAnalyzing(true);
-        setError(null);
-
-        try {
-            // Convert image to base64 without the data URL prefix
-            const base64 = image.includes(",") ? image.split(",")[1] : image;
-
-            const result = await api.analyze.analyzeScreenshot({
-                screenshot: base64,
-                platform,
-            });
-
-            setAnalysis(result);
-            await loadUsage();
-        } catch (err) {
-            const message = err instanceof Error ? err.message : "Analysis failed";
-            setError(message);
-        } finally {
-            setAnalyzing(false);
-        }
+      }
     };
 
-    const handleCopy = async (response: AIResponse) => {
-        try {
-            await navigator.clipboard.writeText(response.content);
-            setCopiedId(response.id);
-            setTimeout(() => setCopiedId(null), 2000);
-        } catch (err) {
-            console.error("Failed to copy:", err);
-        }
-    };
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [handleFile, showToast]);
 
-    const clearImage = () => {
-        setImage(null);
-        setImageFile(null);
-        setAnalysis(null);
-        setError(null);
-    };
-
-    const getToneIcon = (tone: string) => {
-        const icons: Record<string, string> = {
-            warm: "💜",
-            direct: "⚡",
-            playful: "🎈",
-        };
-        return icons[tone.toLowerCase()] || "💬";
-    };
-
-    const getToneGradient = (tone: string) => {
-        const gradients: Record<string, string> = {
-            warm: "from-purple-500 to-pink-500",
-            direct: "from-blue-500 to-cyan-500",
-            playful: "from-orange-500 to-yellow-500",
-        };
-        return gradients[tone.toLowerCase()] || "from-gray-500 to-gray-600";
-    };
-
-    // Loading state
-    if (authLoading) {
-        return (
-            <div className="min-h-screen bg-gradient-dark flex items-center justify-center">
-                <div className="text-center">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-hero flex items-center justify-center animate-pulse mx-auto mb-4">
-                        <span className="text-2xl">🔥</span>
-                    </div>
-                    <p className="text-neutral-400">Loading...</p>
-                </div>
-            </div>
-        );
+  const handleAnalyze = async () => {
+    if (!image) {
+      showToast("Please upload or paste a screenshot first", "error");
+      return;
     }
 
-    if (!isAuthenticated) {
-        return null;
+    if (usage && usage.analyses_remaining <= 0) {
+      showToast("Monthly limit reached. Please upgrade to Pro for unlimited analyses.", "error");
+      router.push("/pricing");
+      return;
     }
 
+    setAnalyzing(true);
+
+    try {
+      const base64 = image.includes(",") ? image.split(",")[1] : image;
+      const result = await api.analyze.analyzeScreenshot({
+        screenshot: base64,
+        platform,
+        context: additionalContext.trim() || undefined,
+      });
+
+      setAnalysis(result);
+      showToast("Analysis complete!", "success");
+      await loadUsage();
+    } catch (err: any) {
+      showToast(err.message || "Analysis failed. Please try again.", "error");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const handleCopy = async (response: AIResponse) => {
+    try {
+      await navigator.clipboard.writeText(response.content);
+      setCopiedId(response.id);
+      showToast("Copied to clipboard!", "success");
+
+      if (analysis?.id) {
+        api.conversations.markCopied(analysis.id, response.id).catch(() => {});
+      }
+
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      showToast("Failed to copy to clipboard", "error");
+    }
+  };
+
+  const clearImage = () => {
+    setImage(null);
+    setAnalysis(null);
+  };
+
+  if (authLoading || !isAuthenticated) {
     return (
-        <div className="min-h-screen bg-gradient-dark">
-            {/* Header */}
-            <header className="glass-dark border-b border-white/10 sticky top-0 z-50">
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex items-center justify-between">
-                        <Link href="/dashboard" className="flex items-center gap-2">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-hero flex items-center justify-center">
-                                <span className="text-xl">🔥</span>
-                            </div>
-                            <span className="text-xl font-bold text-white">flayre.ai</span>
-                        </Link>
-
-                        {usage && (
-                            <div className="flex items-center gap-3">
-                                <div className="glass rounded-full px-4 py-2">
-                                    <span className="text-white font-semibold">
-                                        {usage.analyses_remaining}
-                                    </span>
-                                    <span className="text-neutral-400 ml-1">
-                                        / {usage.analyses_limit === 999999 ? "∞" : usage.analyses_limit} left
-                                    </span>
-                                </div>
-                                <Link href="/dashboard" className="btn btn-ghost text-sm text-white">
-                                    Dashboard
-                                </Link>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </header>
-
-            <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Page Title */}
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
-                        Analyze Conversation
-                    </h1>
-                    <p className="text-neutral-400">
-                        Upload or paste a screenshot to get AI-powered response suggestions
-                    </p>
-                </div>
-
-                <div className="grid lg:grid-cols-2 gap-8">
-                    {/* Left Column - Upload Area */}
-                    <div className="space-y-6">
-                        {/* Upload Zone */}
-                        <div
-                            ref={dropZoneRef}
-                            onDrop={handleDrop}
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            onClick={() => !image && fileInputRef.current?.click()}
-                            className={`relative rounded-2xl border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden
-                ${isDragging
-                                    ? "border-purple-400 bg-purple-500/20 scale-[1.02]"
-                                    : image
-                                        ? "border-white/20 bg-white/5"
-                                        : "border-white/20 bg-white/5 hover:border-purple-400 hover:bg-purple-500/10"
-                                }
-              `}
-                            style={{ minHeight: "400px" }}
-                        >
-                            {image ? (
-                                <div className="relative h-full">
-                                    <img
-                                        src={image}
-                                        alt="Screenshot"
-                                        className="w-full h-full object-contain rounded-xl"
-                                        style={{ maxHeight: "500px" }}
-                                    />
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); clearImage(); }}
-                                        className="absolute top-4 right-4 w-10 h-10 rounded-full bg-red-500/90 hover:bg-red-500 text-white flex items-center justify-center transition shadow-lg"
-                                        title="Remove screenshot"
-                                    >
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
-                                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500/30 to-pink-500/30 flex items-center justify-center mb-6 backdrop-blur-sm">
-                                        <svg className="w-10 h-10 text-purple-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                    </div>
-                                    <p className="text-xl font-semibold text-white mb-2">
-                                        Drop screenshot here
-                                    </p>
-                                    <p className="text-neutral-400 text-center mb-4">
-                                        or click to browse files
-                                    </p>
-                                    <div className="flex items-center gap-2 text-sm text-neutral-500">
-                                        <kbd className="px-2 py-1 rounded bg-white/10 text-neutral-300 font-mono">
-                                            Ctrl+V
-                                        </kbd>
-                                        <span>to paste from clipboard</span>
-                                    </div>
-                                </div>
-                            )}
-
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-                                className="hidden"
-                            />
-                        </div>
-
-                        {/* Platform & Analyze */}
-                        <div className="flex flex-col sm:flex-row gap-4">
-                            <select
-                                value={platform}
-                                onChange={(e) => setPlatform(e.target.value)}
-                                className="flex-1 glass rounded-xl px-4 py-3 text-white bg-white/5 border border-white/10 focus:border-purple-400 focus:outline-none transition"
-                            >
-                                <option value="whatsapp">💬 WhatsApp</option>
-                                <option value="instagram">📸 Instagram</option>
-                                <option value="discord">🎮 Discord</option>
-                                <option value="telegram">✈️ Telegram</option>
-                                <option value="imessage">💬 iMessage</option>
-                                <option value="other">💭 Other</option>
-                            </select>
-
-                            <button
-                                onClick={handleAnalyze}
-                                disabled={!image || analyzing || (usage !== null && usage.analyses_remaining <= 0)}
-                                className="flex-1 btn btn-primary btn-lg disabled:opacity-50 disabled:cursor-not-allowed group"
-                            >
-                                {analyzing ? (
-                                    <>
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        <span>Analyzing...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <span>✨ Analyze</span>
-                                        <svg className="w-5 h-5 group-hover:translate-x-1 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                        </svg>
-                                    </>
-                                )}
-                            </button>
-                        </div>
-
-                        {/* Error Message */}
-                        {error && (
-                            <div className="rounded-xl bg-red-500/20 border border-red-500/30 p-4 text-red-300 flex items-start gap-3">
-                                <span className="text-xl">⚠️</span>
-                                <p>{error}</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Right Column - Results */}
-                    <div className="space-y-6">
-                        {analysis ? (
-                            <>
-                                {/* Context Card */}
-                                <div className="glass rounded-2xl p-6 border border-white/10">
-                                    <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                                        <span>📊</span> Context Analysis
-                                    </h3>
-                                    <p className="text-neutral-300 mb-4 leading-relaxed">
-                                        {analysis.context.summary}
-                                    </p>
-                                    <div className="flex flex-wrap gap-2">
-                                        <span className="badge badge-primary">
-                                            {analysis.context.tone}
-                                        </span>
-                                        {analysis.context.emotional_state && (
-                                            <span className="badge badge-pro">
-                                                {analysis.context.emotional_state}
-                                            </span>
-                                        )}
-                                        {analysis.context.relationship_type && (
-                                            <span className="badge bg-white/10 text-neutral-300">
-                                                {analysis.context.relationship_type}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Response Cards */}
-                                <div className="space-y-4">
-                                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                                        <span>✨</span> Suggested Responses
-                                    </h3>
-
-                                    {analysis.responses.map((response) => (
-                                        <div
-                                            key={response.id}
-                                            className="group glass rounded-xl p-5 border border-white/10 hover:border-purple-500/50 transition-all duration-300"
-                                        >
-                                            <div className="flex items-center justify-between mb-3">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xl">{getToneIcon(response.tone)}</span>
-                                                    <span className={`font-semibold text-transparent bg-clip-text bg-gradient-to-r ${getToneGradient(response.tone)} capitalize`}>
-                                                        {response.tone}
-                                                    </span>
-                                                </div>
-                                                <span className="text-xs text-neutral-500">
-                                                    {response.character_count} chars
-                                                </span>
-                                            </div>
-
-                                            <p className="text-white text-lg leading-relaxed mb-4">
-                                                {response.content}
-                                            </p>
-
-                                            <button
-                                                onClick={() => handleCopy(response)}
-                                                className={`w-full py-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2
-                          ${copiedId === response.id
-                                                        ? "bg-green-500 text-white"
-                                                        : "bg-white/10 hover:bg-white/20 text-white"
-                                                    }`}
-                                            >
-                                                {copiedId === response.id ? (
-                                                    <>
-                                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                        </svg>
-                                                        Copied!
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                                        </svg>
-                                                        Copy Response
-                                                    </>
-                                                )}
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Analyze Again */}
-                                <button
-                                    onClick={clearImage}
-                                    className="w-full btn btn-secondary"
-                                >
-                                    🔄 Start New Analysis
-                                </button>
-                            </>
-                        ) : (
-                            /* Empty State */
-                            <div className="glass rounded-2xl p-8 border border-white/10 text-center h-full flex flex-col items-center justify-center" style={{ minHeight: "500px" }}>
-                                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center mb-6">
-                                    <span className="text-5xl">💬</span>
-                                </div>
-                                <h3 className="text-xl font-semibold text-white mb-2">
-                                    Ready to Analyze
-                                </h3>
-                                <p className="text-neutral-400 max-w-sm">
-                                    Upload a screenshot of your conversation and get AI-powered response suggestions in 3 different tones
-                                </p>
-                                <div className="mt-6 flex flex-wrap justify-center gap-2">
-                                    <span className="badge badge-primary">💜 Warm</span>
-                                    <span className="badge badge-primary">⚡ Direct</span>
-                                    <span className="badge badge-primary">🎈 Playful</span>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </main>
-        </div>
+      <div className="min-h-screen bg-[var(--clay-bg)] flex items-center justify-center">
+        <div className="w-9 h-9 rounded-full border-3 border-[#D97757] border-t-transparent animate-spin" />
+      </div>
     );
+  }
+
+  const isPro = usage ? usage.analyses_limit > 1000 : false;
+  const remaining = usage?.analyses_remaining ?? 10;
+
+  return (
+    <div className="min-h-screen bg-[var(--clay-bg)] text-[var(--clay-text-primary)] flex flex-col lg:flex-row max-w-[1600px] mx-auto">
+      {/* Left Sage Sidebar */}
+      <div className="hidden lg:flex shrink-0">
+        <Sidebar remainingCredits={remaining} isPro={isPro} />
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 pb-12">
+        <Navbar
+          title="Analyze Screenshot"
+          remainingCredits={remaining}
+          isPro={isPro}
+        />
+
+        <main className="px-4 sm:px-6 space-y-6 flex-1">
+          <div className="grid lg:grid-cols-12 gap-6 items-start">
+            {/* ============================================================================ */}
+            {/* Left Column: Dropzone & Settings */}
+            {/* ============================================================================ */}
+            <div className="lg:col-span-5 space-y-5">
+              {/* Cozy Clay Upload Dropzone */}
+              <div
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                }}
+                onClick={() => !image && fileInputRef.current?.click()}
+                className={`clay-card p-6 min-h-[350px] flex flex-col items-center justify-center text-center cursor-pointer border-2 border-dashed transition-all relative overflow-hidden ${
+                  isDragging
+                    ? "border-[#D36A48] bg-[#FBECE6] dark:bg-[#32231C]"
+                    : image
+                    ? "border-transparent bg-[#FFFFFF] dark:bg-[#1C1916]"
+                    : "border-[#B5A593] dark:border-[#3D352D] bg-[#FFFFFF] dark:bg-[#1C1916] hover:border-[#D36A48] hover:bg-[#FFFDF9] dark:hover:bg-[#221E1A]"
+                }`}
+              >
+                {image ? (
+                  <div className="relative w-full h-full flex flex-col items-center justify-center">
+                    <img
+                      src={image}
+                      alt="Uploaded screenshot"
+                      className="max-h-[360px] w-auto object-contain rounded-2xl shadow-md border border-[#EAE0D4] dark:border-[#352E26]"
+                    />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        clearImage();
+                      }}
+                      className="absolute top-2 right-2 w-9 h-9 rounded-full bg-[#FFFFFF] dark:bg-[#25201A] text-[#D36A48] hover:bg-[#FCEAE6] dark:hover:bg-[#362620] shadow-[0_3px_8px_rgba(125,95,75,0.25)] flex items-center justify-center transition border border-[#E2D7C8] dark:border-[#3E342B]"
+                      title="Remove image"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3 pointer-events-none">
+                    <div className="clay-tile clay-tile-sage w-14 h-14 mx-auto">
+                      <Camera className="w-7 h-7" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-base font-black text-[#14100D] dark:text-[#FAF6F0]">
+                        Drop your screenshot here
+                      </p>
+                      <p className="text-xs font-bold text-[#4A3E33] dark:text-[#B5A593]">or click to browse files</p>
+                    </div>
+                    <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#EAE1D5] dark:bg-[#25201A] text-xs font-black text-[#211A14] dark:text-[#E8DFD1] shadow-inner border border-[#D5C8B8] dark:border-[#382F26]">
+                      <kbd className="font-mono text-[#D36A48] font-black">Ctrl+V</kbd>
+                      <span>to paste from clipboard</span>
+                    </div>
+                  </div>
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+                  className="hidden"
+                />
+              </div>
+
+              {/* Platform & Options Clay Card */}
+              <div className="clay-card p-5 space-y-4">
+                {/* Platform Selector Chips */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-[#29211A] dark:text-[#E8DFD1]">Chat Platform</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      { id: "whatsapp", label: "WhatsApp", color: "clay-tile-sage" },
+                      { id: "instagram", label: "Instagram", color: "clay-tile-terracotta" },
+                      { id: "discord", label: "Discord", color: "clay-tile-denim" },
+                      { id: "other", label: "Other", color: "clay-tile-honey" },
+                    ].map((p) => {
+                      const selected = platform === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => setPlatform(p.id as Platform)}
+                          className={`p-2.5 rounded-xl text-xs font-black transition-all flex flex-col items-center justify-center gap-1.5 border ${
+                            selected
+                              ? "bg-[#FFFFFF] dark:bg-[#2A231C] text-[#14100D] dark:text-[#FAF6F0] shadow-[0_4px_12px_rgba(125,95,75,0.22),inset_0_1px_2px_#FFF] dark:shadow-[0_4px_12px_rgba(0,0,0,0.4),inset_0_1px_2px_rgba(255,255,255,0.06)] border-[#D36A48] border-2"
+                              : "bg-[#EFE8DC] dark:bg-[#241F1A] text-[#3D3228] dark:text-[#C5B8A8] border-[#DCD0C1] dark:border-[#332A22] hover:bg-[#E5DCCE] dark:hover:bg-[#2C2620]"
+                          }`}
+                        >
+                          <span className={`w-3 h-3 rounded-full ${p.color}`} />
+                          <span>{p.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Additional Context Input */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-black text-[#29211A] dark:text-[#E8DFD1] flex items-center justify-between">
+                    <span>Optional Context</span>
+                    <span className="text-[11px] font-bold text-[#5C4F42] dark:text-[#9A8A7A]">e.g., tone goal</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={additionalContext}
+                    onChange={(e) => setAdditionalContext(e.target.value)}
+                    placeholder="e.g. Want to sound friendly but decline invitation"
+                    className="clay-input text-xs"
+                    maxLength={120}
+                  />
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  onClick={handleAnalyze}
+                  disabled={!image || analyzing || (usage !== null && usage.analyses_remaining <= 0)}
+                  className="clay-btn clay-btn-primary w-full py-3.5 text-sm font-bold inline-flex items-center justify-center gap-2 rounded-2xl shadow-lg disabled:opacity-50"
+                >
+                  {analyzing ? (
+                    <>
+                      <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                      <span>Vision AI Analyzing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      <span>Generate 3 Response Tones</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* ============================================================================ */}
+            {/* Right Column: Suggested Responses */}
+            {/* ============================================================================ */}
+            <div className="lg:col-span-7 space-y-5">
+              {analysis ? (
+                <div className="space-y-5 animate-in fade-in duration-300">
+                  {/* Context Summary Card */}
+                  <div className="clay-card-sage p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4 text-[#0A261A]" />
+                        <h3 className="text-xs font-black uppercase tracking-wider text-[#0A261A]">
+                          Context Analysis
+                        </h3>
+                      </div>
+                      <span className="clay-badge clay-badge-sage text-[10px] capitalize">
+                        {analysis.platform}
+                      </span>
+                    </div>
+
+                    <p className="text-sm font-bold text-[#0E281D] leading-relaxed">
+                      {analysis.context.summary}
+                    </p>
+
+                    <div className="flex flex-wrap gap-2 pt-1 border-t border-black/10">
+                      {analysis.context.tone && (
+                        <span className="clay-badge clay-badge-terracotta">
+                          Tone: {analysis.context.tone}
+                        </span>
+                      )}
+                      {analysis.context.emotional_state && (
+                        <span className="clay-badge clay-badge-honey">
+                          Emotion: {analysis.context.emotional_state}
+                        </span>
+                      )}
+                      {analysis.context.relationship_type && (
+                        <span className="clay-badge clay-badge-denim">
+                          {analysis.context.relationship_type}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 3 Response Tiles (Warm, Direct, Playful) */}
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-black uppercase tracking-wider text-[#29211A] dark:text-[#E8DFD1]">
+                      Choose Your Response Style
+                    </h3>
+
+                    {analysis.responses.map((resp) => {
+                      const isCopied = copiedId === resp.id;
+                      const isWarm = resp.tone.toLowerCase() === "warm";
+                      const isPlayful = resp.tone.toLowerCase() === "playful";
+
+                      const cardClass = isWarm
+                        ? "clay-card-terracotta"
+                        : isPlayful
+                        ? "clay-card-honey"
+                        : "clay-card-denim";
+
+                      const TileIcon = isWarm ? Heart : isPlayful ? Smile : Zap;
+                      const tileClass = isWarm
+                        ? "clay-tile-terracotta"
+                        : isPlayful
+                        ? "clay-tile-honey"
+                        : "clay-tile-denim";
+
+                      return (
+                        <div key={resp.id} className={`${cardClass} p-5 sm:p-6 space-y-4`}>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                              <div className={`clay-tile ${tileClass} w-8 h-8`}>
+                                <TileIcon className="w-4 h-4" />
+                              </div>
+                              <span className="text-xs font-black uppercase tracking-wider text-[#1E1712] dark:text-[#FAF6F0]">
+                                {resp.tone} Tone
+                              </span>
+                            </div>
+                            <span className="text-xs font-bold text-[#40352B] dark:text-[#C5B8A8]">
+                              {resp.character_count || resp.content.length} chars
+                            </span>
+                          </div>
+
+                          <p className="text-sm sm:text-base font-bold text-[#14100D] dark:text-[#FAF6F0] leading-relaxed [word-spacing:0.035em]">
+                            {resp.content}
+                          </p>
+
+                          <button
+                            onClick={() => handleCopy(resp)}
+                            className={`clay-btn w-full text-xs py-2.5 transition font-bold rounded-xl ${
+                              isCopied
+                                ? "bg-[#CEE7DC] dark:bg-[#1A382B] text-[#07261A] dark:text-[#D1F2E2] shadow-sm border border-[#ACD6C2] dark:border-[#2D5A47]"
+                                : "clay-btn-secondary"
+                            }`}
+                          >
+                            {isCopied ? (
+                              <>
+                                <Check className="w-4 h-4 text-emerald-800 dark:text-emerald-400" />
+                                <span>Copied to Clipboard!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-4 h-4" />
+                                <span>Copy Response</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={clearImage}
+                    className="clay-btn clay-btn-secondary w-full text-xs py-2.5 flex items-center justify-center gap-1.5 font-black"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Start New Screenshot Analysis</span>
+                  </button>
+                </div>
+              ) : (
+                /* Empty Ready State */
+                <div className="clay-card p-12 text-center min-h-[440px] flex flex-col items-center justify-center space-y-4">
+                  <div className="clay-tile clay-tile-sage w-16 h-16 mx-auto">
+                    <FileImage className="w-8 h-8" />
+                  </div>
+                  <div className="space-y-1.5 max-w-sm">
+                    <h3 className="text-base font-black text-[#14100D] dark:text-[#FAF6F0]">Ready to analyze</h3>
+                    <p className="text-xs font-bold text-[#4A3E33] dark:text-[#B5A593] leading-relaxed">
+                      Upload or paste your conversation screenshot on the left to get 3 tailor-made responses in different tones.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 pt-2">
+                    <span className="clay-badge clay-badge-terracotta">Warm</span>
+                    <span className="clay-badge clay-badge-denim">Direct</span>
+                    <span className="clay-badge clay-badge-honey">Playful</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
 }

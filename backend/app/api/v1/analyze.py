@@ -56,11 +56,16 @@ async def analyze_conversation(
         conversation = None
         db_save_failed = False
 
+        # Ensure platform is valid for DB check constraint
+        allowed_platforms = {"whatsapp", "instagram", "discord", "other"}
+        raw_platform = str(analysis_result.platform or "").lower()
+        safe_platform = raw_platform if raw_platform in allowed_platforms else "other"
+
         # Attempt to persist conversation & responses in DB
         try:
             conversation = await conversation_repo.create_with_responses(
                 user_id=user_id,
-                platform=analysis_result.platform,
+                platform=safe_platform,
                 context_summary=analysis_result.context.summary,
                 detected_tone=analysis_result.context.tone,
                 relationship_type=analysis_result.context.relationship_type,
@@ -163,12 +168,7 @@ async def get_usage(
     """
     Get current usage and remaining quota for authenticated user.
     """
-    subscription = await subscription_repo.get_by_user_id(user_id)
-    if not subscription:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Subscription not found"
-        )
+    subscription = await subscription_repo.get_or_create_subscription(user_id)
 
     return {
         "analyses_used": subscription.monthly_analyses_used,

@@ -6,8 +6,6 @@ export type Platform =
   | 'whatsapp'
   | 'instagram'
   | 'discord'
-  | 'telegram'
-  | 'imessage'
   | 'other';
 
 export type ToneType = 'warm' | 'direct' | 'playful';
@@ -57,6 +55,7 @@ export interface Conversation {
   context_summary?: string;
   detected_tone?: string;
   relationship_type?: string;
+  responses?: AIResponse[];
   created_at: string;
 }
 
