@@ -153,7 +153,7 @@ export async function initiateProUpgrade({
             handler: async (response: RazorpayResponse) => {
                 try {
                     // 4. Verify payment on backend
-                    const verifyRes = await fetch(`${apiUrl}/api/v1/billing/verify-payment`, {
+                    const verifyRes = await fetch(`${apiUrl}/api/v1/billing/verify`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",

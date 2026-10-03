@@ -81,6 +81,11 @@ export const api = {
       request<{ success: boolean }>(`/api/v1/conversations/${id}`, {
         method: 'DELETE',
       }),
+
+    markCopied: (conversationId: string, responseId: string): Promise<{ message: string }> =>
+      request<{ message: string }>(`/api/v1/conversations/${conversationId}/responses/${responseId}/copy`, {
+        method: 'POST',
+      }),
   },
 
   billing: {

@@ -1,409 +1,1036 @@
 @import "tailwindcss";
 
-/* ==================================
-   flayre.ai Design System
-   Premium, modern SaaS aesthetic
-   Tailwind CSS v4 Theme Configuration
-================================== */
-
-@theme {
-  /* Primary - Purple/Violet */
-  --color-primary-50: #f5f3ff;
-  --color-primary-100: #ede9fe;
-  --color-primary-200: #ddd6fe;
-  --color-primary-300: #c4b5fd;
-  --color-primary-400: #a78bfa;
-  --color-primary-500: #8b5cf6;
-  --color-primary-600: #7c3aed;
-  --color-primary-700: #6d28d9;
-  --color-primary-800: #5b21b6;
-  --color-primary-900: #4c1d95;
-
-  /* Accent - Coral/Pink */
-  --color-accent-50: #fff1f2;
-  --color-accent-100: #ffe4e6;
-  --color-accent-200: #fecdd3;
-  --color-accent-300: #fda4af;
-  --color-accent-400: #fb7185;
-  --color-accent-500: #f43f5e;
-  --color-accent-600: #e11d48;
-
-  /* Success/Error/Warning */
-  --color-success: #10b981;
-  --color-error: #ef4444;
-  --color-warning: #f59e0b;
-
-  /* Fonts */
-  --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
+/* ============================================================================
+   flayre.ai - High-Visibility 3D Claymorphic Design System
+   Rich contrast, crisp physical depth, tactile pillowy surfaces
+============================================================================ */
 
 :root {
-  /* Gradients (used by custom utility classes) */
-  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --gradient-hero: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #f472b6 100%);
-  --gradient-card: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%);
-  --gradient-dark: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%);
+  --clay-bg: #F4EFE6;
+  --clay-text-primary: #14100D;
+  --clay-text-secondary: #362D24;
+  --clay-text-muted: #574B3F;
+  --clay-sidebar: #9DBEB1;
+  --clay-sidebar-dark: #0A1C15;
+  --clay-terracotta: #D36A48;
+  --clay-terracotta-hover: #BF5736;
+  --clay-sage: #7DAA95;
+  --clay-denim: #729DB9;
+  --clay-honey: #DCAE46;
 }
 
-/* ==========================================
-   Base Styles
-========================================== */
+.dark {
+  --clay-bg: #141210;
+  --clay-text-primary: #FAF6F0;
+  --clay-text-secondary: #D5CBC0;
+  --clay-text-muted: #9E9284;
+  --clay-sidebar: #172B23;
+  --clay-sidebar-dark: #08120E;
+  --clay-terracotta: #E06C46;
+  --clay-terracotta-hover: #EB7953;
+  --clay-sage: #5F917A;
+  --clay-denim: #5684A6;
+  --clay-honey: #C29630;
+}
+
 * {
   box-sizing: border-box;
 }
 
 html {
   scroll-behavior: smooth;
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 body {
-  font-family: var(--font-inter);
-  background: var(--color-neutral-50);
-  color: var(--color-neutral-900);
-  line-height: 1.6;
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--clay-bg);
+  color: var(--clay-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.dark {
-  background: var(--color-neutral-950);
-  color: var(--color-neutral-100);
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-}
-
-/* ==========================================
-   Animations
-========================================== */
-@keyframes float {
-
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-@keyframes pulse-glow {
-
-  0%,
-  100% {
-    opacity: 0.7;
-  }
-
-  50% {
-    opacity: 1;
-  }
-}
-
-@keyframes gradient-shift {
-  0% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
-  }
-
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* ==========================================
-   Component Layer (can be overridden by Tailwind utilities)
-========================================== */
+/* ============================================================================
+   High-Visibility Claymorphic Surfaces & Cards
+============================================================================ */
 @layer components {
-
-  /* Animation Classes */
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-    will-change: transform;
-    contain: layout style;
+  /* Default Porcelain Clay Card - Crisp Pop */
+  .clay-card {
+    background: #FFFFFF;
+    border-radius: 1.5rem;
+    box-shadow: 
+      0 14px 30px -4px rgba(125, 95, 75, 0.20),
+      0 4px 12px -2px rgba(125, 95, 75, 0.12),
+      inset 0 2px 3px rgba(255, 255, 255, 1),
+      inset 0 -2px 4px rgba(160, 130, 110, 0.16);
+    border: 1.5px solid #E2D7C8;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .animate-pulse-glow {
-    animation: pulse-glow 2s ease-in-out infinite;
-    will-change: opacity;
+  .clay-card-interactive {
+    background: #FFFFFF;
+    border-radius: 1.5rem;
+    box-shadow: 
+      0 14px 30px -4px rgba(125, 95, 75, 0.20),
+      0 4px 12px -2px rgba(125, 95, 75, 0.12),
+      inset 0 2px 3px rgba(255, 255, 255, 1),
+      inset 0 -2px 4px rgba(160, 130, 110, 0.16);
+    border: 1.5px solid #E2D7C8;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .animate-gradient {
-    background-size: 200% 200%;
-    animation: gradient-shift 3s ease infinite;
+  .clay-card-interactive:hover {
+    transform: translateY(-2.5px);
+    box-shadow: 
+      0 20px 40px -4px rgba(125, 95, 75, 0.28),
+      0 8px 18px -2px rgba(125, 95, 75, 0.18),
+      inset 0 2px 3px rgba(255, 255, 255, 1),
+      inset 0 -2px 4px rgba(160, 130, 110, 0.20);
+    border-color: #D36A48;
   }
 
-  .animate-fade-in-up {
-    animation: fade-in-up 0.6s ease-out forwards;
+  /* Richer Pastel Clay Surfaces with Crisp Visual Borders */
+  .clay-card-terracotta {
+    background: #FDF1EC;
+    border-radius: 1.5rem;
+    box-shadow: 
+      0 14px 30px -4px rgba(215, 115, 85, 0.32),
+      inset 0 2px 4px rgba(255, 255, 255, 0.98),
+      inset 0 -2px 4px rgba(195, 105, 80, 0.20);
+    border: 1.5px solid #F0BCAE;
   }
 
-  .animate-scale-in {
-    animation: scale-in 0.4s ease-out forwards;
+  .clay-card-sage {
+    background: #EDF7F2;
+    border-radius: 1.5rem;
+    box-shadow: 
+      0 14px 30px -4px rgba(110, 165, 140, 0.30),
+      inset 0 2px 4px rgba(255, 255, 255, 0.98),
+      inset 0 -2px 4px rgba(100, 155, 130, 0.20);
+    border: 1.5px solid #B4DBC8;
   }
 
-  /* Stagger delays */
-  .delay-100 {
-    animation-delay: 100ms;
+  .clay-card-denim {
+    background: #EEF6FC;
+    border-radius: 1.5rem;
+    box-shadow: 
+      0 14px 30px -4px rgba(110, 155, 195, 0.30),
+      inset 0 2px 4px rgba(255, 255, 255, 0.98),
+      inset 0 -2px 4px rgba(100, 145, 185, 0.20);
+    border: 1.5px solid #B5D7EF;
   }
 
-  .delay-200 {
-    animation-delay: 200ms;
+  .clay-card-honey {
+    background: #FCF8E8;
+    border-radius: 1.5rem;
+    box-shadow: 
+      0 14px 30px -4px rgba(195, 160, 90, 0.30),
+      inset 0 2px 4px rgba(255, 255, 255, 0.98),
+      inset 0 -2px 4px rgba(180, 145, 80, 0.20);
+    border: 1.5px solid #EED798;
   }
 
-  .delay-300 {
-    animation-delay: 300ms;
-  }
-
-  .delay-400 {
-    animation-delay: 400ms;
-  }
-
-  .delay-500 {
-    animation-delay: 500ms;
-  }
-
-  /* Glassmorphism */
-  .glass {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-
-  .glass-dark {
-    background: rgba(15, 23, 42, 0.8);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  /* Buttons */
-  .btn {
+  /* Vibrant Embossed 3D Tiles for Icons */
+  .clay-tile {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.75rem 1.5rem;
-    font-weight: 600;
-    border-radius: 12px;
-    transition: all 0.2s ease;
-    cursor: pointer;
-    border: none;
-    gap: 0.5rem;
-    font-size: 1rem;
-    text-decoration: none;
+    border-radius: 1rem;
+    box-shadow: 
+      0 6px 14px -2px rgba(125, 95, 75, 0.24),
+      inset 0 2px 3px rgba(255, 255, 255, 0.95),
+      inset 0 -2px 3px rgba(0, 0, 0, 0.15);
   }
 
-  .btn-primary {
-    background: var(--gradient-hero);
-    color: white;
-    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4);
+  .clay-tile-sage {
+    background: #9FC6B5;
+    color: #072418;
+    border: 1.5px solid rgba(255, 255, 255, 0.7);
   }
 
-  .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5);
+  .clay-tile-terracotta {
+    background: #F0A38D;
+    color: #4A1204;
+    border: 1.5px solid rgba(255, 255, 255, 0.7);
   }
 
-  .btn-secondary {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 2px solid rgba(255, 255, 255, 0.2);
+  .clay-tile-honey {
+    background: #F8D57E;
+    color: #3D2601;
+    border: 1.5px solid rgba(255, 255, 255, 0.7);
   }
 
-  .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.4);
+  .clay-tile-denim {
+    background: #A9CEE4;
+    color: #0A263B;
+    border: 1.5px solid rgba(255, 255, 255, 0.7);
   }
 
-  .btn-ghost {
-    background: transparent;
-    color: var(--color-neutral-700);
-  }
-
-  .btn-ghost:hover {
-    background: var(--color-neutral-100);
-  }
-
-  .btn-lg {
-    padding: 1rem 2rem;
-    font-size: 1.125rem;
-    border-radius: 14px;
-  }
-
-  /* Cards */
-  .card {
-    background: white;
-    border-radius: 16px;
-    padding: 1.5rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-    border: 1px solid var(--color-neutral-200);
-  }
-
-  .card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
-  }
-
-  .card-glass {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-  }
-
-  /* Inputs */
-  .input {
-    width: 100%;
-    padding: 0.875rem 1rem;
-    border: 2px solid rgba(255, 255, 255, 0.15);
-    border-radius: 12px;
-    font-size: 1rem;
-    transition: all 0.2s ease;
-    background: rgba(255, 255, 255, 0.08);
-    color: white;
-  }
-
-  .input::placeholder {
-    color: var(--color-neutral-400);
-  }
-
-  .input:focus {
-    outline: none;
-    border-color: var(--color-primary-500);
-    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2);
-  }
-
-  /* Badges */
-  .badge {
+  /* ============================================================================
+     Tactile Clay Buttons with High Visibility
+  ============================================================================ */
+  .clay-btn,
+  .clay-btn-primary,
+  .clay-btn-secondary,
+  .clay-btn-sage {
     display: inline-flex;
     align-items: center;
-    padding: 0.25rem 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 600;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 800;
+    border-radius: 1.25rem; /* Tactile, rounded 3D clay curves - never square! */
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    text-decoration: none;
+    line-height: 1.25rem;
+    white-space: nowrap;
+    user-select: none;
+    -webkit-user-select: none;
+    box-sizing: border-box;
+  }
+
+  .clay-btn:active,
+  .clay-btn-primary:active,
+  .clay-btn-secondary:active,
+  .clay-btn-sage:active {
+    transform: translateY(1.5px);
+  }
+
+  /* Primary Terracotta Clay Button */
+  .clay-btn-primary {
+    background: linear-gradient(180deg, #E06C46 0%, #C4552E 100%);
+    color: #FFFFFF;
+    border-radius: 1.25rem;
+    box-shadow: 
+      0 6px 18px -2px rgba(196, 85, 46, 0.52),
+      inset 0 2px 2px rgba(255, 255, 255, 0.70),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.22);
+    border: 1.5px solid rgba(255, 255, 255, 0.45);
+  }
+
+  .clay-btn-primary:hover {
+    background: linear-gradient(180deg, #EB7751 0%, #D05E37 100%);
+    box-shadow: 
+      0 8px 24px -2px rgba(196, 85, 46, 0.60),
+      inset 0 2px 2px rgba(255, 255, 255, 0.80),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.22);
+    transform: translateY(-1px);
+  }
+
+  .clay-btn-primary:active {
+    transform: translateY(1.5px);
+    box-shadow: 
+      0 2px 6px -1px rgba(196, 85, 46, 0.45),
+      inset 0 2px 4px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Secondary Pure White Clay Button - Razor Sharp Rim */
+  .clay-btn-secondary {
+    background: #FFFFFF;
+    color: #14100D;
+    border-radius: 1.25rem;
+    box-shadow: 
+      0 5px 14px -2px rgba(125, 95, 75, 0.24),
+      inset 0 2px 2px rgba(255, 255, 255, 1),
+      inset 0 -2px 3px rgba(160, 130, 110, 0.16);
+    border: 1.5px solid #DCD0C1;
+  }
+
+  .clay-btn-secondary:hover {
+    background: #FFFDF9;
+    color: #000000;
+    border-color: #D36A48;
+    transform: translateY(-1px);
+    box-shadow: 
+      0 7px 18px -2px rgba(125, 95, 75, 0.32),
+      inset 0 2px 2px rgba(255, 255, 255, 1);
+  }
+
+  /* Sage Clay Button */
+  .clay-btn-sage {
+    background: linear-gradient(180deg, #8EBAA7 0%, #75A48E 100%);
+    color: #FFFFFF;
+    border-radius: 1.25rem;
+    box-shadow: 
+      0 6px 16px -2px rgba(117, 164, 142, 0.48),
+      inset 0 2px 2px rgba(255, 255, 255, 0.65),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+  }
+
+  /* ============================================================================
+     High-Visibility Clay Inputs & Navigation
+  ============================================================================ */
+  /* Pure White Pill Input with Crisp Boundary Border */
+  .clay-input {
+    width: 100%;
+    padding: 0.625rem 1.125rem;
+    background: #FFFFFF;
     border-radius: 9999px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    color: #14100D;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: 1.5px solid #D6CAB8;
+    box-shadow: 
+      inset 0 2px 3px rgba(125, 95, 75, 0.14),
+      0 2px 5px rgba(255, 255, 255, 0.9);
+    transition: all 0.15s ease;
   }
 
-  .badge-primary {
-    background: var(--color-primary-100);
-    color: var(--color-primary-700);
+  .clay-input::placeholder {
+    color: #786C5F;
+    font-weight: 500;
   }
 
-  .badge-success {
-    background: #d1fae5;
-    color: #047857;
+  .clay-input:focus {
+    outline: none;
+    border-color: #D36A48;
+    box-shadow: 
+      inset 0 2px 3px rgba(211, 106, 72, 0.18),
+      0 0 0 3.5px rgba(211, 106, 72, 0.25);
   }
 
-  .badge-pro {
-    background: var(--gradient-hero);
-    color: white;
+  /* Active Sidebar Navigation Pill */
+  .clay-nav-active {
+    background: #FFFFFF;
+    color: #072418;
+    font-weight: 800;
+    border-radius: 1rem;
+    box-shadow: 
+      0 6px 16px -2px rgba(85, 125, 110, 0.40),
+      inset 0 2px 2px rgba(255, 255, 255, 1),
+      inset 0 -2px 3px rgba(115, 155, 138, 0.20);
+    border: 1.5px solid rgba(255, 255, 255, 0.95);
   }
 
-  /* Gradient Backgrounds */
-  .bg-gradient-hero {
-    background: var(--gradient-hero);
+  .clay-nav-inactive {
+    color: #0E281D;
+    font-weight: 700;
+    border-radius: 1rem;
+    transition: all 0.15s ease;
   }
 
-  .bg-gradient-dark {
-    background: var(--gradient-dark);
+  .clay-nav-inactive:hover {
+    background: rgba(255, 255, 255, 0.50);
+    color: #03120B;
   }
 
-  /* Text Gradient */
-  .text-gradient {
-    background: var(--gradient-hero);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  /* High Contrast Clay Badges */
+  .clay-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    border-radius: 9999px;
+    letter-spacing: 0.02em;
+    box-shadow: 
+      0 2px 5px rgba(125, 95, 75, 0.16),
+      inset 0 1px 1px rgba(255, 255, 255, 0.9);
+  }
+
+  .clay-badge-sage {
+    background: #CEE7DC;
+    color: #07261A;
+    border: 1px solid #ACD6C2;
+  }
+
+  .clay-badge-terracotta {
+    background: #F8D4C8;
+    color: #4D1405;
+    border: 1px solid #F1B4A2;
+  }
+
+  .clay-badge-honey {
+    background: #F8E9B6;
+    color: #422B01;
+    border: 1px solid #EED384;
+  }
+
+  .clay-badge-denim {
+    background: #D2E7F6;
+    color: #0A2E46;
+    border: 1px solid #B0D4EE;
+  }
+
+  /* ============================================================================
+     Dark Claymorphic Surfaces & Components
+  ============================================================================ */
+  .dark .clay-card {
+    background: #1C1916;
+    box-shadow: 
+      0 14px 32px -4px rgba(0, 0, 0, 0.70),
+      0 4px 12px -2px rgba(0, 0, 0, 0.50),
+      inset 0 1.5px 2px rgba(255, 255, 255, 0.08),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.60);
+    border: 1.5px solid #2F2821;
+  }
+
+  .dark .clay-card-interactive {
+    background: #1C1916;
+    box-shadow: 
+      0 14px 32px -4px rgba(0, 0, 0, 0.70),
+      0 4px 12px -2px rgba(0, 0, 0, 0.50),
+      inset 0 1.5px 2px rgba(255, 255, 255, 0.08),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.60);
+    border: 1.5px solid #2F2821;
+  }
+
+  .dark .clay-card-interactive:hover {
+    box-shadow: 
+      0 20px 42px -4px rgba(0, 0, 0, 0.85),
+      0 8px 20px -2px rgba(0, 0, 0, 0.60),
+      inset 0 1.5px 2px rgba(255, 255, 255, 0.12),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.65);
+    border-color: #E06C46;
+  }
+
+  .dark .clay-card-terracotta {
+    background: #2A1510;
+    box-shadow: 
+      0 14px 30px -4px rgba(0, 0, 0, 0.70),
+      inset 0 1.5px 2px rgba(255, 255, 255, 0.10),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.60);
+    border: 1.5px solid #4F2318;
+  }
+
+  .dark .clay-card-sage {
+    background: #13241C;
+    box-shadow: 
+      0 14px 30px -4px rgba(0, 0, 0, 0.70),
+      inset 0 1.5px 2px rgba(255, 255, 255, 0.10),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.60);
+    border: 1.5px solid #204233;
+  }
+
+  .dark .clay-card-denim {
+    background: #12202E;
+    box-shadow: 
+      0 14px 30px -4px rgba(0, 0, 0, 0.70),
+      inset 0 1.5px 2px rgba(255, 255, 255, 0.10),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.60);
+    border: 1.5px solid #1E3A52;
+  }
+
+  .dark .clay-card-honey {
+    background: #281F0E;
+    box-shadow: 
+      0 14px 30px -4px rgba(0, 0, 0, 0.70),
+      inset 0 1.5px 2px rgba(255, 255, 255, 0.10),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.60);
+    border: 1.5px solid #483716;
+  }
+
+  .dark .clay-tile-sage {
+    background: #234937;
+    color: #D3F5E6;
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .dark .clay-tile-terracotta {
+    background: #5A2518;
+    color: #FCD0C5;
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .dark .clay-tile-honey {
+    background: #543E12;
+    color: #FCE8B8;
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .dark .clay-tile-denim {
+    background: #1F3C55;
+    color: #CEE7FC;
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .dark .clay-btn-primary {
+    background: linear-gradient(180deg, #E06C46 0%, #B84722 100%);
+    color: #FFFFFF;
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 
+      0 6px 20px -2px rgba(0, 0, 0, 0.70),
+      0 2px 6px rgba(224, 108, 70, 0.35),
+      inset 0 1.5px 2px rgba(255, 255, 255, 0.30),
+      inset 0 -2px 3px rgba(0, 0, 0, 0.40);
+  }
+
+  .dark .clay-btn-primary:hover {
+    background: linear-gradient(180deg, #EB7751 0%, #C4552E 100%);
+    box-shadow: 
+      0 8px 24px -2px rgba(0, 0, 0, 0.85),
+      0 3px 10px rgba(235, 119, 81, 0.45),
+      inset 0 1.5px 2px rgba(255, 255, 255, 0.40);
+  }
+
+  .dark .clay-btn-secondary {
+    background: #221E19;
+    color: #FAF6F0;
+    border: 1.5px solid #383027;
+    box-shadow: 
+      0 5px 14px -2px rgba(0, 0, 0, 0.60),
+      inset 0 1.5px 2px rgba(255, 255, 255, 0.08),
+      inset 0 -2px 3px rgba(0, 0, 0, 0.40);
+  }
+
+  .dark .clay-btn-secondary:hover {
+    background: #2B2520;
+    color: #FFFFFF;
+    border-color: #E06C46;
+    box-shadow: 
+      0 7px 18px -2px rgba(0, 0, 0, 0.70),
+      inset 0 1.5px 2px rgba(255, 255, 255, 0.10);
+  }
+
+  .dark .clay-input {
+    background: #181512;
+    color: #FAF6F0;
+    border: 1.5px solid #352E26;
+    box-shadow: 
+      inset 0 2px 4px rgba(0, 0, 0, 0.65),
+      0 2px 5px rgba(255, 255, 255, 0.02);
+  }
+
+  .dark .clay-input::placeholder {
+    color: #8C8072;
+  }
+
+  .dark .clay-input:focus {
+    border-color: #E06C46;
+    box-shadow: 
+      inset 0 2px 3px rgba(224, 108, 70, 0.25),
+      0 0 0 3.5px rgba(224, 108, 70, 0.35);
+  }
+
+  .dark .clay-nav-active {
+    background: #254738;
+    color: #E8F7F0;
+    box-shadow: 
+      0 6px 16px -2px rgba(0, 0, 0, 0.60),
+      inset 0 1.5px 2px rgba(255, 255, 255, 0.20),
+      inset 0 -2px 3px rgba(0, 0, 0, 0.40);
+    border: 1.5px solid #386751;
+  }
+
+  .dark .clay-nav-inactive {
+    color: #A3C9B8;
+  }
+
+  .dark .clay-nav-inactive:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #FFFFFF;
+  }
+
+  .dark .clay-badge-sage {
+    background: #173629;
+    color: #C0ECD7;
+    border: 1px solid #285440;
+  }
+
+  .dark .clay-badge-terracotta {
+    background: #3B1B13;
+    color: #FAC0B0;
+    border: 1px solid #5C2B1F;
+  }
+
+  .dark .clay-badge-honey {
+    background: #382B10;
+    color: #F8E2A1;
+    border: 1px solid #574319;
+  }
+
+  .dark .clay-badge-denim {
+    background: #162B3D;
+    color: #C0DFF8;
+    border: 1px solid #244663;
+  }
+
+  /* ============================================================================
+     3D Ceramic Studio Console System (matching reference preview)
+  ============================================================================ */
+  .ceramic-console-frame {
+    border: 14px solid #D67A5A;
+    border-radius: 2.75rem;
+    box-shadow: 
+      0 26px 64px -10px rgba(120, 70, 50, 0.38),
+      0 12px 28px -4px rgba(120, 70, 50, 0.22),
+      inset 0 3px 6px rgba(255, 255, 255, 0.75),
+      inset 0 -4px 8px rgba(0, 0, 0, 0.25);
+    background: #F7F2EB;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .dark .ceramic-console-frame {
+    border: 14px solid #6E3220;
+    box-shadow: 
+      0 28px 68px -10px rgba(0, 0, 0, 0.88),
+      0 12px 30px -4px rgba(0, 0, 0, 0.65),
+      inset 0 2px 4px rgba(255, 255, 255, 0.25),
+      inset 0 -4px 8px rgba(0, 0, 0, 0.60);
+    background: #1C1613;
+  }
+
+  /* ============================================================================
+     3D Sculpted Ceramic Console & Claymorphic Studio System
+  ============================================================================ */
+
+  /* Realistic Wooden Studio Workbench Backdrop */
+  .ceramic-studio-desk {
+    background-color: #DAB992;
+    background-image: 
+      radial-gradient(ellipse at 50% 10%, rgba(255, 250, 240, 0.45) 0%, rgba(220, 185, 145, 0.25) 50%, rgba(160, 115, 75, 0.4) 100%),
+      repeating-linear-gradient(90deg, rgba(160, 115, 75, 0.06) 0px, rgba(160, 115, 75, 0.06) 2px, transparent 2px, transparent 40px),
+      linear-gradient(180deg, #E6C8A4 0%, #D4AE84 45%, #B88E62 100%);
+    border-radius: 3.5rem;
+    padding: 2rem 1.5rem;
+    box-shadow: 
+      0 24px 60px -15px rgba(95, 60, 35, 0.28),
+      inset 0 2px 4px rgba(255, 255, 255, 0.6),
+      inset 0 -4px 8px rgba(90, 50, 20, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+
+  .dark .ceramic-studio-desk {
+    background-color: #1A1410;
+    background-image: 
+      radial-gradient(ellipse at 50% 10%, rgba(65, 48, 38, 0.5) 0%, rgba(30, 22, 17, 0.7) 60%, rgba(12, 9, 7, 0.9) 100%),
+      repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 2px, transparent 2px, transparent 40px),
+      linear-gradient(180deg, #251D17 0%, #1A1410 50%, #100C09 100%);
+    box-shadow: 
+      0 24px 60px -15px rgba(0, 0, 0, 0.75),
+      inset 0 1px 2px rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  /* Thick Chunky Terracotta Tablet Bezel / Outer Casing */
+  .ceramic-console-frame {
+    background: linear-gradient(145deg, #DE896D 0%, #D2765A 45%, #C26346 100%);
+    border-radius: 2.75rem;
+    padding: 1.5rem;
+    box-shadow: 
+      0 35px 70px -12px rgba(90, 40, 20, 0.42),
+      0 14px 28px -6px rgba(90, 40, 20, 0.28),
+      inset 0 4px 6px -1px rgba(255, 255, 255, 0.65),
+      inset 4px 0 6px -1px rgba(255, 255, 255, 0.45),
+      inset 0 -6px 10px -2px rgba(85, 30, 15, 0.45),
+      inset -4px 0 8px -2px rgba(85, 30, 15, 0.35);
+    border: 2px solid rgba(255, 255, 255, 0.45);
+    position: relative;
+    transition: all 0.3s ease;
+  }
+
+  @media (min-width: 640px) {
+    .ceramic-console-frame {
+      padding: 1.75rem;
+    }
+  }
+
+  .dark .ceramic-console-frame {
+    background: linear-gradient(145deg, #8C4028 0%, #6E2D1A 45%, #561E0F 100%);
+    box-shadow: 
+      0 35px 70px -12px rgba(0, 0, 0, 0.8),
+      0 14px 28px -6px rgba(0, 0, 0, 0.5),
+      inset 0 3px 5px rgba(255, 255, 255, 0.25),
+      inset 0 -6px 10px rgba(0, 0, 0, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Inset Porcelain Workboard / Tablet Face */
+  .ceramic-console-face {
+    background: #F7F1E7;
+    border-radius: 2.1rem;
+    padding: 1.25rem;
+    box-shadow: 
+      inset 0 3px 10px rgba(80, 45, 25, 0.18),
+      inset 0 -2px 5px rgba(255, 255, 255, 0.95),
+      0 1px 2px rgba(255, 255, 255, 0.6);
+    border: 1.5px solid rgba(140, 95, 75, 0.18);
+  }
+
+  @media (min-width: 640px) {
+    .ceramic-console-face {
+      padding: 1.75rem;
+    }
+  }
+
+  .dark .ceramic-console-face {
+    background: #1C1713;
+    box-shadow: 
+      inset 0 4px 12px rgba(0, 0, 0, 0.75),
+      inset 0 -2px 4px rgba(255, 255, 255, 0.05),
+      0 1px 1px rgba(255, 255, 255, 0.04);
+    border: 1.5px solid rgba(255, 255, 255, 0.07);
+  }
+
+  /* Debossed Pressed Lettering for "flayre.ai" */
+  .ceramic-debossed-text {
+    color: #2D221A;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.9), 0 -1px 1px rgba(0, 0, 0, 0.18);
+  }
+
+  .dark .ceramic-debossed-text {
+    color: #FAF4EB;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.9), 0 -1px 1px rgba(255, 255, 255, 0.12);
+  }
+
+  /* Circular Recessed Socket for Stamp Controls */
+  .ceramic-stamp-recess {
+    background: #EAE0D2;
+    border-radius: 9999px;
+    box-shadow: 
+      inset 0 2px 4px rgba(90, 65, 45, 0.25),
+      inset 0 -1px 2px rgba(255, 255, 255, 0.9),
+      0 1px 2px rgba(255, 255, 255, 0.8);
+    border: 1px solid #D8CABB;
+    transition: all 0.15s ease;
+  }
+
+  .dark .ceramic-stamp-recess {
+    background: #231C17;
+    box-shadow: 
+      inset 0 2px 5px rgba(0, 0, 0, 0.75),
+      inset 0 -1px 1px rgba(255, 255, 255, 0.05),
+      0 1px 2px rgba(0, 0, 0, 0.4);
+    border: 1px solid #382D24;
+  }
+
+  /* Tactile Porcelain Clay Slab */
+  .clay-slab {
+    background: #F4ECE0;
+    border-radius: 1.25rem;
+    box-shadow: 
+      0 6px 14px -3px rgba(110, 80, 60, 0.14),
+      inset 0 2px 3px rgba(255, 255, 255, 0.95),
+      inset 0 -2px 3px rgba(140, 105, 85, 0.14);
+    border: 1.5px solid #E6DDD0;
+  }
+
+  .dark .clay-slab {
+    background: #221B16;
+    box-shadow: 
+      0 6px 14px -3px rgba(0, 0, 0, 0.6),
+      inset 0 2px 3px rgba(255, 255, 255, 0.06),
+      inset 0 -2px 3px rgba(0, 0, 0, 0.4);
+    border: 1.5px solid #352B22;
+  }
+
+  /* 3D Sculpted Clay Speech Bubbles with Lateral Physical Tails */
+  .clay-bubble-terracotta {
+    position: relative;
+    background: linear-gradient(145deg, #EFA891 0%, #DE8468 100%);
+    color: #2D1A12;
+    border-radius: 1.25rem 1.25rem 1.25rem 0.35rem;
+    box-shadow: 
+      0 8px 18px -2px rgba(185, 95, 70, 0.35),
+      inset 0 2px 3px rgba(255, 255, 255, 0.85),
+      inset 0 -2px 3px rgba(125, 45, 25, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+  }
+
+  /* Left-pointing speech tail for user message */
+  .clay-bubble-terracotta::before {
+    content: "";
+    position: absolute;
+    left: -7px;
+    top: 16px;
+    width: 12px;
+    height: 12px;
+    background: #E89E86;
+    clip-path: polygon(100% 0, 0 50%, 100% 100%);
+    filter: drop-shadow(-1px 2px 2px rgba(150, 60, 35, 0.25));
+  }
+
+  .clay-bubble-sage {
+    position: relative;
+    background: linear-gradient(145deg, #A8C7AF 0%, #90B499 100%);
+    color: #0E2419;
+    border-radius: 1.25rem 1.25rem 0.35rem 1.25rem;
+    box-shadow: 
+      0 8px 18px -2px rgba(90, 130, 105, 0.32),
+      inset 0 2px 3px rgba(255, 255, 255, 0.85),
+      inset 0 -2px 3px rgba(50, 85, 65, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+  }
+
+  /* Right-pointing speech tail for flayre.ai response */
+  .clay-bubble-sage::before {
+    content: "";
+    position: absolute;
+    right: -7px;
+    top: 16px;
+    width: 12px;
+    height: 12px;
+    background: #9BBFA5;
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+    filter: drop-shadow(1px 2px 2px rgba(60, 95, 75, 0.25));
+  }
+
+  .dark .clay-bubble-terracotta {
+    background: linear-gradient(145deg, #9C452C 0%, #7E311B 100%);
+    color: #FAF4EF;
+    box-shadow: 
+      0 8px 18px -2px rgba(0, 0, 0, 0.65),
+      inset 0 2px 2px rgba(255, 255, 255, 0.25),
+      inset 0 -2px 3px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .dark .clay-bubble-terracotta::before {
+    background: #8F3C24;
+  }
+
+  .dark .clay-bubble-sage {
+    background: linear-gradient(145deg, #345B47 0%, #244333 100%);
+    color: #EAF8F1;
+    box-shadow: 
+      0 8px 18px -2px rgba(0, 0, 0, 0.65),
+      inset 0 2px 2px rgba(255, 255, 255, 0.25),
+      inset 0 -2px 3px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .dark .clay-bubble-sage::before {
+    background: #2C4E3D;
+  }
+
+  /* Chunky Sculpted Sage Pill Button */
+  .clay-btn-sage {
+    background: linear-gradient(180deg, #A4C5AB 0%, #89AF91 100%);
+    color: #0E2419;
+    border-radius: 9999px;
+    font-weight: 800;
+    box-shadow: 
+      0 5px 12px -2px rgba(75, 115, 90, 0.35),
+      inset 0 2px 2px rgba(255, 255, 255, 0.85),
+      inset 0 -2px 3px rgba(40, 70, 50, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .clay-btn-sage:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 
+      0 8px 18px -2px rgba(75, 115, 90, 0.45),
+      inset 0 2px 3px rgba(255, 255, 255, 1);
+  }
+
+  .clay-btn-sage:active {
+    transform: translateY(1px);
+    box-shadow: inset 0 2px 4px rgba(40, 70, 50, 0.35);
+  }
+
+  .dark .clay-btn-sage {
+    background: linear-gradient(180deg, #3A6650 0%, #284C3A 100%);
+    color: #EAF8F1;
+    box-shadow: 
+      0 5px 12px -2px rgba(0, 0, 0, 0.55),
+      inset 0 2px 2px rgba(255, 255, 255, 0.25),
+      inset 0 -2px 3px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  /* Chunky Sculpted Porcelain Pill Button */
+  .clay-btn-porcelain {
+    background: linear-gradient(180deg, #FAF6EE 0%, #ECE4D7 100%);
+    color: #2F241B;
+    border-radius: 9999px;
+    font-weight: 800;
+    box-shadow: 
+      0 4px 10px -2px rgba(110, 85, 70, 0.18),
+      inset 0 2px 2px rgba(255, 255, 255, 0.95),
+      inset 0 -2px 3px rgba(150, 125, 105, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .clay-btn-porcelain:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 
+      0 7px 15px -2px rgba(110, 85, 70, 0.25),
+      inset 0 2px 3px #FFF;
+  }
+
+  .clay-btn-porcelain:active {
+    transform: translateY(1px);
+    box-shadow: inset 0 2px 4px rgba(120, 95, 80, 0.25);
+  }
+
+  .dark .clay-btn-porcelain {
+    background: linear-gradient(180deg, #2A221C 0%, #1E1713 100%);
+    color: #E8DDD2;
+    box-shadow: 
+      0 4px 10px -2px rgba(0, 0, 0, 0.5),
+      inset 0 2px 2px rgba(255, 255, 255, 0.08),
+      inset 0 -2px 3px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Tactile Ceramic Tone Slider Track & Spherical Clay Bead */
+  .ceramic-slider-track {
+    height: 10px;
+    border-radius: 9999px;
+    background: #E5DCD0;
+    box-shadow: 
+      inset 0 2px 4px rgba(90, 65, 50, 0.28),
+      inset 0 -1px 2px rgba(255, 255, 255, 0.8),
+      0 1px 2px #FFFFFF;
+    position: relative;
+    border: 1px solid #D4C6B4;
+  }
+
+  .dark .ceramic-slider-track {
+    background: #221A15;
+    box-shadow: 
+      inset 0 2px 5px rgba(0, 0, 0, 0.8),
+      0 1px 2px rgba(255, 255, 255, 0.04);
+    border: 1px solid #362920;
+  }
+
+  .ceramic-slider-knob {
+    width: 22px;
+    height: 22px;
+    border-radius: 9999px;
+    background: radial-gradient(circle at 35% 30%, #FFA88F 0%, #DC7554 48%, #A8492C 95%);
+    box-shadow: 
+      0 5px 12px rgba(140, 50, 25, 0.45),
+      inset 0 2px 2px rgba(255, 255, 255, 0.75),
+      inset 0 -2px 3px rgba(90, 30, 15, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .ceramic-slider-knob:hover {
+    transform: scale(1.12);
+    box-shadow: 
+      0 7px 16px rgba(140, 50, 25, 0.55),
+      inset 0 2px 2px #FFF;
+  }
+
+  /* Tactile Studio Clay Tile */
+  .clay-studio-tile {
+    border-radius: 1.25rem;
+    padding: 1rem;
+    box-shadow: 
+      0 8px 18px -3px rgba(125, 95, 75, 0.24),
+      inset 0 2px 3px rgba(255, 255, 255, 0.95),
+      inset 0 -2px 3px rgba(0, 0, 0, 0.14);
+    border: 1.5px solid rgba(255, 255, 255, 0.70);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .clay-studio-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 12px 24px -3px rgba(125, 95, 75, 0.32),
+      inset 0 2px 3px rgba(255, 255, 255, 1);
+  }
+
+  .clay-studio-tile:active {
+    transform: translateY(1px);
+    box-shadow: 
+      0 4px 10px -2px rgba(125, 95, 75, 0.2),
+      inset 0 2px 4px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Specific Tactile Clay Tiles matching reference */
+  .clay-tile-peach {
+    background: linear-gradient(145deg, #F9E3DA 0%, #F0CEBF 100%);
+    border: 1.5px solid #EBBBAA;
+    box-shadow: 
+      0 8px 18px -3px rgba(185, 110, 85, 0.28),
+      inset 0 2px 3px rgba(255, 255, 255, 0.95),
+      inset 0 -2px 3px rgba(160, 90, 70, 0.18);
+  }
+
+  .clay-tile-sage-green {
+    background: linear-gradient(145deg, #D4E5DC 0%, #BED7CA 100%);
+    border: 1.5px solid #A2C6B3;
+    box-shadow: 
+      0 8px 18px -3px rgba(95, 140, 115, 0.28),
+      inset 0 2px 3px rgba(255, 255, 255, 0.95),
+      inset 0 -2px 3px rgba(70, 110, 90, 0.18);
+  }
+
+  .clay-tile-ochre {
+    background: linear-gradient(145deg, #FBE6BC 0%, #F2D59B 100%);
+    border: 1.5px solid #E5C57F;
+    box-shadow: 
+      0 8px 18px -3px rgba(180, 140, 60, 0.28),
+      inset 0 2px 3px rgba(255, 255, 255, 0.95),
+      inset 0 -2px 3px rgba(140, 100, 30, 0.18);
+  }
+
+  .dark .clay-tile-peach {
+    background: linear-gradient(145deg, #4A231A 0%, #341812 100%);
+    border-color: #5C2A1E;
+  }
+
+  .dark .clay-tile-sage-green {
+    background: linear-gradient(145deg, #244434 0%, #172D22 100%);
+    border-color: #2D5440;
+  }
+
+  .dark .clay-tile-ochre {
+    background: linear-gradient(145deg, #483617 0%, #332610 100%);
+    border-color: #55411B;
   }
 }
 
-/* ==========================================
-   Dark-context overrides (higher specificity, outside @layer)
-========================================== */
-
-/* Ghost button in dark contexts */
-.bg-gradient-dark .btn-ghost,
-.glass-dark .btn-ghost {
-  color: var(--color-neutral-300);
-}
-
-.bg-gradient-dark .btn-ghost:hover,
-.glass-dark .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-}
-
-/* Select dropdown styling for dark backgrounds */
-select option {
-  background: var(--color-neutral-800);
-  color: white;
-}
-
-/* ==========================================
-   Scrollbar
-========================================== */
+/* ============================================================================
+   Scrollbars & Focus
+============================================================================ */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-neutral-100);
+  background: #E8E2D7;
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-neutral-300);
-  border-radius: 4px;
+  background: #C7BCAE;
+  border-radius: 9999px;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-neutral-400);
+  background: #B3A798;
 }
 
-/* Focus Ring */
-*:focus-visible {
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: 2px;
+.dark ::-webkit-scrollbar-track {
+  background: #1A1714;
 }
 
-/* Selection */
+.dark ::-webkit-scrollbar-thumb {
+  background: #362F27;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #473E34;
+}
+
 ::selection {
-  background: var(--color-primary-200);
-  color: var(--color-primary-900);
+  background: rgba(211, 106, 72, 0.28);
+  color: inherit;
+}
+
+*:focus-visible {
+  outline: 2.5px solid #D36A48;
+  outline-offset: 2px;
 }
