@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { CeramicStudioConsole } from "@/components/CeramicStudioConsole";
+import { ChatShowcase } from "@/components/ChatShowcase";
 import {
   Sparkles,
   ArrowRight,
@@ -11,78 +11,140 @@ import {
   Layers,
   Heart,
   Smile,
-  Play,
   Flame,
-  Headphones,
-  Camera,
+  CheckCircle2,
 } from "lucide-react";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[var(--clay-bg)] text-[var(--clay-text-primary)] flex flex-col selection:bg-[#D97757]/25 selection:text-[var(--clay-text-primary)]">
+    <div className="min-h-screen bg-white text-slate-900 flex flex-col relative selection:bg-[#FF5238]/20 selection:text-[#FF5238]">
+      {/* Subtle top glow */}
+      <div className="simple-hero-glow" />
+
       <Navbar />
 
-      <main className="flex-1">
+      <main className="flex-1 relative z-10">
         {/* ============================================================================ */}
         {/* Hero Section */}
         {/* ============================================================================ */}
-        <section className="relative pt-16 pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
-          {/* Subtle Ambient Radial Lighting */}
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-[#D97757]/10 blur-[140px] pointer-events-none rounded-full" />
-
-          <div className="relative text-center max-w-3xl mx-auto space-y-6">
+        <section className="relative pt-12 sm:pt-20 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="text-center max-w-3xl mx-auto space-y-5">
             {/* Pill Announcement */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FFFFFF] dark:bg-[#1C1916] shadow-[0_4px_10px_rgba(125,95,75,0.18),inset_0_1px_2px_#FFF] dark:shadow-[0_4px_10px_rgba(0,0,0,0.3),inset_0_1px_2px_rgba(255,255,255,0.06)] border border-[#E2D7C8] dark:border-[#382F26] text-xs font-black text-[#29211A] dark:text-[#E8DFD1]">
-              <span className="w-2 h-2 rounded-full bg-[#D36A48] animate-pulse" />
-              <span>Vision AI Conversation Assistant</span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-[#FF5238]" />
+              <span className="text-slate-900 font-bold">Vision AI 2.0</span>
+              <span className="text-slate-300">•</span>
+              <span>Intelligent Screenshot Analysis</span>
             </div>
 
-            {/* Headline with balanced word spacing & editorial touch */}
-            <h1 className="text-4xl sm:text-6xl font-extrabold tracking-[-0.015em] [word-spacing:0.04em] text-[#14100D] dark:text-[#FAF6F0] leading-[1.22] max-w-4xl mx-auto">
-              Never get stuck on <span className="text-[#D36A48] italic font-serif">what to text</span> next.
+            {/* Headline */}
+            <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-slate-950 leading-[1.15]">
+              Never wonder{" "}
+              <span className="text-gradient-flame">what to text</span> next.
             </h1>
 
             {/* Subtitle */}
-            <p className="text-base sm:text-lg text-[#3B3026] dark:text-[#B5A593] leading-relaxed font-medium max-w-2xl mx-auto [word-spacing:0.025em]">
-              Drop or paste any chat screenshot. Our Vision AI decodes hidden subtext, mood, and relationship dynamics to generate the ideal responses in seconds.
+            <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-normal max-w-2xl mx-auto">
+              Drop or paste any chat screenshot. Our multimodal AI reads the subtext, emotional tension, and conversational rhythm to suggest the ideal response.
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2">
-              <Link href="/analyze" className="clay-btn clay-btn-primary py-3.5 px-8 text-sm font-bold w-full sm:w-auto shadow-xl inline-flex items-center justify-center gap-2 rounded-full">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <Link
+                href="/analyze"
+                className="clay-btn-primary py-3 px-7 text-sm font-semibold w-full sm:w-auto inline-flex items-center justify-center gap-2 shadow-md"
+              >
                 <span>Start Free Analysis</span>
                 <ArrowRight className="w-4 h-4 shrink-0" />
               </Link>
-              <a href="#features" className="clay-btn clay-btn-secondary py-3.5 px-7 text-sm font-bold w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full">
-                <span>Explore Studio</span>
+              <a
+                href="#demo"
+                className="clay-btn-secondary py-3 px-6 text-sm font-semibold w-full sm:w-auto inline-flex items-center justify-center gap-2"
+              >
+                <span>Try Interactive Demo</span>
               </a>
             </div>
 
-            <p className="text-xs font-bold text-[#574B3F] dark:text-[#8E7E70] pt-1">
-              10 free analyses every month • No credit card required • Works on all chat apps
-            </p>
+            {/* Trust Micro-Text */}
+            <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-500 pt-2 font-medium">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                10 Free Analyses / Month
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                No Credit Card Required
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                WhatsApp, Instagram, iMessage
+              </span>
+            </div>
           </div>
 
           {/* ============================================================================ */}
-          {/* 3D Ceramic Studio Console (faithful to preview mockup) */}
+          {/* Interactive AI Showcase */}
           {/* ============================================================================ */}
-          <div className="relative mt-12 sm:mt-16">
-            <CeramicStudioConsole />
+          <div id="demo" className="mt-12 sm:mt-16">
+            <ChatShowcase />
           </div>
         </section>
 
         {/* ============================================================================ */}
-        {/* Features Section */}
+        {/* Simple 3-step loop */}
         {/* ============================================================================ */}
-        <section id="features" className="py-20 border-t border-[#E8DFD3] dark:border-[#2A231D] bg-[#EFE9DE]/50 dark:bg-[#181512]/60">
+        <section id="how-it-works" className="py-20 border-t border-slate-100 bg-slate-50/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-xl mx-auto mb-12 space-y-2">
+              <span className="clay-badge-terracotta">Simple Workflow</span>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+                Ready in three simple steps
+              </h2>
+              <p className="text-sm text-slate-500">
+                From awkward screenshot to confident reply in under 5 seconds.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {[
+                {
+                  step: "01",
+                  title: "Drop or Paste Screenshot",
+                  desc: "Take a screenshot on WhatsApp, Instagram, or iMessage and press Ctrl+V to paste instantly.",
+                },
+                {
+                  step: "02",
+                  title: "AI Decodes Context",
+                  desc: "Vision AI evaluates participant cues, subtext, emotional tension, and urgency automatically.",
+                },
+                {
+                  step: "03",
+                  title: "Pick Tone & Send",
+                  desc: "Select Warm, Direct, or Playful. Copy with one click and reply with complete confidence.",
+                },
+              ].map((item, idx) => (
+                <div key={idx} className="clay-card p-6 space-y-3 bg-white hover:border-slate-300 transition-all duration-150">
+                  <span className="text-xs font-mono font-bold text-[#FF5238] block">{item.step}</span>
+                  <h3 className="text-base font-bold text-slate-900">{item.title}</h3>
+                  <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================================ */}
+        {/* Features / Capabilities */}
+        {/* ============================================================================ */}
+        <section id="features" className="py-20 border-t border-slate-100 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto mb-14 space-y-2">
-              <span className="clay-badge clay-badge-sage">Capabilities</span>
-              <h2 className="text-3xl font-extrabold text-[#14100D] dark:text-[#FAF6F0] tracking-normal">
-                Designed for natural conversation
+              <span className="clay-badge-sage">Capabilities</span>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+                Engineered for natural human conversation
               </h2>
-              <p className="text-xs sm:text-sm text-[#3B3026] dark:text-[#B5A593] font-bold">
-                More than text extraction. flayre.ai processes visual nuances, reactions, and context.
+              <p className="text-sm text-slate-500">
+                Beyond naive OCR. flayre.ai processes visual nuances, emoji context, reply delays, and conversational tension.
               </p>
             </div>
 
@@ -90,35 +152,39 @@ export default function LandingPage() {
               {[
                 {
                   icon: Eye,
-                  color: "clay-tile-sage",
-                  title: "Multimodal Vision AI",
-                  desc: "Analyzes full screenshots including emojis, reactions, bubble placement, and tone.",
+                  color: "clay-tile-terracotta",
+                  title: "Multimodal Vision OCR",
+                  desc: "Analyzes full chat screenshots including sticker reactions, bubble layout, and emoji subtext.",
                 },
                 {
                   icon: Layers,
-                  color: "clay-tile-terracotta",
-                  title: "Three Dynamic Tones",
-                  desc: "Receive Warm (empathetic), Direct (straightforward), and Playful (witty) replies.",
+                  color: "clay-tile-sage",
+                  title: "3 Calibrated Tones",
+                  desc: "Get Warm (empathetic), Direct (straightforward), and Playful (witty) replies instantly.",
                 },
                 {
                   icon: Zap,
                   color: "clay-tile-denim",
-                  title: "Clipboard Workflow",
-                  desc: "Press Ctrl+V to paste your screenshot, get suggestions in 3 seconds, and copy with one click.",
+                  title: "Instant Clipboard Flow",
+                  desc: "Hit Ctrl+V directly anywhere to paste a screenshot and get replies in under 3 seconds.",
                 },
                 {
                   icon: ShieldCheck,
                   color: "clay-tile-honey",
-                  title: "Zero Retention",
-                  desc: "Screenshots are processed transiently in-memory and are never stored or shared.",
+                  title: "Ephemeral Privacy",
+                  desc: "Screenshots are processed in transient memory and immediately wiped. Never stored.",
                 },
               ].map((feat, idx) => (
-                <div key={idx} className="clay-card p-6 space-y-3">
-                  <div className={`clay-tile ${feat.color} w-11 h-11`}>
+                <div key={idx} className="clay-card p-6 space-y-3.5 bg-white hover:border-slate-300 transition-all duration-150">
+                  <div className={`clay-tile ${feat.color} w-10 h-10`}>
                     <feat.icon className="w-5 h-5" />
                   </div>
-                  <h3 className="text-base font-black text-[#14100D] dark:text-[#FAF6F0]">{feat.title}</h3>
-                  <p className="text-xs text-[#3B3026] dark:text-[#B5A593] leading-relaxed font-bold">{feat.desc}</p>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    {feat.title}
+                  </h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    {feat.desc}
+                  </p>
                 </div>
               ))}
             </div>
@@ -126,57 +192,22 @@ export default function LandingPage() {
         </section>
 
         {/* ============================================================================ */}
-        {/* How It Works Section */}
+        {/* Bottom CTA Banner */}
         {/* ============================================================================ */}
-        <section id="how-it-works" className="py-20 border-t border-[#E8DFD3] dark:border-[#2A231D]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-xl mx-auto mb-14 space-y-2">
-              <span className="clay-badge clay-badge-terracotta">Simple Workflow</span>
-              <h2 className="text-3xl font-extrabold text-[#14100D] dark:text-[#FAF6F0] tracking-normal">How it works in 3 steps</h2>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              {[
-                {
-                  step: "01",
-                  title: "Upload or Paste",
-                  desc: "Take a screenshot of WhatsApp, Instagram, or Discord and drop it or hit Ctrl+V.",
-                },
-                {
-                  step: "02",
-                  title: "Vision AI Reads Tone",
-                  desc: "Our model reads the entire chat thread, mood, and emotional cues in seconds.",
-                },
-                {
-                  step: "03",
-                  title: "Pick & Send",
-                  desc: "Choose the tone that matches your mood, copy the response, and reply effortlessly.",
-                },
-              ].map((item, idx) => (
-                <div key={idx} className="clay-card p-6 space-y-3">
-                  <span className="text-xs font-mono font-black text-[#D36A48]">{item.step}</span>
-                  <h3 className="text-base font-black text-[#14100D] dark:text-[#FAF6F0]">{item.title}</h3>
-                  <p className="text-xs text-[#3B3026] dark:text-[#B5A593] leading-relaxed font-bold">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ============================================================================ */}
-        {/* CTA Banner */}
-        {/* ============================================================================ */}
-        <section className="py-16 border-t border-[#E8DFD3] dark:border-[#2A231D] bg-[#EFE9DF]/60 dark:bg-[#181512]/80 text-center px-4">
-          <div className="max-w-2xl mx-auto space-y-5">
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-normal text-[#14100D] dark:text-[#FAF6F0] leading-snug">
-              Ready to elevate your texting confidence?
+        <section className="py-20 border-t border-slate-100 bg-slate-50/50 text-center px-4 relative overflow-hidden">
+          <div className="max-w-2xl mx-auto space-y-5 relative z-10 bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-sm">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+              Ready to elevate your conversation confidence?
             </h2>
-            <p className="text-xs sm:text-sm text-[#3B3026] dark:text-[#B5A593] font-bold">
-              Start with 10 free analyses every month. No credit card required.
+            <p className="text-sm text-slate-600 max-w-lg mx-auto">
+              Start with 10 free AI analyses each month. No credit card required.
             </p>
-            <div>
-              <Link href="/analyze" className="clay-btn clay-btn-primary py-3.5 px-8 text-sm font-bold shadow-xl inline-flex items-center justify-center gap-2">
-                <span>Start Analyzing Now</span>
+            <div className="pt-2">
+              <Link
+                href="/analyze"
+                className="clay-btn-primary py-3.5 px-8 text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-md"
+              >
+                <span>Start Free Analysis</span>
                 <ArrowRight className="w-4 h-4 shrink-0" />
               </Link>
             </div>

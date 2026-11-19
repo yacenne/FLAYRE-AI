@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { AlertCircle, RefreshCw, Home } from "lucide-react";
 
 export default function Error({
   error,
@@ -15,27 +16,31 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-gradient-dark flex items-center justify-center p-4">
-      <div className="glass rounded-2xl p-8 max-w-md w-full text-center border border-white/10">
-        <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
-          <span className="text-3xl">⚠️</span>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex items-center justify-center p-4">
+      <div className="clay-card p-8 max-w-md w-full text-center space-y-4 bg-white dark:bg-slate-900 shadow-sm rounded-3xl">
+        <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center mx-auto">
+          <AlertCircle className="w-7 h-7" />
         </div>
-        <h2 className="text-2xl font-bold text-white mb-2">Something went wrong</h2>
-        <p className="text-neutral-300 text-sm mb-6">
-          {error.message || "An unexpected error occurred while loading this page."}
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="space-y-1">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Something went wrong</h2>
+          <p className="text-slate-500 text-xs leading-relaxed">
+            {error.message || "An unexpected error occurred while loading this page."}
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2.5 justify-center pt-2">
           <button
             onClick={reset}
-            className="btn btn-primary"
+            className="clay-btn-primary text-xs py-2.5 px-4 font-bold inline-flex items-center justify-center gap-1.5 shadow-sm"
           >
-            Try Again
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Try Again</span>
           </button>
           <Link
             href="/"
-            className="btn btn-secondary"
+            className="clay-btn-secondary text-xs py-2.5 px-4 font-bold inline-flex items-center justify-center gap-1.5"
           >
-            Back to Home
+            <Home className="w-3.5 h-3.5" />
+            <span>Back to Home</span>
           </Link>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Flame, Headphones, ArrowRight, AlertCircle, Mail, Lock, User } from "lucide-react";
+import { Flame, ArrowRight, AlertCircle, Mail, Lock, User } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
@@ -74,39 +74,38 @@ function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md space-y-6">
-      {/* 3D Flame Mascot Header */}
-      <div className="text-center space-y-3">
+    <div className="w-full max-w-md space-y-6 relative z-10">
+      {/* Brand Header */}
+      <div className="text-center space-y-2">
         <Link href="/" className="inline-flex flex-col items-center gap-2 group">
-          <div className="w-16 h-16 rounded-3xl bg-[#FFFFFF] dark:bg-[#25201A] shadow-[0_8px_18px_rgba(211,106,72,0.35),inset_0_2px_4px_#FFF] dark:shadow-[0_8px_18px_rgba(0,0,0,0.4),inset_0_2px_4px_rgba(255,255,255,0.06)] border border-[#E2D7C8] dark:border-[#3E342B] flex items-center justify-center p-1.5 group-hover:scale-105 transition-transform">
-            <div className="w-full h-full rounded-2xl bg-gradient-to-tr from-[#D36A48] via-[#E28E6E] to-[#F8D57E] flex items-center justify-center relative shadow-inner">
-              <Flame className="w-8 h-8 text-white drop-shadow-md" />
-              <Headphones className="w-10 h-10 text-[#102B20] absolute -top-0.5 opacity-95" />
-            </div>
+          <div className="w-12 h-12 rounded-2xl bg-[#FF5238] flex items-center justify-center shadow-md shadow-[#FF5238]/20 group-hover:scale-105 transition">
+            <Flame className="w-6 h-6 text-white fill-white" />
           </div>
-          <span className="font-extrabold text-2xl tracking-normal text-[#14100D] dark:text-[#FAF6F0]">
-            flayre<span className="text-[#D36A48]">.ai</span>
+          <span className="font-bold text-2xl tracking-tight text-slate-900 dark:text-white">
+            flayre<span className="text-[#FF5238]">.ai</span>
           </span>
         </Link>
-        <p className="text-xs font-bold text-[#4A3E33] dark:text-[#B5A593]">
+        <p className="text-xs text-slate-500">
           {isLogin
-            ? "Sign in to access your cozy conversation dashboard"
+            ? "Sign in to access your conversation intelligence dashboard"
             : "Get started with 10 free AI conversation analyses every month"}
         </p>
       </div>
 
       {/* Auth Card */}
-      <div className="clay-card p-6 sm:p-8 space-y-5">
+      <div className="clay-card p-6 sm:p-8 space-y-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-3xl">
         {/* Toggle between Sign In & Sign Up */}
-        <div className="flex rounded-2xl bg-[#EAE0D4] dark:bg-[#151210] p-1 shadow-inner border border-[#D5C8B8] dark:border-[#2D251E]">
+        <div className="grid grid-cols-2 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
           <button
             type="button"
             onClick={() => {
               setIsLogin(true);
               setError("");
             }}
-            className={`flex-1 py-2 text-xs font-black rounded-xl transition ${
-              isLogin ? "clay-nav-active" : "text-[#4A3E33] dark:text-[#A89A8A] hover:text-[#000000] dark:hover:text-[#FFFFFF]"
+            className={`py-2 text-xs font-bold rounded-lg transition ${
+              isLogin
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm border border-slate-200/80 dark:border-slate-700"
+                : "text-slate-500 hover:text-slate-900"
             }`}
           >
             Sign In
@@ -117,8 +116,10 @@ function LoginForm() {
               setIsLogin(false);
               setError("");
             }}
-            className={`flex-1 py-2 text-xs font-black rounded-xl transition ${
-              !isLogin ? "clay-nav-active" : "text-[#4A3E33] dark:text-[#A89A8A] hover:text-[#000000] dark:hover:text-[#FFFFFF]"
+            className={`py-2 text-xs font-bold rounded-lg transition ${
+              !isLogin
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm border border-slate-200/80 dark:border-slate-700"
+                : "text-slate-500 hover:text-slate-900"
             }`}
           >
             Sign Up
@@ -129,7 +130,7 @@ function LoginForm() {
         <button
           onClick={handleGoogleLogin}
           type="button"
-          className="clay-btn clay-btn-secondary w-full justify-center text-xs py-2.5 flex items-center gap-2.5 font-black"
+          className="clay-btn-secondary w-full justify-center text-xs py-2.5 flex items-center gap-2.5 font-bold rounded-xl"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path
@@ -152,66 +153,66 @@ function LoginForm() {
           <span>Continue with Google</span>
         </button>
 
+        {/* Divider */}
         <div className="relative flex items-center justify-center">
-          <div className="w-full border-t border-[#EAE0D4] dark:border-[#352E26]" />
-          <span className="bg-[#FFFFFF] dark:bg-[#1C1916] px-3 text-[11px] font-black text-[#574B3F] dark:text-[#A09282] uppercase tracking-wider absolute">
-            Or with email
+          <div className="border-t border-slate-200 dark:border-slate-800 w-full" />
+          <span className="bg-white dark:bg-slate-900 px-3 text-[11px] font-medium text-slate-400 uppercase tracking-wider relative">
+            or email
           </span>
         </div>
 
-        {/* Error Alert */}
-        {error && (
-          <div className="p-3 rounded-2xl bg-[#FCEAE6] dark:bg-[#2A1612] border border-[#F5C2B6] dark:border-[#4E241B] text-[#6E1C07] dark:text-[#FCA5A5] text-xs font-bold flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 text-[#D36A48]" />
-            <span>{error}</span>
-          </div>
-        )}
-
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3.5">
+          {error && (
+            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
           {!isLogin && (
             <div className="space-y-1">
-              <label className="text-xs font-black text-[#29211A] dark:text-[#E8DFD1]">Full Name</label>
+              <label className="text-xs font-bold text-slate-600 dark:text-slate-300">Full Name</label>
               <div className="relative">
-                <User className="w-4 h-4 text-[#635548] dark:text-[#8E7E70] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  required
-                  placeholder="Your Name"
+                  placeholder="Alex Rivers"
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className="clay-input pl-10 py-2 text-xs"
+                  className="w-full pl-9 pr-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#FF5238] focus:bg-white transition"
                 />
               </div>
             </div>
           )}
 
           <div className="space-y-1">
-            <label className="text-xs font-black text-[#29211A] dark:text-[#E8DFD1]">Email address</label>
+            <label className="text-xs font-bold text-slate-600 dark:text-slate-300">Email Address</label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-[#635548] dark:text-[#8E7E70] absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="email"
                 required
-                placeholder="you@example.com"
+                placeholder="alex@example.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="clay-input pl-10 py-2 text-xs"
+                className="w-full pl-9 pr-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#FF5238] focus:bg-white transition"
               />
             </div>
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-black text-[#29211A] dark:text-[#E8DFD1]">Password</label>
+            <label className="text-xs font-bold text-slate-600 dark:text-slate-300">Password</label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-[#635548] dark:text-[#8E7E70] absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="password"
                 required
+                minLength={6}
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="clay-input pl-10 py-2 text-xs"
+                className="w-full pl-9 pr-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#FF5238] focus:bg-white transition"
               />
             </div>
           </div>
@@ -219,13 +220,13 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="clay-btn clay-btn-primary w-full inline-flex items-center justify-center gap-2 text-xs py-3.5 font-bold shadow-lg rounded-2xl disabled:opacity-50"
+            className="clay-btn-primary w-full inline-flex items-center justify-center gap-2 text-xs py-3 font-bold rounded-xl disabled:opacity-50 shadow-md"
           >
             {loading ? (
               <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
             ) : (
               <>
-                <span>{isLogin ? "Sign In" : "Create Account"}</span>
+                <span>{isLogin ? "Sign In" : "Create Free Account"}</span>
                 <ArrowRight className="w-4 h-4 shrink-0" />
               </>
             )}
@@ -233,8 +234,8 @@ function LoginForm() {
         </form>
       </div>
 
-      <p className="text-center text-[11px] font-bold text-[#574B3F] dark:text-[#8E7E70]">
-        Protected by Supabase Auth & Vision AI security.
+      <p className="text-center text-[11px] text-slate-400">
+        Secured with Supabase Authentication & Vision AI.
       </p>
     </div>
   );
@@ -242,10 +243,11 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-[var(--clay-bg)] text-[var(--clay-text-primary)] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-200">
+      <div className="simple-hero-glow" />
       <Suspense
         fallback={
-          <div className="w-9 h-9 rounded-full border-3 border-[#D97757] border-t-transparent animate-spin" />
+          <div className="w-8 h-8 rounded-full border-2 border-[#FF5238] border-t-transparent animate-spin" />
         }
       >
         <LoginForm />

@@ -46,8 +46,7 @@ export default function RootLayout({
               (function() {
                 try {
                   var saved = localStorage.getItem('flayre_theme');
-                  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                  if (saved === 'dark' || (!saved && prefersDark)) {
+                  if (saved === 'dark') {
                     document.documentElement.classList.add('dark');
                     document.documentElement.style.colorScheme = 'dark';
                   } else {
@@ -60,7 +59,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased bg-[var(--clay-bg)] text-[var(--clay-text-primary)] min-h-screen font-sans transition-colors duration-200">
+      <body className="antialiased bg-[var(--bg-base)] text-[var(--text-primary)] min-h-screen font-sans transition-colors duration-200">
         <Script
           src="https://checkout.razorpay.com/v1/checkout.js"
           strategy="beforeInteractive"

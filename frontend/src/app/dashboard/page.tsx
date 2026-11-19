@@ -15,12 +15,9 @@ import {
   Heart,
   Clock,
   Flame,
-  Play,
   ArrowRight,
   TrendingUp,
-  Headphones,
-  CheckCircle2,
-  Calendar,
+  Zap,
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -66,8 +63,8 @@ export default function DashboardPage() {
 
   if (authLoading || !isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[var(--clay-bg)] flex items-center justify-center transition-colors duration-200">
-        <div className="w-9 h-9 rounded-full border-3 border-[#D36A48] border-t-transparent animate-spin" />
+      <div className="min-h-screen bg-white dark:bg-slate-900 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-[#FF5238] border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -75,18 +72,17 @@ export default function DashboardPage() {
   const isPro = subscription?.is_pro || false;
   const used = subscription?.usage.analyses_used || 0;
   const remaining = subscription?.usage.analyses_remaining ?? 10;
-  const displayName = user?.full_name?.split(" ")[0] || user?.email?.split("@")[0] || "Friend";
+  const displayName = user?.full_name?.split(" ")[0] || user?.email?.split("@")[0] || "User";
 
   return (
-    <div className="min-h-screen bg-[var(--clay-bg)] text-[var(--clay-text-primary)] flex flex-col lg:flex-row max-w-[1600px] mx-auto transition-colors duration-200">
-      {/* Left Sage Sidebar (from Reference Image) */}
+    <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col lg:flex-row max-w-[1600px] mx-auto transition-colors duration-200">
+      {/* Sidebar */}
       <div className="hidden lg:flex shrink-0">
         <Sidebar remainingCredits={remaining} isPro={isPro} />
       </div>
 
       {/* Main App Area */}
       <div className="flex-1 flex flex-col min-w-0 pb-12">
-        {/* Top Bar with Search & Profile */}
         <Navbar
           title="Dashboard"
           remainingCredits={remaining}
@@ -95,247 +91,246 @@ export default function DashboardPage() {
 
         <main className="px-4 sm:px-6 space-y-6 flex-1">
           {/* ============================================================================ */}
-          {/* 1. Hero Greeting Banner (faithfully matching reference image) */}
+          {/* 1. Hero Greeting Banner */}
           {/* ============================================================================ */}
-          <div className="clay-card-terracotta p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
-            {/* Mascot Character with Headphones */}
-            <div className="flex items-center gap-5 sm:gap-6 z-10">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-[#FFFFFF] dark:bg-[#1E1A16] shadow-[0_8px_20px_rgba(211,106,72,0.35),inset_0_2px_4px_#FFF] dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)] border border-white dark:border-[#352E26] flex items-center justify-center p-2 shrink-0">
-                <div className="w-full h-full rounded-2xl bg-gradient-to-tr from-[#D36A48] via-[#E28E6E] to-[#F8D57E] flex items-center justify-center relative shadow-inner">
-                  <Flame className="w-10 h-10 text-white drop-shadow-md" />
-                  <Headphones className="w-12 h-12 text-[#102B20] dark:text-[#0A1A14] absolute -top-1 opacity-95" />
-                </div>
+          <div className="clay-card p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div className="flex items-center gap-5 z-10">
+              <div className="w-14 h-14 rounded-2xl bg-[#FF5238] flex items-center justify-center shadow-md shadow-[#FF5238]/20 shrink-0">
+                <Flame className="w-7 h-7 text-white fill-white" />
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase tracking-wider text-[#82331C] dark:text-[#FAC0B0]">
-                    Daily Assistant
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#FF5238]">
+                    Vision AI Ready
                   </span>
-                  <span className="text-sm">✨</span>
+                  <span className="text-slate-300">•</span>
+                  <span className="text-xs text-slate-500">10 free monthly credits active</span>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-extrabold text-[#210D07] dark:text-[#FAF6F0] tracking-normal">
-                  Good Day, {displayName}!
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                  Welcome back, {displayName}
                 </h2>
-                <p className="text-xs sm:text-sm text-[#4F2014] dark:text-[#E8C0B5] max-w-md font-bold">
-                  Have an unread text or an awkward message? Let&apos;s craft the perfect response today!
+                <p className="text-xs sm:text-sm text-slate-500 max-w-md">
+                  Have an unread text or need the right words? Upload any screenshot to get instant suggestions.
                 </p>
               </div>
             </div>
 
-            {/* Tactile Coral Action Button */}
             <Link
               href="/analyze"
-              className="clay-btn clay-btn-primary py-3 px-6 text-sm font-bold inline-flex items-center gap-2.5 z-10 shrink-0 self-start md:self-center rounded-2xl shadow-lg"
+              className="clay-btn-primary py-3 px-6 text-xs sm:text-sm font-semibold inline-flex items-center gap-2 z-10 shrink-0 self-start md:self-center shadow-md"
             >
-              <Play className="w-4 h-4 fill-current" />
-              <span>Start Analysis</span>
+              <Zap className="w-4 h-4 fill-current" />
+              <span>New Analysis</span>
             </Link>
           </div>
 
           {/* ============================================================================ */}
-          {/* 2. Four 3D Clay Stat Cards (faithfully matching reference image) */}
+          {/* 2. 4 Stat KPI Cards */}
           {/* ============================================================================ */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Stat 1: Analyses Used */}
-            <div className="clay-card p-4 sm:p-5 flex flex-col justify-between space-y-3">
-              <div className="clay-tile clay-tile-sage w-11 h-11">
-                <MessageSquare className="w-5 h-5" />
+            <div className="clay-card p-4 sm:p-5 flex flex-col justify-between space-y-3 bg-white dark:bg-slate-900 shadow-sm">
+              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/80 flex items-center justify-center">
+                <MessageSquare className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-xs font-black text-[#40352B] dark:text-[#C8BEB2]">Analyses Done</p>
-                <p className="text-2xl sm:text-3xl font-black text-[#14100D] dark:text-[#FAF6F0] tracking-tight">{used}</p>
-                <p className="text-[11px] font-bold text-emerald-800 dark:text-emerald-400 flex items-center gap-1 mt-0.5">
+                <p className="text-xs font-semibold text-slate-500">Analyses Completed</p>
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight mt-0.5">
+                  {used}
+                </p>
+                <p className="text-[11px] text-emerald-600 flex items-center gap-1 mt-1 font-semibold">
                   <TrendingUp className="w-3 h-3" />
-                  <span>+1 today</span>
+                  <span>Active this month</span>
                 </p>
               </div>
             </div>
 
             {/* Stat 2: Saved Responses */}
-            <div className="clay-card p-4 sm:p-5 flex flex-col justify-between space-y-3">
-              <div className="clay-tile clay-tile-terracotta w-11 h-11">
-                <Heart className="w-5 h-5" />
+            <div className="clay-card p-4 sm:p-5 flex flex-col justify-between space-y-3 bg-white dark:bg-slate-900 shadow-sm">
+              <div className="w-9 h-9 rounded-xl bg-rose-50 text-[#FF5238] border border-rose-200/80 flex items-center justify-center">
+                <Heart className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-xs font-black text-[#40352B] dark:text-[#C8BEB2]">Responses Copied</p>
-                <p className="text-2xl sm:text-3xl font-black text-[#14100D] dark:text-[#FAF6F0] tracking-tight">
+                <p className="text-xs font-semibold text-slate-500">Responses Copied</p>
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight mt-0.5">
                   {Math.max(used * 2, 4)}
                 </p>
-                <p className="text-[11px] font-bold text-[#8C341C] dark:text-[#F8C3B4] flex items-center gap-1 mt-0.5">
+                <p className="text-[11px] text-[#FF5238] flex items-center gap-1 mt-1 font-semibold">
                   <Sparkles className="w-3 h-3" />
                   <span>Favorite suggestions</span>
                 </p>
               </div>
             </div>
 
-            {/* Stat 3: Analyses Remaining */}
-            <div className="clay-card p-4 sm:p-5 flex flex-col justify-between space-y-3">
-              <div className="clay-tile clay-tile-honey w-11 h-11">
-                <Clock className="w-5 h-5" />
+            {/* Stat 3: Quota Remaining */}
+            <div className="clay-card p-4 sm:p-5 flex flex-col justify-between space-y-3 bg-white dark:bg-slate-900 shadow-sm">
+              <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 border border-amber-200/80 flex items-center justify-center">
+                <Clock className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-xs font-black text-[#40352B] dark:text-[#C8BEB2]">Remaining Quota</p>
-                <p className="text-2xl sm:text-3xl font-black text-[#14100D] dark:text-[#FAF6F0] tracking-tight">
+                <p className="text-xs font-semibold text-slate-500">Remaining Credits</p>
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight mt-0.5">
                   {isPro ? "∞" : remaining}
                 </p>
-                <p className="text-[11px] font-bold text-[#6E5004] dark:text-[#F8E2A1] flex items-center gap-1 mt-0.5">
+                <p className="text-[11px] text-slate-400 mt-1 font-medium">
                   <span>Renews monthly</span>
                 </p>
               </div>
             </div>
 
-            {/* Stat 4: Membership / Plan */}
-            <div className="clay-card p-4 sm:p-5 flex flex-col justify-between space-y-3">
-              <div className="clay-tile clay-tile-denim w-11 h-11">
-                <Flame className="w-5 h-5" />
+            {/* Stat 4: Membership Tier */}
+            <div className="clay-card p-4 sm:p-5 flex flex-col justify-between space-y-3 bg-white dark:bg-slate-900 shadow-sm">
+              <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-200/80 flex items-center justify-center">
+                <Flame className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-xs font-black text-[#40352B] dark:text-[#C8BEB2]">Active Tier</p>
-                <p className="text-xl sm:text-2xl font-black text-[#14100D] dark:text-[#FAF6F0] tracking-tight">
-                  {isPro ? "flayre Pro" : "Free Starter"}
+                <p className="text-xs font-semibold text-slate-500">Current Plan</p>
+                <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-0.5">
+                  {isPro ? "flayre Pro" : "Free Plan"}
                 </p>
-                <p className="text-[11px] font-bold text-[#143B57] dark:text-[#C0DFF8] flex items-center gap-1 mt-0.5">
-                  <span>{isPro ? "Unlimited Access" : "10 per month"}</span>
+                <p className="text-[11px] text-blue-600 mt-1 font-semibold">
+                  <span>{isPro ? "Unlimited access" : "10 analyses/month"}</span>
                 </p>
               </div>
             </div>
           </div>
 
           {/* ============================================================================ */}
-          {/* 3. Middle Section: Activity Pill Visualizer & Tone Donut (From Reference) */}
+          {/* 3. Middle Section: Activity Visualizer & Tone Breakdown */}
           {/* ============================================================================ */}
           <div className="grid md:grid-cols-12 gap-5 items-stretch">
-            {/* Weekly Activity Pill Bars */}
-            <div className="clay-card p-5 sm:p-6 md:col-span-7 flex flex-col justify-between space-y-4">
+            {/* Weekly Activity Bars */}
+            <div className="clay-card p-5 sm:p-6 md:col-span-7 flex flex-col justify-between space-y-4 bg-white dark:bg-slate-900 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-black text-[#14100D] dark:text-[#FAF6F0]">Activity Overview</h3>
-                  <p className="text-xs font-bold text-[#4A3E33] dark:text-[#C8BEB2]">Screenshots analyzed this week</p>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Activity Overview</h3>
+                  <p className="text-xs text-slate-500">Screenshots processed this week</p>
                 </div>
-                <span className="clay-badge clay-badge-sage text-xs">This Week</span>
+                <span className="clay-badge-sage text-xs">Past 7 Days</span>
               </div>
 
-              {/* 3D Clay Pill Bars */}
-              <div className="flex items-end justify-between gap-2 sm:gap-3 h-40 pt-4 px-2">
+              {/* Minimalist Bar Graph */}
+              <div className="flex items-end justify-between gap-3 h-36 pt-4 px-2">
                 {[
-                  { day: "Mon", height: "45%", color: "bg-[#F3B4A2] border-[#E89E8A] dark:bg-[#6E3524] dark:border-[#8C4530]" },
-                  { day: "Tue", height: "70%", color: "bg-[#FCE19D] border-[#EECD7B] dark:bg-[#785C19] dark:border-[#967523]" },
-                  { day: "Wed", height: "55%", color: "bg-[#B6D4C7] border-[#97C2B0] dark:bg-[#285743] dark:border-[#38755B]" },
-                  { day: "Thu", height: "85%", color: "bg-[#E28E6E] border-[#D17652] dark:bg-[#853D25] dark:border-[#A85135]" },
-                  { day: "Fri", height: "60%", color: "bg-[#BEDAEB] border-[#A2C7DF] dark:bg-[#284E6E] dark:border-[#376994]" },
-                  { day: "Sat", height: "90%", color: "bg-[#9AC0AF] border-[#7FAD97] dark:bg-[#326950] dark:border-[#428768]" },
-                  { day: "Sun", height: "40%", color: "bg-[#D9A3B5] border-[#C7879C] dark:bg-[#6E3747] dark:border-[#8E495D]" },
+                  { day: "Mon", height: "40%" },
+                  { day: "Tue", height: "65%" },
+                  { day: "Wed", height: "50%" },
+                  { day: "Thu", height: "85%" },
+                  { day: "Fri", height: "60%" },
+                  { day: "Sat", height: "90%" },
+                  { day: "Sun", height: "35%" },
                 ].map((col) => (
-                  <div key={col.day} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
+                  <div key={col.day} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
                     <div
-                      className={`w-full max-w-[28px] ${col.color} border rounded-full shadow-[0_4px_10px_rgba(140,110,90,0.30),inset_0_2px_3px_rgba(255,255,255,0.9),inset_0_-2px_3px_rgba(0,0,0,0.15)] dark:shadow-[0_4px_10px_rgba(0,0,0,0.5),inset_0_2px_3px_rgba(255,255,255,0.2),inset_0_-2px_3px_rgba(0,0,0,0.5)] transition-all duration-500`}
+                      className="w-full max-w-[28px] bg-slate-100 dark:bg-slate-800 hover:bg-[#FF5238] rounded-t-md transition-all duration-200"
                       style={{ height: col.height }}
                     />
-                    <span className="text-xs font-black text-[#2D241C] dark:text-[#D5CBC0]">{col.day}</span>
+                    <span className="text-[11px] font-mono font-medium text-slate-400 group-hover:text-slate-900">
+                      {col.day}
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Tone Distribution Visualizer */}
-            <div className="clay-card p-5 sm:p-6 md:col-span-5 flex flex-col justify-between space-y-4">
+            {/* Tone Distribution */}
+            <div className="clay-card p-5 sm:p-6 md:col-span-5 flex flex-col justify-between space-y-4 bg-white dark:bg-slate-900 shadow-sm">
               <div>
-                <h3 className="text-sm font-black text-[#14100D] dark:text-[#FAF6F0]">Suggested Tones</h3>
-                <p className="text-xs font-bold text-[#4A3E33] dark:text-[#C8BEB2]">Style preferences breakdown</p>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Suggested Tone Mix</h3>
+                <p className="text-xs text-slate-500">Response distribution generated by AI</p>
               </div>
 
-              <div className="flex items-center justify-center py-2">
-                {/* 3D Clay Donut Illustration */}
-                <div className="relative w-32 h-32 rounded-full shadow-[0_8px_20px_rgba(140,110,90,0.32),inset_0_2px_4px_#FFF] dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)] flex items-center justify-center p-2 border border-[#E2D7C8] dark:border-[#352E26]">
-                  <div className="w-full h-full rounded-full border-8 border-[#F3B4A2] dark:border-[#7A3624] border-t-[#BEDAEB] dark:border-t-[#2E577A] border-r-[#FCE19D] dark:border-r-[#7D601E] flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-full bg-[#FFFFFF] dark:bg-[#1E1A16] shadow-inner flex flex-col items-center justify-center border border-[#EAE0D4] dark:border-[#352E26]">
-                      <span className="text-xs font-black text-[#14100D] dark:text-[#FAF6F0]">3 Tones</span>
-                    </div>
+              {/* Progress stack */}
+              <div className="space-y-3 py-2">
+                <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
+                  <div className="h-full bg-[#FF5238]" style={{ width: "45%" }} title="Warm 45%" />
+                  <div className="h-full bg-blue-500" style={{ width: "35%" }} title="Direct 35%" />
+                  <div className="h-full bg-purple-500" style={{ width: "20%" }} title="Playful 20%" />
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 text-center pt-2">
+                  <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40">
+                    <p className="text-[10px] text-rose-700 font-bold uppercase">Warm</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">45%</p>
                   </div>
-                </div>
-              </div>
-
-              {/* Legend Chips */}
-              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#EAE0D4] dark:border-[#352E26] text-center">
-                <div className="clay-card-terracotta p-1.5 rounded-xl">
-                  <p className="text-[10px] font-black text-[#702511] dark:text-[#FAC0B0]">Warm</p>
-                  <p className="text-xs font-black text-[#2B0A03] dark:text-[#FAF6F0]">45%</p>
-                </div>
-                <div className="clay-card-denim p-1.5 rounded-xl">
-                  <p className="text-[10px] font-black text-[#11324B] dark:text-[#C0DFF8]">Direct</p>
-                  <p className="text-xs font-black text-[#081824] dark:text-[#FAF6F0]">35%</p>
-                </div>
-                <div className="clay-card-honey p-1.5 rounded-xl">
-                  <p className="text-[10px] font-black text-[#573E02] dark:text-[#F8E2A1]">Playful</p>
-                  <p className="text-xs font-black text-[#2E2001] dark:text-[#FAF6F0]">20%</p>
+                  <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40">
+                    <p className="text-[10px] text-blue-700 font-bold uppercase">Direct</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">35%</p>
+                  </div>
+                  <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/40">
+                    <p className="text-[10px] text-purple-700 font-bold uppercase">Playful</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">20%</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* ============================================================================ */}
-          {/* 4. Recent Analyses Cards (faithfully matching reference image) */}
+          {/* 4. Recent Analyses Cards */}
           {/* ============================================================================ */}
-          <div className="clay-card p-5 sm:p-6 space-y-4">
+          <div className="clay-card p-5 sm:p-6 space-y-4 bg-white dark:bg-slate-900 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-black text-[#14100D] dark:text-[#FAF6F0]">Recently Analyzed</h3>
-                <p className="text-xs font-bold text-[#4A3E33] dark:text-[#C8BEB2]">Click any card to inspect and copy suggestions</p>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Recently Analyzed</h3>
+                <p className="text-xs text-slate-500">Click any card to inspect or copy generated responses</p>
               </div>
               <Link
                 href="/history"
-                className="clay-badge clay-badge-terracotta hover:scale-105 transition-transform"
+                className="text-xs font-semibold text-[#FF5238] hover:underline flex items-center gap-1 transition"
               >
-                <span>See All</span>
-                <ArrowRight className="w-3 h-3" />
+                <span>View Full History</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
             {loading ? (
-              <div className="py-12 text-center text-[#4A3E33] dark:text-[#C8BEB2] space-y-2">
-                <div className="w-6 h-6 rounded-full border-2 border-[#D36A48] border-t-transparent animate-spin mx-auto" />
-                <p className="text-xs font-bold">Loading recent conversations...</p>
+              <div className="py-12 text-center text-slate-400 space-y-2">
+                <div className="w-6 h-6 rounded-full border-2 border-[#FF5238] border-t-transparent animate-spin mx-auto" />
+                <p className="text-xs">Loading conversations...</p>
               </div>
             ) : conversations.length > 0 ? (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
                 {conversations.map((conv) => (
                   <div
                     key={conv.id}
                     onClick={() => setSelectedConversationId(conv.id)}
-                    className="clay-card-interactive p-4 flex items-center justify-between gap-3 cursor-pointer group"
+                    className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-100/60 transition flex items-center justify-between gap-3 cursor-pointer group"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="clay-tile clay-tile-sage w-10 h-10 shrink-0 font-black text-xs uppercase">
+                      <div className="w-9 h-9 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs font-mono font-bold uppercase text-slate-700 dark:text-slate-300 shrink-0">
                         {conv.platform?.slice(0, 2) || "CH"}
                       </div>
-                      <div className="min-w-0 space-y-0.5">
-                        <p className="text-xs font-black text-[#14100D] dark:text-[#FAF6F0] capitalize truncate">
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-900 dark:text-white capitalize truncate">
                           {conv.platform}
                         </p>
-                        <p className="text-[11px] font-bold text-[#4A3E33] dark:text-[#C8BEB2] truncate max-w-[140px]">
-                          {conv.context_summary || "Conversation screenshot"}
+                        <p className="text-[11px] text-slate-500 truncate max-w-[150px]">
+                          {conv.context_summary || "Chat screenshot"}
                         </p>
                       </div>
                     </div>
 
-                    {/* Circular Play / Inspect button (From Reference) */}
-                    <div className="w-8 h-8 rounded-full bg-[#EFF5FA] dark:bg-[#1E2E3D] shadow-[0_2px_5px_rgba(140,110,90,0.22),inset_0_1px_1px_#FFF] dark:shadow-[0_2px_5px_rgba(0,0,0,0.4)] border border-[#CDE0EE] dark:border-[#2D4760] flex items-center justify-center text-[#1C4E72] dark:text-[#C0DFF8] group-hover:scale-110 group-hover:bg-[#D36A48] group-hover:text-white transition-all shrink-0">
-                      <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                    <div className="w-7 h-7 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-[#FF5238] group-hover:border-[#FF5238] transition shrink-0">
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="py-12 text-center space-y-3">
-                <div className="clay-tile clay-tile-sage w-12 h-12 mx-auto">
+                <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center mx-auto text-slate-400">
                   <Sparkles className="w-6 h-6" />
                 </div>
                 <div className="space-y-0.5">
-                  <p className="text-sm font-black text-[#14100D] dark:text-[#FAF6F0]">No conversations yet</p>
-                  <p className="text-xs font-bold text-[#4A3E33] dark:text-[#C8BEB2]">Upload your first screenshot to see suggestions here!</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">No conversations analyzed yet</p>
+                  <p className="text-xs text-slate-500">Upload your first screenshot to see suggestions here!</p>
                 </div>
-                <Link href="/analyze" className="clay-btn clay-btn-primary text-xs py-2 px-4 rounded-xl inline-flex font-bold">
+                <Link
+                  href="/analyze"
+                  className="clay-btn-primary text-xs py-2 px-4 rounded-xl inline-flex font-semibold shadow-sm"
+                >
                   Analyze Screenshot
                 </Link>
               </div>
