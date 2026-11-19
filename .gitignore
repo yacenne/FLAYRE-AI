@@ -45,6 +45,9 @@ tmp/
 temp/
 *.tmp
 
+# Vercel
+.vercel/
+
 # Supabase local
 .supabase/
 

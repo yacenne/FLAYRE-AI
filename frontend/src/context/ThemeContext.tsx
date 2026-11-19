@@ -13,14 +13,14 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  // Default to clean white light mode
   const [theme, setThemeState] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Check saved theme or system preference
+    // Check saved theme or default to light
     const savedTheme = localStorage.getItem("flayre_theme") as Theme | null;
-    const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const initialTheme: Theme = savedTheme || (systemPrefersDark ? "dark" : "light");
+    const initialTheme: Theme = savedTheme === "dark" ? "dark" : "light";
 
     setThemeState(initialTheme);
     applyTheme(initialTheme);

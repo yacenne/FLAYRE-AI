@@ -19,8 +19,7 @@ import {
   Crown,
   Sun,
   Moon,
-  CheckCircle2,
-  Info,
+  Zap,
 } from "lucide-react";
 
 interface NavbarProps {
@@ -48,15 +47,15 @@ export function Navbar({
   const [notifications, setNotifications] = useState([
     {
       id: "1",
-      title: "Welcome to flayre.ai!",
-      message: "10 free AI analyses are ready in your account this month.",
+      title: "Welcome to flayre.ai",
+      message: "10 free AI analyses are active in your account this month.",
       time: "Just now",
       read: false,
     },
     {
       id: "2",
-      title: "Vision Model Online",
-      message: "WhatsApp, Instagram, and Discord OCR processing at peak speed.",
+      title: "Vision Model v2.0 Ready",
+      message: "High-speed OCR & sentiment subtext engine ready.",
       time: "10m ago",
       read: false,
     },
@@ -65,7 +64,6 @@ export function Navbar({
   const [searchQuery, setSearchQuery] = useState("");
   const notifRef = useRef<HTMLDivElement>(null);
 
-  // Close notifications on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
@@ -94,83 +92,94 @@ export function Navbar({
   // Unauthenticated / Landing Page Header
   if (!isAuthenticated || pathname === "/") {
     return (
-      <header className="sticky top-0 z-50 bg-[var(--clay-bg)]/90 backdrop-blur-md border-b border-[#DCD0C1] dark:border-[#2F2821] px-4 sm:px-8 py-3.5 transition-colors duration-200">
+      <header className="sticky top-0 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-8 py-3.5 transition-colors duration-200">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#D36A48] to-[#E5BF67] flex items-center justify-center shadow-[0_4px_10px_rgba(211,106,72,0.35),inset_0_1px_2px_#FFF] group-hover:scale-105 transition-transform">
-              <Flame className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 rounded-xl bg-[#FF5238] flex items-center justify-center shadow-md shadow-[#FF5238]/20 group-hover:scale-105 transition-transform">
+              <Flame className="w-4 h-4 text-white fill-white" />
             </div>
-            <span className="font-black text-xl tracking-tight text-[#14100D] dark:text-[#FAF6F0]">
-              flayre<span className="text-[#D36A48]">.ai</span>
+            <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">
+              flayre<span className="text-[#FF5238]">.ai</span>
             </span>
           </Link>
 
-          {/* Desktop Links */}
-          <nav className="hidden md:flex items-center gap-6 text-sm font-bold text-[#3B3026] dark:text-[#D5CBC0]">
-            <a href="#features" className="hover:text-[#000000] dark:hover:text-[#FFFFFF] transition">
-              Features
-            </a>
-            <a href="#how-it-works" className="hover:text-[#000000] dark:hover:text-[#FFFFFF] transition">
+          {/* Desktop Nav Links */}
+          <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-slate-600 dark:text-slate-300">
+            <a href="#how-it-works" className="hover:text-slate-950 dark:hover:text-white transition-colors">
               How It Works
             </a>
-            <Link href="/pricing" className="hover:text-[#000000] dark:hover:text-[#FFFFFF] transition">
+            <a href="#demo" className="hover:text-slate-950 dark:hover:text-white transition-colors">
+              Interactive Demo
+            </a>
+            <a href="#features" className="hover:text-slate-950 dark:hover:text-white transition-colors">
+              Features
+            </a>
+            <Link href="/pricing" className="hover:text-slate-950 dark:hover:text-white transition-colors">
               Pricing
             </Link>
           </nav>
 
-          {/* Auth & Dark Mode Actions */}
+          {/* Right Actions */}
           <div className="flex items-center gap-2.5">
-            {/* Dark Mode Toggle */}
+            {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="w-10 h-10 rounded-2xl bg-[#FFFFFF] dark:bg-[#221E19] shadow-[0_4px_10px_rgba(125,95,75,0.18),inset_0_1px_2px_#FFF] dark:shadow-[0_4px_10px_rgba(0,0,0,0.5),inset_0_1px_2px_rgba(255,255,255,0.08)] border border-[#E2D7C8] dark:border-[#383027] flex items-center justify-center text-[#211A14] dark:text-[#FAF6F0] hover:text-[#D36A48] dark:hover:text-[#E06C46] transition"
+              className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition"
               title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
               aria-label="Toggle Theme"
             >
               {theme === "dark" ? (
                 <Sun className="w-4 h-4 text-amber-400" />
               ) : (
-                <Moon className="w-4 h-4 text-[#4A3E33]" />
+                <Moon className="w-4 h-4 text-slate-600" />
               )}
             </button>
 
-            <Link href="/login" className="clay-btn clay-btn-secondary text-xs sm:text-sm py-2 px-3.5">
-              Sign In
-            </Link>
-            <Link href="/login" className="clay-btn clay-btn-primary text-xs sm:text-sm py-2 px-4">
-              Get Started Free
-            </Link>
+            {isAuthenticated ? (
+              <Link href="/dashboard" className="clay-btn-primary text-xs sm:text-sm py-2 px-4">
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="clay-btn-secondary text-xs sm:text-sm py-2 px-3.5">
+                  Sign In
+                </Link>
+                <Link href="/login" className="clay-btn-primary text-xs sm:text-sm py-2 px-4 shadow-sm">
+                  Get Started Free
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
     );
   }
 
-  // Authenticated Top Utility Bar
+  // Authenticated Top Bar
   return (
     <div className="w-full px-4 sm:px-6 py-4 flex items-center justify-between gap-4 transition-colors duration-200">
       {/* Page Title & Mobile Drawer Button */}
       <div className="flex items-center gap-3">
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="lg:hidden w-10 h-10 rounded-2xl bg-[#FFFFFF] dark:bg-[#221E19] shadow-[0_4px_10px_rgba(125,95,75,0.18),inset_0_1px_2px_#FFF] dark:shadow-[0_4px_10px_rgba(0,0,0,0.5)] border border-[#E2D7C8] dark:border-[#383027] flex items-center justify-center text-[#211A14] dark:text-[#FAF6F0]"
+          className="lg:hidden w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300 shadow-sm"
           aria-label="Toggle Navigation"
         >
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
         </button>
 
         {title && (
-          <h1 className="text-xl sm:text-2xl font-black text-[#14100D] dark:text-[#FAF6F0] tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
             {title}
           </h1>
         )}
       </div>
 
-      {/* Center Search Pill */}
+      {/* Center Search Input */}
       <div className="flex-1 max-w-md hidden sm:block">
         <form onSubmit={handleSearchSubmit} className="relative">
-          <Search className="w-4 h-4 text-[#6E6153] dark:text-[#8C8072] absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder={searchPlaceholder}
@@ -179,24 +188,27 @@ export function Navbar({
               setSearchQuery(e.target.value);
               if (onSearch) onSearch(e.target.value);
             }}
-            className="clay-input pl-10 pr-4 py-2 text-xs w-full"
+            className="w-full pl-10 pr-12 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#FF5238] focus:bg-white transition"
           />
+          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-mono px-1.5 py-0.5 rounded bg-slate-200/60 dark:bg-slate-700 border border-slate-300/60 dark:border-slate-600">
+            ⌘K
+          </kbd>
         </form>
       </div>
 
-      {/* Right Controls: Theme Toggle, Credits Pill, Notifications Bell, Profile Circle */}
-      <div className="flex items-center gap-3">
-        {/* Dark Mode Toggle Button */}
+      {/* Right Controls */}
+      <div className="flex items-center gap-2.5">
+        {/* Dark Mode Toggle */}
         <button
           onClick={toggleTheme}
-          className="w-10 h-10 rounded-2xl bg-[#FFFFFF] dark:bg-[#221E19] shadow-[0_4px_10px_rgba(125,95,75,0.18),inset_0_1px_2px_#FFF] dark:shadow-[0_4px_10px_rgba(0,0,0,0.5),inset_0_1px_2px_rgba(255,255,255,0.08)] border border-[#E2D7C8] dark:border-[#383027] flex items-center justify-center text-[#211A14] dark:text-[#FAF6F0] hover:text-[#D36A48] dark:hover:text-[#E06C46] transition"
+          className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 transition shadow-sm"
           title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
           aria-label="Toggle Theme"
         >
           {theme === "dark" ? (
             <Sun className="w-4 h-4 text-amber-400" />
           ) : (
-            <Moon className="w-4 h-4 text-[#4A3E33]" />
+            <Moon className="w-4 h-4 text-slate-600" />
           )}
         </button>
 
@@ -204,47 +216,47 @@ export function Navbar({
         {remainingCredits !== undefined && remainingCredits !== null && (
           <Link
             href="/pricing"
-            className="hidden md:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#FFFFFF] dark:bg-[#221E19] shadow-[0_3px_8px_rgba(125,95,75,0.18),inset_0_1px_2px_#FFF] dark:shadow-[0_3px_8px_rgba(0,0,0,0.4)] border border-[#E2D7C8] dark:border-[#383027] text-xs font-bold text-[#362D24] dark:text-[#D5CBC0] hover:text-[#D36A48] dark:hover:text-[#E06C46] transition"
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:border-slate-300 transition"
           >
-            <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <span>
               {isPro ? (
-                <strong className="text-[#D36A48] font-black">Pro Unlimited</strong>
+                <strong className="text-amber-600 dark:text-amber-400 font-bold">Pro Active</strong>
               ) : (
                 <>
-                  <strong className="text-[#14100D] dark:text-[#FAF6F0] font-black">{remainingCredits}</strong> free left
+                  <strong className="text-slate-900 dark:text-white font-bold">{remainingCredits}</strong> credits left
                 </>
               )}
             </span>
           </Link>
         )}
 
-        {/* Notification Bell with Badge & Dropdown */}
+        {/* Notification Bell */}
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="w-10 h-10 rounded-2xl bg-[#FFFFFF] dark:bg-[#221E19] shadow-[0_4px_10px_rgba(125,95,75,0.18),inset_0_1px_2px_#FFF] dark:shadow-[0_4px_10px_rgba(0,0,0,0.5)] border border-[#E2D7C8] dark:border-[#383027] flex items-center justify-center text-[#211A14] dark:text-[#FAF6F0] hover:text-[#D36A48] dark:hover:text-[#E06C46] transition"
+            className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 transition shadow-sm"
             title="Notifications"
           >
             <Bell className="w-4 h-4" />
           </button>
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#D36A48] text-white text-[10px] font-black flex items-center justify-center shadow-sm pointer-events-none">
+            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#FF5238] text-white text-[10px] font-bold flex items-center justify-center shadow-md pointer-events-none">
               {unreadCount}
             </span>
           )}
 
           {/* Notifications Dropdown */}
           {notificationsOpen && (
-            <div className="absolute right-0 mt-3 w-80 sm:w-96 clay-card p-4 shadow-2xl z-50 space-y-3 animate-in fade-in duration-150">
-              <div className="flex items-center justify-between pb-2 border-b border-[#EAE0D4] dark:border-[#352E26]">
-                <h3 className="text-xs font-black uppercase tracking-wider text-[#14100D] dark:text-[#FAF6F0]">
+            <div className="absolute right-0 mt-3 w-80 sm:w-88 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl z-50 space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
                   Notifications
                 </h3>
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllRead}
-                    className="text-[11px] font-bold text-[#D36A48] dark:text-[#E06C46] hover:underline"
+                    className="text-[11px] font-semibold text-[#FF5238] hover:underline"
                   >
                     Mark all read
                   </button>
@@ -255,21 +267,17 @@ export function Navbar({
                 {notifications.map((n) => (
                   <div
                     key={n.id}
-                    className={`p-3 rounded-2xl text-xs transition ${
+                    className={`p-3 rounded-xl text-xs transition ${
                       n.read
-                        ? "bg-[#F7F2EA] dark:bg-[#181512] text-[#574B3F] dark:text-[#8C8072]"
-                        : "bg-[#FDF1EC] dark:bg-[#2A1510] text-[#14100D] dark:text-[#FAF6F0] border border-[#F0BCAE] dark:border-[#4F2318]"
+                        ? "bg-slate-50 dark:bg-slate-800/40 text-slate-500"
+                        : "bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <p className="font-black">{n.title}</p>
-                      <span className="text-[10px] font-semibold text-[#8C8072] shrink-0">
-                        {n.time}
-                      </span>
+                      <p className="font-bold text-slate-900 dark:text-white">{n.title}</p>
+                      <span className="text-[10px] text-slate-400 shrink-0">{n.time}</span>
                     </div>
-                    <p className="mt-1 text-[11px] font-medium leading-relaxed">
-                      {n.message}
-                    </p>
+                    <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">{n.message}</p>
                   </div>
                 ))}
               </div>
@@ -277,35 +285,37 @@ export function Navbar({
           )}
         </div>
 
-        {/* Profile Circle */}
+        {/* Profile Avatar */}
         <Link
           href="/dashboard"
-          className="w-10 h-10 rounded-2xl bg-[#9ECBB9] dark:bg-[#204938] shadow-[0_4px_10px_rgba(100,150,130,0.40),inset_0_1px_2px_#FFF] dark:shadow-[0_4px_10px_rgba(0,0,0,0.5)] border border-[#7BB49F] dark:border-[#346F56] flex items-center justify-center text-[#092418] dark:text-[#D3F5E6] hover:scale-105 transition-transform"
+          className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:scale-105 transition shadow-sm"
           title={user?.email}
         >
-          <User className="w-5 h-5" />
+          <User className="w-4 h-4" />
         </Link>
       </div>
 
       {/* Mobile Drawer */}
       {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex justify-start p-4 animate-in fade-in duration-200">
-          <div className="w-72 bg-[#9DBEB1] dark:bg-[#162B21] rounded-3xl p-5 shadow-2xl flex flex-col justify-between border border-white/40 dark:border-white/10 transition-colors duration-200">
+        <div className="lg:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex justify-start p-4 animate-in fade-in duration-200">
+          <div className="w-72 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col justify-between">
             <div className="space-y-6">
-              <div className="flex items-center justify-between pb-3 border-b border-white/30 dark:border-white/10">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
-                  <Flame className="w-5 h-5 text-[#D36A48]" />
-                  <span className="font-black text-[#0C1E17] dark:text-[#E8F7F0]">flayre.ai</span>
+                  <div className="w-7 h-7 rounded-lg bg-[#FF5238] flex items-center justify-center">
+                    <Flame className="w-4 h-4 text-white fill-white" />
+                  </div>
+                  <span className="font-bold text-slate-900 dark:text-white">flayre.ai</span>
                 </div>
                 <button
                   onClick={() => setMobileOpen(false)}
-                  className="p-1 rounded-lg text-[#0C1E17] dark:text-[#E8F7F0] hover:bg-white/30"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <nav className="space-y-2">
+              <nav className="space-y-1.5">
                 {[
                   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
                   { href: "/analyze", label: "Analyze", icon: Sparkles },
@@ -319,10 +329,10 @@ export function Navbar({
                       key={link.href}
                       href={link.href}
                       onClick={() => setMobileOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-2xl transition ${
+                      className={`flex items-center gap-3 px-3.5 py-2.5 text-sm font-semibold rounded-xl transition ${
                         active
-                          ? "clay-nav-active"
-                          : "clay-nav-inactive"
+                          ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-l-2 border-[#FF5238]"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 hover:bg-slate-50"
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -333,12 +343,12 @@ export function Navbar({
               </nav>
             </div>
 
-            <div className="pt-4 border-t border-white/30 dark:border-white/10 space-y-3">
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
               <button
                 onClick={toggleTheme}
-                className="w-full flex items-center justify-center gap-2 py-2 text-xs font-bold bg-white/30 dark:bg-white/10 text-[#0C1E17] dark:text-[#E8F7F0] rounded-xl transition"
+                className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl transition"
               >
-                {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+                {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
                 <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
               </button>
 
@@ -347,7 +357,7 @@ export function Navbar({
                   setMobileOpen(false);
                   logout();
                 }}
-                className="w-full clay-btn clay-btn-secondary text-xs py-2 font-bold"
+                className="w-full clay-btn-secondary text-xs py-2 font-semibold"
               >
                 Log Out
               </button>

@@ -10,14 +10,12 @@ import { Navbar } from "@/components/Navbar";
 import { ConversationModal } from "@/components/ConversationModal";
 import type { Conversation, SubscriptionInfo } from "@/types";
 import {
-  History,
   Clock,
   ChevronRight,
   ChevronLeft,
-  Search,
   Sparkles,
   Inbox,
-  Play,
+  ArrowRight,
 } from "lucide-react";
 
 export default function HistoryPage() {
@@ -70,8 +68,8 @@ export default function HistoryPage() {
 
   if (authLoading || !isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[var(--clay-bg)] flex items-center justify-center">
-        <div className="w-9 h-9 rounded-full border-3 border-[#D97757] border-t-transparent animate-spin" />
+      <div className="min-h-screen bg-white dark:bg-slate-900 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-[#FF5238] border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -90,8 +88,8 @@ export default function HistoryPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[var(--clay-bg)] text-[var(--clay-text-primary)] flex flex-col lg:flex-row max-w-[1600px] mx-auto">
-      {/* Left Sage Sidebar */}
+    <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col lg:flex-row max-w-[1600px] mx-auto transition-colors duration-200">
+      {/* Sidebar */}
       <div className="hidden lg:flex shrink-0">
         <Sidebar remainingCredits={remaining} isPro={isPro} />
       </div>
@@ -106,21 +104,21 @@ export default function HistoryPage() {
           isPro={isPro}
         />
 
-        <main className="px-4 sm:px-6 space-y-6 flex-1">
+        <main className="px-4 sm:px-6 space-y-4 flex-1">
           {error ? (
-            <div className="clay-card p-8 text-center space-y-3">
-              <p className="text-sm font-semibold text-[#D97757]">{error}</p>
+            <div className="clay-card p-8 text-center space-y-3 bg-white dark:bg-slate-900">
+              <p className="text-sm font-semibold text-rose-600">{error}</p>
               <button
                 onClick={() => fetchConversations(currentPage)}
-                className="clay-btn clay-btn-primary text-xs py-2 px-4 rounded-xl font-bold inline-flex"
+                className="clay-btn-primary text-xs py-2 px-4 rounded-xl font-bold inline-flex shadow-sm"
               >
                 Try Again
               </button>
             </div>
           ) : loading ? (
-            <div className="py-20 text-center text-[#7A6F65] space-y-2">
-              <div className="w-7 h-7 rounded-full border-3 border-[#D97757] border-t-transparent animate-spin mx-auto" />
-              <p className="text-xs font-semibold">Loading past analyses...</p>
+            <div className="py-20 text-center text-slate-400 space-y-2">
+              <div className="w-7 h-7 rounded-full border-2 border-[#FF5238] border-t-transparent animate-spin mx-auto" />
+              <p className="text-xs">Loading past analyses...</p>
             </div>
           ) : filteredConversations.length > 0 ? (
             <div className="space-y-3">
@@ -128,44 +126,44 @@ export default function HistoryPage() {
                 <div
                   key={conv.id}
                   onClick={() => setSelectedConversationId(conv.id)}
-                  className="clay-card-interactive p-5 flex items-center justify-between gap-4 cursor-pointer group"
+                  className="clay-card p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900 transition-all group shadow-sm"
                 >
                   <div className="flex items-start gap-4 min-w-0">
-                    <div className="clay-tile clay-tile-sage w-11 h-11 shrink-0 font-black text-xs uppercase mt-0.5">
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-mono font-bold text-xs uppercase text-slate-700 dark:text-slate-300 shrink-0 mt-0.5">
                       {conv.platform?.slice(0, 2) || "CH"}
                     </div>
-                    <div className="space-y-1 min-w-0">
+                    <div className="space-y-1.5 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-black text-[#14100D] dark:text-[#FAF6F0] capitalize">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white capitalize">
                           {conv.platform}
                         </span>
                         {conv.detected_tone && (
-                          <span className="clay-badge clay-badge-terracotta text-[10px] py-0.5 px-2 capitalize">
+                          <span className="clay-badge-terracotta text-[10px] py-0.5 px-2 capitalize">
                             {conv.detected_tone}
                           </span>
                         )}
                         {conv.relationship_type && (
-                          <span className="clay-badge clay-badge-denim text-[10px] py-0.5 px-2 capitalize">
+                          <span className="clay-badge-denim text-[10px] py-0.5 px-2 capitalize">
                             {conv.relationship_type}
                           </span>
                         )}
                       </div>
-                      <p className="text-sm font-bold text-[#2A221B] dark:text-[#FAF6F0] line-clamp-2 leading-relaxed">
+                      <p className="text-sm text-slate-700 dark:text-slate-200 line-clamp-2 leading-relaxed font-normal">
                         {conv.context_summary || "Conversation screenshot analysis"}
                       </p>
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-[#574B3F] dark:text-[#B5A593] pt-0.5">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-400 font-mono">
                         <Clock className="w-3.5 h-3.5" />
                         <span>{new Date(conv.created_at).toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-xs font-black text-[#D36A48] opacity-0 group-hover:opacity-100 transition hidden sm:inline">
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs font-semibold text-[#FF5238] opacity-0 group-hover:opacity-100 transition hidden sm:inline">
                       Inspect
                     </span>
-                    <div className="w-9 h-9 rounded-full bg-[#EFF5FA] dark:bg-[#1E2E3B] shadow-[0_2px_5px_rgba(125,95,75,0.22),inset_0_1px_1px_#FFF] dark:shadow-[0_2px_5px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.06)] border border-[#CDE0EE] dark:border-[#2C485E] flex items-center justify-center text-[#1C4E72] dark:text-[#88C6F2] group-hover:bg-[#D36A48] group-hover:text-white transition">
-                      <Play className="w-4 h-4 fill-current ml-0.5" />
+                    <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-[#FF5238] group-hover:border-[#FF5238] transition">
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </div>
                   </div>
                 </div>
@@ -173,24 +171,24 @@ export default function HistoryPage() {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between pt-6 border-t border-[#EAE0D4] dark:border-[#352E26]">
+                <div className="flex items-center justify-between pt-6 border-t border-slate-200 dark:border-slate-800">
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage <= 1}
-                    className="clay-btn clay-btn-secondary text-xs flex items-center gap-1 disabled:opacity-40 font-black"
+                    className="clay-btn-secondary text-xs flex items-center gap-1 disabled:opacity-30"
                   >
                     <ChevronLeft className="w-4 h-4" />
                     <span>Previous</span>
                   </button>
 
-                  <span className="text-xs font-black text-[#2A221B] dark:text-[#FAF6F0]">
+                  <span className="text-xs font-mono text-slate-500">
                     Page {currentPage} of {totalPages}
                   </span>
 
                   <button
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={currentPage >= totalPages}
-                    className="clay-btn clay-btn-secondary text-xs flex items-center gap-1 disabled:opacity-40 font-black"
+                    className="clay-btn-secondary text-xs flex items-center gap-1 disabled:opacity-30"
                   >
                     <span>Next</span>
                     <ChevronRight className="w-4 h-4" />
@@ -199,21 +197,24 @@ export default function HistoryPage() {
               )}
             </div>
           ) : (
-            <div className="clay-card p-16 text-center space-y-4">
-              <div className="clay-tile clay-tile-sage w-14 h-14 mx-auto">
-                <Inbox className="w-7 h-7" />
+            <div className="clay-card p-16 text-center space-y-4 bg-white dark:bg-slate-900 shadow-sm">
+              <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center mx-auto text-slate-400">
+                <Inbox className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h2 className="text-base font-black text-[#14100D] dark:text-[#FAF6F0]">No conversation records found</h2>
-                <p className="text-xs font-bold text-[#4A3E33] dark:text-[#B5A593] max-w-sm mx-auto">
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">No records found</h2>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
                   {searchQuery
-                    ? "No conversations match your search filter."
-                    : "Analyses you perform will appear here."}
+                    ? "No past conversations match your filter query."
+                    : "Analyses you run will automatically be archived here."}
                 </p>
               </div>
-              <Link href="/analyze" className="clay-btn clay-btn-primary text-xs py-2 px-4 inline-flex items-center gap-2 rounded-xl font-bold">
+              <Link
+                href="/analyze"
+                className="clay-btn-primary text-xs py-2 px-4 inline-flex items-center gap-2 rounded-xl font-bold shadow-sm"
+              >
                 <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                <span>Analyze a Screenshot</span>
+                <span>Start New Analysis</span>
               </Link>
             </div>
           )}
