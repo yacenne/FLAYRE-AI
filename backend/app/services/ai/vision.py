@@ -90,54 +90,73 @@ async def analyze_screenshot(
                 "HTTP-Referer": settings.frontend_url,
                 "X-Title": "flayre.ai"
             }
-            logger.info(f"Using OpenRouter Vision ({model})")
+        models_to_try = [settings.vision_model]
+        if not settings.use_ollama:
+            for fb in ["inclusionai/ling-3.2-flash:free", "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"]:
+                if fb not in models_to_try:
+                    models_to_try.append(fb)
 
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            response = await client.post(
-                api_url,
-                headers=headers,
-                json={
-                    "model": model,
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": ANALYSIS_PROMPT
-                        },
-                        {
-                            "role": "user",
-                            "content": [
+        last_error = "Unknown error"
+        for model in models_to_try:
+            try:
+                logger.info(f"Attempting Vision AI analysis using {model}")
+                async with httpx.AsyncClient(timeout=120.0) as client:
+                    response = await client.post(
+                        api_url,
+                        headers=headers,
+                        json={
+                            "model": model,
+                            "messages": [
                                 {
-                                    "type": "text",
-                                    "text": f"Analyze this conversation screenshot and generate response suggestions. {context_hint}".strip()
+                                    "role": "system",
+                                    "content": ANALYSIS_PROMPT
                                 },
                                 {
-                                    "type": "image_url",
-                                    "image_url": {
-                                        "url": f"data:image/png;base64,{screenshot_base64}"
-                                    }
+                                    "role": "user",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": f"Analyze this conversation screenshot and generate response suggestions. {context_hint}".strip()
+                                        },
+                                        {
+                                            "type": "image_url",
+                                            "image_url": {
+                                                "url": f"data:image/png;base64,{screenshot_base64}"
+                                            }
+                                        }
+                                    ]
                                 }
-                            ]
+                            ],
+                            "max_tokens": 2000,
+                            "temperature": 0.7
                         }
-                    ],
-                    "max_tokens": 2000,
-                    "temperature": 0.7
-                }
-            )
+                    )
 
-            if response.status_code != 200:
-                error_text = response.text[:500] if response.text else "No response body"
-                logger.error(f"Vision AI returned error status {response.status_code}: {error_text}")
-                raise AIServiceError(f"Vision AI returned {response.status_code}: {error_text}")
+                    if response.status_code != 200:
+                        error_text = response.text[:500] if response.text else "No response body"
+                        logger.warning(f"Vision model {model} returned status {response.status_code}: {error_text}")
+                        last_error = f"{response.status_code}: {error_text}"
+                        continue
 
-            data = response.json()
-            choices = data.get("choices") or []
-            content = choices[0].get("message", {}).get("content", "") if choices else ""
+                    data = response.json()
+                    choices = data.get("choices") or []
+                    content = choices[0].get("message", {}).get("content", "") if choices else ""
 
-            # Parse AI output into structured format
-            result = parse_ai_response(content, platform)
-            result.model_used = model
-            logger.info("Vision AI analysis successfully completed")
-            return result
+                    # Parse AI output into structured format
+                    result = parse_ai_response(content, platform)
+                    result.model_used = model
+                    logger.info(f"Vision AI analysis successfully completed using {model}")
+                    return result
+            except httpx.TimeoutException:
+                logger.warning(f"Vision model {model} timed out, trying fallback...")
+                last_error = "Timeout"
+                continue
+            except Exception as e:
+                logger.warning(f"Vision model {model} failed: {e}, trying fallback...")
+                last_error = str(e)
+                continue
+
+        raise AIServiceError(f"All vision models failed. Last error: {last_error}")
 
     except httpx.TimeoutException:
         logger.error("Vision AI request timed out")

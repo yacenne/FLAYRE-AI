@@ -44,6 +44,12 @@ export default function AnalyzePage() {
       setUsage(data);
     } catch (err) {
       console.error("Failed to load usage:", err);
+      // Fallback usage for smooth local testing experience
+      setUsage({
+        analyses_used: 0,
+        analyses_limit: 10,
+        analyses_remaining: 10,
+      });
     }
   }, []);
 
@@ -126,7 +132,10 @@ export default function AnalyzePage() {
       loadUsage();
       showToast("Analysis complete!", "success");
     } catch (err: any) {
-      showToast(err.message || "Failed to analyze screenshot", "error");
+      const msg = err.message === "Failed to fetch"
+        ? "Unable to connect to backend (http://localhost:8000). Please check that the server is running."
+        : (err.message || "Failed to analyze screenshot");
+      showToast(msg, "error");
     } finally {
       setAnalyzing(false);
     }
