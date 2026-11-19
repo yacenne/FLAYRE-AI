@@ -46,7 +46,7 @@ export default function PricingPage() {
   const remaining = subscription?.usage.analyses_remaining ?? 10;
 
   return (
-    <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col lg:flex-row max-w-[1600px] mx-auto transition-colors duration-200">
+    <div className="min-h-screen bg-slate-50/60 text-slate-900 flex flex-col lg:flex-row max-w-[1600px] mx-auto">
       {/* Sidebar if Authenticated */}
       {isAuthenticated && (
         <div className="hidden lg:flex shrink-0">
@@ -66,7 +66,7 @@ export default function PricingPage() {
           {/* Header */}
           <div className="text-center space-y-2 max-w-xl mx-auto">
             <span className="clay-badge-terracotta">Simple Pricing</span>
-            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white tracking-tight leading-snug">
+            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight leading-snug">
               Start free. Upgrade for unlimited.
             </h1>
             <p className="text-sm text-slate-500">
@@ -77,14 +77,14 @@ export default function PricingPage() {
           {/* Pricing Cards */}
           <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto items-stretch">
             {/* Free Starter Tier */}
-            <div className="clay-card p-6 sm:p-8 flex flex-col justify-between space-y-6 bg-white dark:bg-slate-900 shadow-sm">
+            <div className="clay-card p-6 sm:p-8 flex flex-col justify-between space-y-6 bg-white shadow-sm border border-slate-200">
               <div className="space-y-4">
                 <div className="space-y-1">
                   <span className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold">
                     Starter Plan
                   </span>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-bold text-slate-900 dark:text-white">$0</span>
+                    <span className="text-4xl font-bold text-slate-900">$0</span>
                     <span className="text-xs text-slate-500">/ forever</span>
                   </div>
                   <p className="text-xs text-slate-500">
@@ -92,10 +92,10 @@ export default function PricingPage() {
                   </p>
                 </div>
 
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3 text-xs text-slate-600 dark:text-slate-300 font-medium">
+                <div className="pt-4 border-t border-slate-100 space-y-3 text-xs text-slate-600 font-medium">
                   <div className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span><strong className="text-slate-900 dark:text-white">10 free analyses</strong> every month</span>
+                    <span><strong className="text-slate-900">10 free analyses</strong> every month</span>
                   </div>
                   <div className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -121,7 +121,7 @@ export default function PricingPage() {
             </div>
 
             {/* Pro Tier */}
-            <div className="clay-card p-6 sm:p-8 flex flex-col justify-between space-y-6 relative bg-white dark:bg-slate-900 border-2 border-[#FF5238] shadow-md">
+            <div className="clay-card p-6 sm:p-8 flex flex-col justify-between space-y-6 relative bg-white border-2 border-[#FF5238] shadow-md">
               <div className="absolute -top-3 right-6 px-3 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[#FF5238] text-white shadow-md">
                 Most Popular
               </div>
@@ -135,7 +135,7 @@ export default function PricingPage() {
                     <Crown className="w-4 h-4 text-amber-500 fill-current" />
                   </div>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-bold text-slate-900 dark:text-white">$9.99</span>
+                    <span className="text-4xl font-bold text-slate-900">$9.99</span>
                     <span className="text-xs text-slate-500">/ month</span>
                   </div>
                   <p className="text-xs text-slate-500">
@@ -143,10 +143,10 @@ export default function PricingPage() {
                   </p>
                 </div>
 
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3 text-xs text-slate-700 dark:text-slate-200 font-medium">
+                <div className="pt-4 border-t border-slate-100 space-y-3 text-xs text-slate-700 font-medium">
                   <div className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-[#FF5238] shrink-0" />
-                    <span><strong className="text-slate-950 dark:text-white font-bold">Unlimited analyses</strong> (zero monthly caps)</span>
+                    <span><strong className="text-slate-950 font-bold">Unlimited analyses</strong> (zero monthly caps)</span>
                   </div>
                   <div className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-[#FF5238] shrink-0" />
@@ -188,27 +188,27 @@ export default function PricingPage() {
           </div>
 
           {/* FAQ Card */}
-          <div className="clay-card p-6 sm:p-8 space-y-6 bg-white dark:bg-slate-900 shadow-sm">
-            <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <div className="clay-card p-6 sm:p-8 space-y-6 bg-white shadow-sm border border-slate-200">
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <HelpCircle className="w-4 h-4 text-[#FF5238]" />
               <span>Frequently Asked Questions</span>
             </h2>
 
             <div className="grid sm:grid-cols-2 gap-6 text-xs leading-relaxed text-slate-500">
               <div className="space-y-1">
-                <h3 className="font-bold text-slate-900 dark:text-white text-sm">Can I cancel anytime?</h3>
+                <h3 className="font-bold text-slate-900 text-sm">Can I cancel anytime?</h3>
                 <p>Yes. You can cancel with a single click in your dashboard settings anytime. You retain full access until the end of your billing cycle.</p>
               </div>
               <div className="space-y-1">
-                <h3 className="font-bold text-slate-900 dark:text-white text-sm">Are screenshots saved permanently?</h3>
+                <h3 className="font-bold text-slate-900 text-sm">Are screenshots saved permanently?</h3>
                 <p>No. Screenshots are processed transiently in memory for Vision AI analysis and are immediately deleted. Never stored or shared.</p>
               </div>
               <div className="space-y-1">
-                <h3 className="font-bold text-slate-900 dark:text-white text-sm">Which messaging apps work?</h3>
+                <h3 className="font-bold text-slate-900 text-sm">Which messaging apps work?</h3>
                 <p>WhatsApp, Instagram Direct, Discord, iMessage, Tinder, Bumble, Telegram, and standard SMS. Any clear screenshot works seamlessly.</p>
               </div>
               <div className="space-y-1">
-                <h3 className="font-bold text-slate-900 dark:text-white text-sm">What payment methods are supported?</h3>
+                <h3 className="font-bold text-slate-900 text-sm">What payment methods are supported?</h3>
                 <p>All major Credit Cards, Debit Cards, UPI, and Net Banking are securely processed through Razorpay.</p>
               </div>
             </div>

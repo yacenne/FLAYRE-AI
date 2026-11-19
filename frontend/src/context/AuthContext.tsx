@@ -29,6 +29,7 @@ interface AuthContextType {
     login: (email: string, password: string) => Promise<void>;
     signup: (email: string, password: string, fullName?: string) => Promise<void>;
     loginWithGoogle: () => Promise<void>;
+    loginAsDemo: () => void;
     logout: () => Promise<void>;
     refreshSession: () => Promise<void>;
 }
@@ -89,13 +90,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
     useEffect(() => {
         const supabase = getSupabase();
 
-        // Get initial session
         const initializeAuth = async () => {
             try {
-                // Add timeout to prevent hanging
+                // First check localStorage for instant loading
+                const storedToken = localStorage.getItem("access_token");
+                const storedUser = localStorage.getItem("user");
+                if (storedToken && storedUser) {
+                    try {
+                        setUser(JSON.parse(storedUser));
+                    } catch (e) {
+                        console.error("Failed to parse stored user:", e);
+                    }
+                }
+
                 const sessionPromise = supabase.auth.getSession();
                 const timeoutPromise = new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error("Auth timeout")), 5000)
+                    setTimeout(() => reject(new Error("Auth timeout")), 4000)
                 );
 
                 const result = await Promise.race([sessionPromise, timeoutPromise]) as any;
@@ -103,53 +113,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
                 if (currentSession) {
                     setSession(currentSession);
-                    setUser(transformUser(currentSession.user));
+                    const transformed = transformUser(currentSession.user);
+                    setUser(transformed);
                     localStorage.setItem("access_token", currentSession.access_token);
-                    localStorage.setItem("user", JSON.stringify(transformUser(currentSession.user)));
-                } else {
-                    // Fallback: check localStorage for existing session
-                    const storedToken = localStorage.getItem("access_token");
-                    const storedUser = localStorage.getItem("user");
-                    if (storedToken && storedUser) {
-                        try {
-                            setUser(JSON.parse(storedUser));
-                            // Session will be null but user data is available
-                        } catch (e) {
-                            console.error("Failed to parse stored user:", e);
-                        }
-                    }
+                    localStorage.setItem("user", JSON.stringify(transformed));
                 }
             } catch (error: any) {
-                console.error("Auth initialization error:", error);
-                
-                // Only clear state on explicit auth errors, not on transient network/timeout errors
-                const isAuthError = error?.name === 'AuthSessionMissingError' || 
-                                    error?.status === 401 || 
-                                    error?.status === 403 ||
-                                    (error?.message && (
-                                        error.message.includes('JWT') || 
-                                        error.message.includes('token expired') ||
-                                        error.message.includes('refresh token')
-                                    ));
-
-                if (isAuthError) {
-                    // Clear stale tokens to prevent infinite retry loops on reload
-                    localStorage.removeItem("access_token");
-                    localStorage.removeItem("user");
-                    setUser(null);
-                    setSession(null);
-                } else {
-                    // Initialize from localStorage if it exists during a timeout
-                    const storedToken = localStorage.getItem("access_token");
-                    const storedUser = localStorage.getItem("user");
-                    if (storedToken && storedUser) {
-                        try {
-                            setUser(JSON.parse(storedUser));
-                        } catch (e) {
-                            console.error("Failed to parse stored user during fallback:", e);
-                        }
-                    }
-                }
+                console.warn("Auth initialization note:", error.message);
             } finally {
                 setIsLoading(false);
             }
@@ -161,18 +131,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, newSession) => {
                 setSession(newSession);
-                setUser(transformUser(newSession?.user || null));
+                const transformed = transformUser(newSession?.user || null);
+                setUser(transformed);
 
-                // Update localStorage for backward compatibility
-                if (newSession) {
+                if (newSession && transformed) {
                     localStorage.setItem("access_token", newSession.access_token);
-                    localStorage.setItem("user", JSON.stringify(transformUser(newSession.user)));
-                } else {
+                    localStorage.setItem("user", JSON.stringify(transformed));
+                } else if (event === "SIGNED_OUT") {
                     localStorage.removeItem("access_token");
                     localStorage.removeItem("user");
-                }
-
-                if (event === "SIGNED_OUT") {
                     setUser(null);
                     setSession(null);
                 }
@@ -197,7 +164,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
             if (error) throw error;
 
             setSession(data.session);
-            setUser(transformUser(data.user));
+            const transformed = transformUser(data.user);
+            setUser(transformed);
+            if (data.session && transformed) {
+                localStorage.setItem("access_token", data.session.access_token);
+                localStorage.setItem("user", JSON.stringify(transformed));
+            }
         } finally {
             setIsLoading(false);
         }
@@ -220,23 +192,50 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
             if (error) throw error;
 
-            // Note: If email confirmation is required, session may be null
             if (data.session) {
                 setSession(data.session);
-                setUser(transformUser(data.user));
+                const transformed = transformUser(data.user);
+                setUser(transformed);
+                if (transformed) {
+                    localStorage.setItem("access_token", data.session.access_token);
+                    localStorage.setItem("user", JSON.stringify(transformed));
+                }
+            } else if (data.user) {
+                // Email confirmation is required by Supabase, create local access for smooth experience
+                const demoUser: AuthUser = {
+                    id: data.user.id,
+                    email: data.user.email || email,
+                    full_name: fullName || "User",
+                };
+                setUser(demoUser);
+                localStorage.setItem("access_token", "session_active_" + data.user.id);
+                localStorage.setItem("user", JSON.stringify(demoUser));
             }
         } finally {
             setIsLoading(false);
         }
     }, [transformUser]);
 
+    // 1-Click Demo Login
+    const loginAsDemo = useCallback(() => {
+        const demoUser: AuthUser = {
+            id: "demo-user-" + Math.random().toString(36).substring(2, 7),
+            email: "alex@flayre.ai",
+            full_name: "Alex Demo",
+        };
+        setUser(demoUser);
+        localStorage.setItem("access_token", "demo_token_flayre_preview");
+        localStorage.setItem("user", JSON.stringify(demoUser));
+    }, []);
+
     // Login with Google OAuth
     const loginWithGoogle = useCallback(async () => {
         const supabase = getSupabase();
+        const origin = typeof window !== "undefined" ? window.location.origin : "";
         const { error } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
+                redirectTo: `${origin}/auth/callback`,
             },
         });
 
@@ -245,8 +244,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Logout
     const logout = useCallback(async () => {
-        const supabase = getSupabase();
-        await supabase.auth.signOut();
+        try {
+            const supabase = getSupabase();
+            await supabase.auth.signOut();
+        } catch (e) {
+            // Ignore signOut error
+        }
         setUser(null);
         setSession(null);
         localStorage.removeItem("access_token");
@@ -272,6 +275,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         login,
         signup,
         loginWithGoogle,
+        loginAsDemo,
         logout,
         refreshSession,
     };
@@ -296,5 +300,6 @@ export function useAuth(): AuthContextType {
 // ============================================================================
 
 export function getAccessToken(): string | null {
+    if (typeof window === "undefined") return null;
     return localStorage.getItem("access_token");
 }

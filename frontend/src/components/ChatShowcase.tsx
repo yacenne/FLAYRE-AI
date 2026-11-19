@@ -176,7 +176,7 @@ export function ChatShowcase() {
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6">
       {/* Simple Scenario Switcher */}
-      <div className="flex flex-wrap items-center justify-center gap-2 p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800/60 max-w-xl mx-auto border border-slate-200 dark:border-slate-700/60">
+      <div className="flex flex-wrap items-center justify-center gap-2 p-1.5 rounded-2xl bg-slate-100 max-w-xl mx-auto border border-slate-200">
         {SCENARIOS.map((s) => {
           const active = s.id === scenario.id;
           return (
@@ -185,8 +185,8 @@ export function ChatShowcase() {
               onClick={() => setActiveScenarioId(s.id)}
               className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-150 ${
                 active
-                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm border border-slate-200/80 dark:border-slate-700"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  ? "bg-white text-slate-900 shadow-sm border border-slate-200"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               {s.tabLabel}
@@ -196,19 +196,19 @@ export function ChatShowcase() {
       </div>
 
       {/* Main Preview Container */}
-      <div className="grid lg:grid-cols-12 gap-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-5 sm:p-8 shadow-sm">
+      <div className="grid lg:grid-cols-12 gap-6 bg-white rounded-3xl border border-slate-200 p-5 sm:p-8 shadow-sm">
         
         {/* Left Column: Simulated Chat Screenshot */}
         <div className="lg:col-span-5 flex flex-col justify-between space-y-4">
           <div className="space-y-3">
             {/* Header info */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-sm flex items-center justify-center border border-slate-200 dark:border-slate-700">
+                <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-700 font-bold text-sm flex items-center justify-center border border-slate-200">
                   {scenario.senderAvatar}
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                  <h4 className="text-sm font-bold text-slate-900">
                     {scenario.senderName}
                   </h4>
                   <span className="text-[11px] text-slate-500 font-medium">
@@ -216,16 +216,16 @@ export function ChatShowcase() {
                   </span>
                 </div>
               </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 Active
               </span>
             </div>
 
             {/* Chat Bubble Canvas */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-3 min-h-[160px] flex flex-col justify-center">
-              <div className="self-start max-w-[85%] bg-white dark:bg-slate-800 p-3.5 rounded-2xl rounded-tl-sm border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-1">
-                <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-100 leading-relaxed">
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-3 min-h-[160px] flex flex-col justify-center">
+              <div className="self-start max-w-[85%] bg-white p-3.5 rounded-2xl rounded-tl-sm border border-slate-200 shadow-sm space-y-1">
+                <p className="text-xs sm:text-sm text-slate-800 leading-relaxed">
                   {scenario.incomingText}
                 </p>
                 <div className="text-[10px] text-slate-400 text-right font-medium">
@@ -235,21 +235,21 @@ export function ChatShowcase() {
             </div>
 
             {/* Detected AI Dynamics */}
-            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-2">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
                 <Sparkles className="w-3.5 h-3.5 text-[#FF5238]" />
                 <span>AI Emotion & Context Detection</span>
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                <div className="p-2 rounded-xl bg-white border border-slate-200">
                   <span className="text-[10px] text-slate-400 block font-medium">Detected Emotion</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200 text-[11px] truncate block">
+                  <span className="font-semibold text-slate-800 text-[11px] truncate block">
                     {scenario.dynamics.emotion}
                   </span>
                 </div>
-                <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                <div className="p-2 rounded-xl bg-white border border-slate-200">
                   <span className="text-[10px] text-slate-400 block font-medium">Subtext</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200 text-[11px] truncate block">
+                  <span className="font-semibold text-slate-800 text-[11px] truncate block">
                     {scenario.dynamics.subtext}
                   </span>
                 </div>
@@ -259,7 +259,7 @@ export function ChatShowcase() {
 
           <Link
             href="/analyze"
-            className="w-full py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold text-xs flex items-center justify-center gap-2 transition"
+            className="w-full py-2.5 px-4 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold text-xs flex items-center justify-center gap-2 transition"
           >
             <span>Try with your own screenshot</span>
             <ArrowRight className="w-3.5 h-3.5 text-[#FF5238]" />
@@ -284,7 +284,7 @@ export function ChatShowcase() {
                 <div
                   key={item.tone}
                   onClick={() => handleCopy(item.tone, item.text)}
-                  className="group relative p-4 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md transition-all duration-150 cursor-pointer space-y-2.5"
+                  className="group relative p-4 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all duration-150 cursor-pointer space-y-2.5"
                 >
                   <div className="flex items-center justify-between">
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${item.badgeColor}`}>
@@ -296,8 +296,8 @@ export function ChatShowcase() {
                       type="button"
                       className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition ${
                         isCopied
-                          ? "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300"
-                          : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 group-hover:bg-[#FF5238] group-hover:text-white"
+                          ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+                          : "bg-slate-100 text-slate-700 group-hover:bg-[#FF5238] group-hover:text-white"
                       }`}
                     >
                       {isCopied ? (
@@ -314,12 +314,12 @@ export function ChatShowcase() {
                     </button>
                   </div>
 
-                  <p className="text-sm font-medium text-slate-900 dark:text-slate-100 leading-relaxed">
+                  <p className="text-sm font-medium text-slate-900 leading-relaxed">
                     &ldquo;{item.text}&rdquo;
                   </p>
 
-                  <div className="text-[11px] text-slate-500 font-normal border-t border-slate-100 dark:border-slate-700/60 pt-2">
-                    <span className="font-semibold text-slate-600 dark:text-slate-400">Why this works: </span>
+                  <div className="text-[11px] text-slate-500 font-normal border-t border-slate-100 pt-2">
+                    <span className="font-semibold text-slate-600">Why this works: </span>
                     {item.why}
                   </div>
                 </div>

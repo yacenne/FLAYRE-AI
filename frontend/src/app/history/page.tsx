@@ -68,7 +68,7 @@ export default function HistoryPage() {
 
   if (authLoading || !isAuthenticated) {
     return (
-      <div className="min-h-screen bg-white dark:bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-[#FF5238] border-t-transparent animate-spin" />
       </div>
     );
@@ -88,7 +88,7 @@ export default function HistoryPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col lg:flex-row max-w-[1600px] mx-auto transition-colors duration-200">
+    <div className="min-h-screen bg-slate-50/60 text-slate-900 flex flex-col lg:flex-row max-w-[1600px] mx-auto">
       {/* Sidebar */}
       <div className="hidden lg:flex shrink-0">
         <Sidebar remainingCredits={remaining} isPro={isPro} />
@@ -106,7 +106,7 @@ export default function HistoryPage() {
 
         <main className="px-4 sm:px-6 space-y-4 flex-1">
           {error ? (
-            <div className="clay-card p-8 text-center space-y-3 bg-white dark:bg-slate-900">
+            <div className="clay-card p-8 text-center space-y-3 bg-white border border-slate-200">
               <p className="text-sm font-semibold text-rose-600">{error}</p>
               <button
                 onClick={() => fetchConversations(currentPage)}
@@ -126,15 +126,15 @@ export default function HistoryPage() {
                 <div
                   key={conv.id}
                   onClick={() => setSelectedConversationId(conv.id)}
-                  className="clay-card p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900 transition-all group shadow-sm"
+                  className="clay-card p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer hover:border-slate-300 bg-white transition-all group shadow-sm border border-slate-200"
                 >
                   <div className="flex items-start gap-4 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-mono font-bold text-xs uppercase text-slate-700 dark:text-slate-300 shrink-0 mt-0.5">
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center font-mono font-bold text-xs uppercase text-slate-700 shrink-0 mt-0.5">
                       {conv.platform?.slice(0, 2) || "CH"}
                     </div>
                     <div className="space-y-1.5 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-bold text-slate-900 dark:text-white capitalize">
+                        <span className="text-xs font-bold text-slate-900 capitalize">
                           {conv.platform}
                         </span>
                         {conv.detected_tone && (
@@ -148,7 +148,7 @@ export default function HistoryPage() {
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-slate-700 dark:text-slate-200 line-clamp-2 leading-relaxed font-normal">
+                      <p className="text-sm text-slate-700 line-clamp-2 leading-relaxed font-normal">
                         {conv.context_summary || "Conversation screenshot analysis"}
                       </p>
                       <div className="flex items-center gap-1.5 text-xs text-slate-400 font-mono">
@@ -162,7 +162,7 @@ export default function HistoryPage() {
                     <span className="text-xs font-semibold text-[#FF5238] opacity-0 group-hover:opacity-100 transition hidden sm:inline">
                       Inspect
                     </span>
-                    <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-[#FF5238] group-hover:border-[#FF5238] transition">
+                    <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-[#FF5238] group-hover:border-[#FF5238] transition">
                       <ArrowRight className="w-3.5 h-3.5" />
                     </div>
                   </div>
@@ -171,7 +171,7 @@ export default function HistoryPage() {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between pt-6 border-t border-slate-200 dark:border-slate-800">
+                <div className="flex items-center justify-between pt-6 border-t border-slate-200">
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage <= 1}
@@ -197,12 +197,12 @@ export default function HistoryPage() {
               )}
             </div>
           ) : (
-            <div className="clay-card p-16 text-center space-y-4 bg-white dark:bg-slate-900 shadow-sm">
-              <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center mx-auto text-slate-400">
+            <div className="clay-card p-16 text-center space-y-4 bg-white shadow-sm border border-slate-200">
+              <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto text-slate-400">
                 <Inbox className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h2 className="text-base font-bold text-slate-900 dark:text-white">No records found</h2>
+                <h2 className="text-base font-bold text-slate-900">No records found</h2>
                 <p className="text-xs text-slate-500 max-w-sm mx-auto">
                   {searchQuery
                     ? "No past conversations match your filter query."

@@ -18,18 +18,6 @@ export const metadata: Metadata = {
   description: "Never know what to say? flayre.ai analyzes your chat conversations and suggests smart, contextual responses. Works with WhatsApp, Instagram, Discord and more.",
   keywords: ["AI", "conversation assistant", "chat helper", "response suggestions", "WhatsApp", "Instagram", "Discord"],
   authors: [{ name: "flayre.ai" }],
-  openGraph: {
-    title: "flayre.ai - AI-Powered Conversation Assistant",
-    description: "Get smart response suggestions for any chat conversation",
-    url: "https://flayreai.vercel.app",
-    siteName: "flayre.ai",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "flayre.ai - AI-Powered Conversation Assistant",
-    description: "Get smart response suggestions for any chat conversation",
-  },
 };
 
 export default function RootLayout({
@@ -45,21 +33,17 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  var saved = localStorage.getItem('flayre_theme');
-                  if (saved === 'dark') {
-                    document.documentElement.classList.add('dark');
-                    document.documentElement.style.colorScheme = 'dark';
-                  } else {
-                    document.documentElement.classList.remove('dark');
-                    document.documentElement.style.colorScheme = 'light';
-                  }
+                  // Purge any stale dark mode flag so UI is always crisp white
+                  localStorage.removeItem('flayre_theme');
+                  document.documentElement.classList.remove('dark');
+                  document.documentElement.style.colorScheme = 'light';
                 } catch(e) {}
               })();
             `,
           }}
         />
       </head>
-      <body className="antialiased bg-[var(--bg-base)] text-[var(--text-primary)] min-h-screen font-sans transition-colors duration-200">
+      <body className="antialiased bg-white text-slate-900 min-h-screen font-sans">
         <Script
           src="https://checkout.razorpay.com/v1/checkout.js"
           strategy="beforeInteractive"

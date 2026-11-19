@@ -50,7 +50,7 @@ export function ClayToneSlider({
       </div>
 
       {/* Modern Segmented Pill Bar */}
-      <div className="p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 grid grid-flow-col auto-cols-fr gap-1">
+      <div className="p-1 rounded-xl bg-slate-100 border border-slate-200 grid grid-flow-col auto-cols-fr gap-1">
         {tones.map((t) => {
           const isSelected = t.id === activeTone;
           return (
@@ -60,7 +60,7 @@ export function ClayToneSlider({
               onClick={() => onChange(t.id)}
               className={`py-2 px-2.5 rounded-lg text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1.5 ${
                 isSelected
-                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm border border-slate-200/80 dark:border-slate-700"
+                  ? "bg-white text-slate-900 shadow-sm border border-slate-200"
                   : "text-slate-500 hover:text-slate-900"
               }`}
             >

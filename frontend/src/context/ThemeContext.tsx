@@ -13,40 +13,23 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Default to clean white light mode
+  // Always clean white light mode by default
   const [theme, setThemeState] = useState<Theme>("light");
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Check saved theme or default to light
-    const savedTheme = localStorage.getItem("flayre_theme") as Theme | null;
-    const initialTheme: Theme = savedTheme === "dark" ? "dark" : "light";
-
-    setThemeState(initialTheme);
-    applyTheme(initialTheme);
-    setMounted(true);
+    try {
+      localStorage.removeItem("flayre_theme");
+      document.documentElement.classList.remove("dark");
+      document.documentElement.style.colorScheme = "light";
+    } catch (e) {}
   }, []);
 
-  const applyTheme = (newTheme: Theme) => {
-    const root = document.documentElement;
-    if (newTheme === "dark") {
-      root.classList.add("dark");
-      root.style.colorScheme = "dark";
-    } else {
-      root.classList.remove("dark");
-      root.style.colorScheme = "light";
-    }
+  const toggleTheme = () => {
+    // Keep it light
   };
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem("flayre_theme", newTheme);
-    applyTheme(newTheme);
-  };
-
-  const toggleTheme = () => {
-    const nextTheme: Theme = theme === "light" ? "dark" : "light";
-    setTheme(nextTheme);
   };
 
   return (
