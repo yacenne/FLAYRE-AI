@@ -9,7 +9,6 @@ import { Navbar } from "@/components/Navbar";
 import { useToast } from "@/components/Toast";
 import type { AnalyzeResponse, AIResponse, UsageInfo, Platform } from "@/types";
 import {
-  UploadCloud,
   Sparkles,
   Copy,
   Check,
@@ -45,6 +44,12 @@ export default function AnalyzePage() {
       setUsage(data);
     } catch (err) {
       console.error("Failed to load usage:", err);
+      // Fallback usage for smooth local testing experience
+      setUsage({
+        analyses_used: 0,
+        analyses_limit: 10,
+        analyses_remaining: 10,
+      });
     }
   }, []);
 
@@ -127,7 +132,10 @@ export default function AnalyzePage() {
       loadUsage();
       showToast("Analysis complete!", "success");
     } catch (err: any) {
-      showToast(err.message || "Failed to analyze screenshot", "error");
+      const msg = err.message === "Failed to fetch"
+        ? "Unable to connect to backend (http://localhost:8000). Please check that the server is running."
+        : (err.message || "Failed to analyze screenshot");
+      showToast(msg, "error");
     } finally {
       setAnalyzing(false);
     }
@@ -157,7 +165,7 @@ export default function AnalyzePage() {
 
   if (authLoading || !isAuthenticated) {
     return (
-      <div className="min-h-screen bg-white dark:bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-[#FF5238] border-t-transparent animate-spin" />
       </div>
     );
@@ -167,7 +175,7 @@ export default function AnalyzePage() {
   const remaining = usage?.analyses_remaining ?? 10;
 
   return (
-    <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col lg:flex-row max-w-[1600px] mx-auto transition-colors duration-200">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col lg:flex-row max-w-[1600px] mx-auto">
       {/* Sidebar */}
       <div className="hidden lg:flex shrink-0">
         <Sidebar remainingCredits={remaining} isPro={isPro} />
@@ -203,12 +211,12 @@ export default function AnalyzePage() {
                   setIsDragging(false);
                 }}
                 onClick={() => !image && fileInputRef.current?.click()}
-                className={`clay-card p-6 min-h-[340px] flex flex-col items-center justify-center text-center cursor-pointer border-2 border-dashed transition-all relative overflow-hidden bg-white dark:bg-slate-900 ${
+                className={`p-6 min-h-[340px] flex flex-col items-center justify-center text-center cursor-pointer border-2 border-dashed rounded-2xl transition-all relative overflow-hidden bg-white shadow-sm ${
                   isDragging
-                    ? "border-[#FF5238] bg-orange-50/60 dark:bg-orange-950/20 shadow-md"
+                    ? "border-[#FF5238] bg-orange-50/60 shadow-md"
                     : image
                     ? "border-transparent"
-                    : "border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600"
+                    : "border-slate-300 hover:border-slate-400"
                 }`}
               >
                 {image ? (
@@ -216,7 +224,7 @@ export default function AnalyzePage() {
                     <img
                       src={image}
                       alt="Uploaded screenshot"
-                      className="max-h-[360px] w-auto object-contain rounded-xl shadow-md border border-slate-200 dark:border-slate-700"
+                      className="max-h-[360px] w-auto object-contain rounded-xl shadow-md border border-slate-200"
                     />
                     <button
                       onClick={(e) => {
@@ -231,16 +239,16 @@ export default function AnalyzePage() {
                   </div>
                 ) : (
                   <div className="space-y-3 pointer-events-none">
-                    <div className="w-12 h-12 rounded-2xl bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/40 flex items-center justify-center mx-auto text-[#FF5238]">
+                    <div className="w-12 h-12 rounded-2xl bg-orange-50 border border-orange-200 flex items-center justify-center mx-auto text-[#FF5238]">
                       <Camera className="w-6 h-6" />
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">
+                      <p className="text-sm font-bold text-slate-900">
                         Drop conversation screenshot here
                       </p>
                       <p className="text-xs text-slate-500">or click to browse files</p>
                     </div>
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono text-slate-600 dark:text-slate-300">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-mono text-slate-600">
                       <kbd className="text-[#FF5238] font-bold">Ctrl+V</kbd>
                       <span>to paste directly</span>
                     </div>
@@ -257,10 +265,10 @@ export default function AnalyzePage() {
               </div>
 
               {/* Settings Card */}
-              <div className="clay-card p-5 space-y-4 bg-white dark:bg-slate-900">
+              <div className="p-5 space-y-4 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
                 {/* Platform Selector */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                     Chat Platform
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -279,7 +287,7 @@ export default function AnalyzePage() {
                           className={`p-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center border ${
                             selected
                               ? "bg-[#FF5238] text-white border-[#FF5238] shadow-sm"
-                              : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                              : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
                           }`}
                         >
                           <span>{p.label}</span>
@@ -291,7 +299,7 @@ export default function AnalyzePage() {
 
                 {/* Additional Context Input */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center justify-between">
                     <span>Optional Context</span>
                     <span className="text-[10px] text-slate-400 font-normal">e.g. goal or vibe</span>
                   </label>
@@ -300,7 +308,7 @@ export default function AnalyzePage() {
                     value={additionalContext}
                     onChange={(e) => setAdditionalContext(e.target.value)}
                     placeholder="e.g. Keep it chill, don't sound eager, ask for Saturday"
-                    className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#FF5238] focus:bg-white transition"
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#FF5238] focus:bg-white transition"
                     maxLength={140}
                   />
                 </div>
@@ -331,24 +339,24 @@ export default function AnalyzePage() {
               {analysis ? (
                 <div className="space-y-4 animate-in fade-in duration-300">
                   {/* Context Summary Card */}
-                  <div className="clay-card p-5 space-y-3 bg-white dark:bg-slate-900 border-emerald-200 dark:border-emerald-800/60">
+                  <div className="p-5 space-y-3 bg-white border border-emerald-200 rounded-2xl shadow-sm">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <MessageSquare className="w-4 h-4 text-emerald-600" />
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-700">
                           Detected Context & Tone
                         </h3>
                       </div>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 capitalize border border-slate-200 dark:border-slate-700">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 capitalize border border-slate-200">
                         {analysis.platform}
                       </span>
                     </div>
 
-                    <p className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-medium">
+                    <p className="text-sm text-slate-800 leading-relaxed font-medium">
                       {analysis.context.summary}
                     </p>
 
-                    <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
                       {analysis.context.tone && (
                         <span className="clay-badge-terracotta">
                           Tone: {analysis.context.tone}
@@ -388,7 +396,7 @@ export default function AnalyzePage() {
                       return (
                         <div
                           key={resp.id}
-                          className="clay-card p-5 space-y-3.5 bg-white dark:bg-slate-900 hover:border-slate-300 transition-all shadow-sm"
+                          className="p-5 space-y-3.5 bg-white border border-slate-200/80 rounded-2xl hover:border-slate-300 transition-all shadow-sm"
                         >
                           <div className="flex items-center justify-between">
                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${badgeClasses}`}>
@@ -400,7 +408,7 @@ export default function AnalyzePage() {
                             </span>
                           </div>
 
-                          <p className="text-sm sm:text-base text-slate-900 dark:text-slate-100 leading-relaxed font-medium">
+                          <p className="text-sm sm:text-base text-slate-900 leading-relaxed font-medium">
                             &ldquo;{resp.content}&rdquo;
                           </p>
 
@@ -439,12 +447,12 @@ export default function AnalyzePage() {
                 </div>
               ) : (
                 /* Empty Ready State */
-                <div className="clay-card p-12 text-center min-h-[440px] flex flex-col items-center justify-center space-y-4 bg-white dark:bg-slate-900">
-                  <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center mx-auto text-slate-400">
+                <div className="p-12 text-center min-h-[440px] flex flex-col items-center justify-center space-y-4 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+                  <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto text-slate-400">
                     <FileImage className="w-7 h-7" />
                   </div>
                   <div className="space-y-1.5 max-w-sm">
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white">Ready to Analyze</h3>
+                    <h3 className="text-base font-bold text-slate-900">Ready to Analyze</h3>
                     <p className="text-xs text-slate-500 leading-relaxed">
                       Upload or paste your conversation screenshot on the left to receive three tailor-made responses calibrated for Warmth, Directness, and Playfulness.
                     </p>

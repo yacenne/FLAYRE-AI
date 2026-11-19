@@ -77,12 +77,12 @@ export default function AuthCallbackPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex items-center justify-center p-4">
-        <div className="clay-card p-8 max-w-md text-center space-y-3 bg-white dark:bg-slate-900 shadow-md">
+      <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center p-4">
+        <div className="clay-card p-8 max-w-md text-center space-y-3 bg-white shadow-md border border-slate-200">
           <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center mx-auto">
             <AlertCircle className="w-6 h-6" />
           </div>
-          <h1 className="text-lg font-bold text-slate-900 dark:text-white">Authentication Error</h1>
+          <h1 className="text-lg font-bold text-slate-900">Authentication Error</h1>
           <p className="text-xs text-slate-500">{error}</p>
           <p className="text-xs text-slate-400 font-mono">Redirecting to login...</p>
         </div>
@@ -91,12 +91,12 @@ export default function AuthCallbackPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center p-4">
       <div className="text-center space-y-3">
         <div className="w-14 h-14 rounded-2xl bg-[#FF5238] flex items-center justify-center mx-auto shadow-md shadow-[#FF5238]/30 animate-pulse">
           <Flame className="w-7 h-7 text-white fill-white" />
         </div>
-        <p className="text-slate-900 dark:text-white font-bold text-base">Verifying authentication...</p>
+        <p className="text-slate-900 font-bold text-base">Verifying authentication...</p>
         <p className="text-slate-500 text-xs">Please wait while we secure your session</p>
       </div>
     </div>

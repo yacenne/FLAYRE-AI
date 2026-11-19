@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { useTheme } from "@/context/ThemeContext";
 import {
   Flame,
   Search,
@@ -16,10 +15,6 @@ import {
   Sparkles,
   LayoutDashboard,
   History,
-  Crown,
-  Sun,
-  Moon,
-  Zap,
 } from "lucide-react";
 
 interface NavbarProps {
@@ -40,7 +35,6 @@ export function Navbar({
   const pathname = usePathname();
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -92,52 +86,38 @@ export function Navbar({
   // Unauthenticated / Landing Page Header
   if (!isAuthenticated || pathname === "/") {
     return (
-      <header className="sticky top-0 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-8 py-3.5 transition-colors duration-200">
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-8 py-3.5">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
             <div className="w-8 h-8 rounded-xl bg-[#FF5238] flex items-center justify-center shadow-md shadow-[#FF5238]/20 group-hover:scale-105 transition-transform">
               <Flame className="w-4 h-4 text-white fill-white" />
             </div>
-            <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">
+            <span className="font-bold text-lg tracking-tight text-slate-900">
               flayre<span className="text-[#FF5238]">.ai</span>
             </span>
           </Link>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-slate-600 dark:text-slate-300">
-            <a href="#how-it-works" className="hover:text-slate-950 dark:hover:text-white transition-colors">
+          <nav className="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-600">
+            <a href="#how-it-works" className="hover:text-slate-950 transition-colors">
               How It Works
             </a>
-            <a href="#demo" className="hover:text-slate-950 dark:hover:text-white transition-colors">
+            <a href="#demo" className="hover:text-slate-950 transition-colors">
               Interactive Demo
             </a>
-            <a href="#features" className="hover:text-slate-950 dark:hover:text-white transition-colors">
+            <a href="#features" className="hover:text-slate-950 transition-colors">
               Features
             </a>
-            <Link href="/pricing" className="hover:text-slate-950 dark:hover:text-white transition-colors">
+            <Link href="/pricing" className="hover:text-slate-950 transition-colors">
               Pricing
             </Link>
           </nav>
 
           {/* Right Actions */}
           <div className="flex items-center gap-2.5">
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition"
-              title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              aria-label="Toggle Theme"
-            >
-              {theme === "dark" ? (
-                <Sun className="w-4 h-4 text-amber-400" />
-              ) : (
-                <Moon className="w-4 h-4 text-slate-600" />
-              )}
-            </button>
-
             {isAuthenticated ? (
-              <Link href="/dashboard" className="clay-btn-primary text-xs sm:text-sm py-2 px-4">
+              <Link href="/dashboard" className="clay-btn-primary text-xs sm:text-sm py-2 px-4 shadow-sm">
                 Dashboard
               </Link>
             ) : (
@@ -158,19 +138,19 @@ export function Navbar({
 
   // Authenticated Top Bar
   return (
-    <div className="w-full px-4 sm:px-6 py-4 flex items-center justify-between gap-4 transition-colors duration-200">
+    <div className="w-full px-4 sm:px-6 py-4 flex items-center justify-between gap-4 bg-white/50 border-b border-slate-100">
       {/* Page Title & Mobile Drawer Button */}
       <div className="flex items-center gap-3">
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="lg:hidden w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300 shadow-sm"
+          className="lg:hidden w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 shadow-sm"
           aria-label="Toggle Navigation"
         >
           {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
         </button>
 
         {title && (
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
             {title}
           </h1>
         )}
@@ -188,9 +168,9 @@ export function Navbar({
               setSearchQuery(e.target.value);
               if (onSearch) onSearch(e.target.value);
             }}
-            className="w-full pl-10 pr-12 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#FF5238] focus:bg-white transition"
+            className="w-full pl-10 pr-12 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#FF5238] focus:bg-white transition"
           />
-          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-mono px-1.5 py-0.5 rounded bg-slate-200/60 dark:bg-slate-700 border border-slate-300/60 dark:border-slate-600">
+          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-mono px-1.5 py-0.5 rounded bg-slate-200/60 border border-slate-300/60">
             ⌘K
           </kbd>
         </form>
@@ -198,33 +178,19 @@ export function Navbar({
 
       {/* Right Controls */}
       <div className="flex items-center gap-2.5">
-        {/* Dark Mode Toggle */}
-        <button
-          onClick={toggleTheme}
-          className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 transition shadow-sm"
-          title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          aria-label="Toggle Theme"
-        >
-          {theme === "dark" ? (
-            <Sun className="w-4 h-4 text-amber-400" />
-          ) : (
-            <Moon className="w-4 h-4 text-slate-600" />
-          )}
-        </button>
-
         {/* Remaining Credits Pill */}
         {remainingCredits !== undefined && remainingCredits !== null && (
           <Link
             href="/pricing"
-            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:border-slate-300 transition"
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 hover:border-slate-300 transition"
           >
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <span>
               {isPro ? (
-                <strong className="text-amber-600 dark:text-amber-400 font-bold">Pro Active</strong>
+                <strong className="text-amber-600 font-bold">Pro Active</strong>
               ) : (
                 <>
-                  <strong className="text-slate-900 dark:text-white font-bold">{remainingCredits}</strong> credits left
+                  <strong className="text-slate-900 font-bold">{remainingCredits}</strong> credits left
                 </>
               )}
             </span>
@@ -235,7 +201,7 @@ export function Navbar({
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 transition shadow-sm"
+            className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 transition shadow-sm"
             title="Notifications"
           >
             <Bell className="w-4 h-4" />
@@ -248,8 +214,8 @@ export function Navbar({
 
           {/* Notifications Dropdown */}
           {notificationsOpen && (
-            <div className="absolute right-0 mt-3 w-80 sm:w-88 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl z-50 space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <div className="absolute right-0 mt-3 w-80 sm:w-88 p-4 rounded-2xl bg-white border border-slate-200 shadow-xl z-50 space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
                   Notifications
                 </h3>
@@ -269,15 +235,15 @@ export function Navbar({
                     key={n.id}
                     className={`p-3 rounded-xl text-xs transition ${
                       n.read
-                        ? "bg-slate-50 dark:bg-slate-800/40 text-slate-500"
-                        : "bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700"
+                        ? "bg-slate-50 text-slate-500"
+                        : "bg-slate-50 text-slate-800 border border-slate-200"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <p className="font-bold text-slate-900 dark:text-white">{n.title}</p>
+                      <p className="font-bold text-slate-900">{n.title}</p>
                       <span className="text-[10px] text-slate-400 shrink-0">{n.time}</span>
                     </div>
-                    <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">{n.message}</p>
+                    <p className="mt-1 text-[11px] text-slate-600 leading-relaxed">{n.message}</p>
                   </div>
                 ))}
               </div>
@@ -288,7 +254,7 @@ export function Navbar({
         {/* Profile Avatar */}
         <Link
           href="/dashboard"
-          className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:scale-105 transition shadow-sm"
+          className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 hover:scale-105 transition shadow-sm"
           title={user?.email}
         >
           <User className="w-4 h-4" />
@@ -298,14 +264,14 @@ export function Navbar({
       {/* Mobile Drawer */}
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex justify-start p-4 animate-in fade-in duration-200">
-          <div className="w-72 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col justify-between">
+          <div className="w-72 bg-white border border-slate-200 rounded-2xl p-5 shadow-2xl flex flex-col justify-between">
             <div className="space-y-6">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-[#FF5238] flex items-center justify-center">
                     <Flame className="w-4 h-4 text-white fill-white" />
                   </div>
-                  <span className="font-bold text-slate-900 dark:text-white">flayre.ai</span>
+                  <span className="font-bold text-slate-900">flayre.ai</span>
                 </div>
                 <button
                   onClick={() => setMobileOpen(false)}
@@ -331,8 +297,8 @@ export function Navbar({
                       onClick={() => setMobileOpen(false)}
                       className={`flex items-center gap-3 px-3.5 py-2.5 text-sm font-semibold rounded-xl transition ${
                         active
-                          ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-l-2 border-[#FF5238]"
-                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 hover:bg-slate-50"
+                          ? "bg-slate-100 text-slate-900 border-l-2 border-[#FF5238]"
+                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -343,15 +309,7 @@ export function Navbar({
               </nav>
             </div>
 
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
-              <button
-                onClick={toggleTheme}
-                className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl transition"
-              >
-                {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
-                <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
-              </button>
-
+            <div className="pt-4 border-t border-slate-100 space-y-2.5">
               <button
                 onClick={() => {
                   setMobileOpen(false);

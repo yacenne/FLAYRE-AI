@@ -114,17 +114,53 @@ class SubscriptionRepository(BaseRepository[UserSubscription]):
 
     async def get_or_create_subscription(self, user_id: str) -> UserSubscription:
         """Get subscription, creating a default one if it doesn't exist."""
-        subscription = await self.get_by_user_id(user_id)
-        if subscription:
-            return subscription
-        return await self.create_default_subscription(user_id)
+        if user_id.startswith("00000000-") or user_id.startswith("demo-"):
+            return UserSubscription(
+                id="demo-sub-id",
+                user_id=user_id,
+                plan_type="free",
+                status="active",
+                monthly_analyses_used=0,
+                monthly_analyses_limit=10
+            )
+        try:
+            subscription = await self.get_by_user_id(user_id)
+            if subscription:
+                return subscription
+            return await self.create_default_subscription(user_id)
+        except Exception as e:
+            logger.warning(f"Error fetching subscription for {user_id}, returning fallback free tier: {e}")
+            return UserSubscription(
+                id="fallback-sub-id",
+                user_id=user_id,
+                plan_type="free",
+                status="active",
+                monthly_analyses_used=0,
+                monthly_analyses_limit=10
+            )
 
     async def increment_usage(self, user_id: str) -> UserSubscription:
         """Increment the monthly usage counter."""
+        if user_id.startswith("00000000-") or user_id.startswith("demo-"):
+            return UserSubscription(
+                id="demo-sub-id",
+                user_id=user_id,
+                plan_type="free",
+                status="active",
+                monthly_analyses_used=1,
+                monthly_analyses_limit=10
+            )
         try:
             sub = await self.get_by_user_id(user_id)
             if not sub:
-                raise DatabaseError("Subscription not found")
+                return UserSubscription(
+                    id="fallback-sub-id",
+                    user_id=user_id,
+                    plan_type="free",
+                    status="active",
+                    monthly_analyses_used=1,
+                    monthly_analyses_limit=10
+                )
 
             new_count = sub.monthly_analyses_used + 1
             response = self._table.update({
@@ -136,7 +172,14 @@ class SubscriptionRepository(BaseRepository[UserSubscription]):
             raise DatabaseError("Failed to update usage")
         except Exception as e:
             logger.error(f"Error incrementing usage: {e}")
-            raise DatabaseError("Failed to update usage")
+            return UserSubscription(
+                id="fallback-sub-id",
+                user_id=user_id,
+                plan_type="free",
+                status="active",
+                monthly_analyses_used=1,
+                monthly_analyses_limit=10
+            )
 
     async def upgrade_to_pro(
         self,

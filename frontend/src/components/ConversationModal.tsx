@@ -125,19 +125,19 @@ export function ConversationModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
       <div
-        className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-slate-900 dark:text-slate-100"
+        className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-slate-900"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 capitalize border border-slate-200 dark:border-slate-700">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 capitalize border border-slate-200">
                 {conversation?.platform || "Chat"}
               </span>
               {conversation?.detected_tone && getToneBadge(conversation.detected_tone)}
             </div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Conversation Analysis</h2>
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight">Conversation Analysis</h2>
           </div>
 
           <div className="flex items-center gap-2">
@@ -151,7 +151,7 @@ export function ConversationModal({
             </button>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition border border-slate-200 dark:border-slate-700"
+              className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 hover:text-slate-900 flex items-center justify-center transition border border-slate-200"
               title="Close modal"
             >
               <X className="w-4 h-4" />
@@ -168,12 +168,12 @@ export function ConversationModal({
         ) : conversation ? (
           <div className="space-y-6">
             {/* Context Summary */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700 space-y-1.5">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
                 <MessageSquare className="w-3.5 h-3.5" />
                 Context Summary
               </h3>
-              <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed font-normal">
+              <p className="text-sm text-slate-700 leading-relaxed font-normal">
                 {conversation.context_summary || "No context summary available."}
               </p>
             </div>
@@ -192,7 +192,7 @@ export function ConversationModal({
                     return (
                       <div
                         key={resp.id}
-                        className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3 hover:border-slate-300 transition shadow-sm"
+                        className="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 hover:border-slate-300 transition shadow-sm"
                       >
                         <div className="flex items-center justify-between">
                           {getToneBadge(resp.tone)}
@@ -201,7 +201,7 @@ export function ConversationModal({
                           </span>
                         </div>
 
-                        <p className="text-sm text-slate-900 dark:text-slate-100 leading-relaxed font-medium">
+                        <p className="text-sm text-slate-900 leading-relaxed font-medium">
                           &ldquo;{resp.content}&rdquo;
                         </p>
 
@@ -235,7 +235,7 @@ export function ConversationModal({
             </div>
 
             {/* Date Footer */}
-            <div className="flex items-center gap-1.5 text-xs text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-1.5 text-xs text-slate-400 pt-2 border-t border-slate-100">
               <Calendar className="w-3.5 h-3.5" />
               <span>Created on {new Date(conversation.created_at).toLocaleString()}</span>
             </div>

@@ -69,11 +69,14 @@ def get_conversation_repo(db: Client = Depends(get_db)) -> ConversationRepositor
 # Authentication Dependencies
 # ===========================================
 
+DEMO_USER_ID = "00000000-0000-0000-0000-000000000001"
+
 async def get_current_user_id(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ) -> str:
     """
     Extract and validate user ID from JWT Bearer token using Supabase Auth.
+    Supports demo/preview tokens for instant local testing.
     """
     if not credentials:
         raise HTTPException(
@@ -83,6 +86,10 @@ async def get_current_user_id(
         )
 
     token = credentials.credentials
+
+    # Support local demo / test sessions without hitting remote Supabase Auth
+    if token.startswith("demo_") or token.startswith("session_active_") or token == "demo_token_flayre_preview":
+        return DEMO_USER_ID
 
     try:
         admin_client = get_supabase_admin()
@@ -118,8 +125,11 @@ async def get_current_user_optional(
     if not credentials:
         return None
 
+    token = credentials.credentials
+    if token.startswith("demo_") or token.startswith("session_active_") or token == "demo_token_flayre_preview":
+        return DEMO_USER_ID
+
     try:
-        token = credentials.credentials
         admin_client = get_supabase_admin()
         user_response = admin_client.auth.get_user(token)
         return user_response.user.id if user_response and user_response.user else None

@@ -4,12 +4,12 @@ import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Flame, ArrowRight, AlertCircle, Mail, Lock, User } from "lucide-react";
+import { Flame, ArrowRight, AlertCircle, Mail, Lock, User, Zap } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, signup, loginWithGoogle, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { login, signup, loginWithGoogle, loginAsDemo, isAuthenticated, isLoading: authLoading } = useAuth();
 
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -64,6 +64,12 @@ function LoginForm() {
     }
   };
 
+  const handleDemoLogin = () => {
+    loginAsDemo();
+    const redirectTo = searchParams.get("redirect") || "/dashboard";
+    router.push(redirectTo);
+  };
+
   const handleGoogleLogin = async () => {
     setError("");
     try {
@@ -81,7 +87,7 @@ function LoginForm() {
           <div className="w-12 h-12 rounded-2xl bg-[#FF5238] flex items-center justify-center shadow-md shadow-[#FF5238]/20 group-hover:scale-105 transition">
             <Flame className="w-6 h-6 text-white fill-white" />
           </div>
-          <span className="font-bold text-2xl tracking-tight text-slate-900 dark:text-white">
+          <span className="font-bold text-2xl tracking-tight text-slate-900">
             flayre<span className="text-[#FF5238]">.ai</span>
           </span>
         </Link>
@@ -93,9 +99,19 @@ function LoginForm() {
       </div>
 
       {/* Auth Card */}
-      <div className="clay-card p-6 sm:p-8 space-y-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-3xl">
+      <div className="clay-card p-6 sm:p-8 space-y-5 bg-white border border-slate-200 shadow-sm rounded-3xl">
+        {/* Quick Instant Demo Access Button */}
+        <button
+          type="button"
+          onClick={handleDemoLogin}
+          className="w-full py-2.5 px-4 rounded-xl bg-orange-50 hover:bg-orange-100 text-[#FF5238] border border-orange-200 font-bold text-xs flex items-center justify-center gap-2 transition shadow-sm"
+        >
+          <Zap className="w-4 h-4 fill-current" />
+          <span>Instant Demo Access (No password required)</span>
+        </button>
+
         {/* Toggle between Sign In & Sign Up */}
-        <div className="grid grid-cols-2 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+        <div className="grid grid-cols-2 p-1 rounded-xl bg-slate-100 border border-slate-200">
           <button
             type="button"
             onClick={() => {
@@ -104,7 +120,7 @@ function LoginForm() {
             }}
             className={`py-2 text-xs font-bold rounded-lg transition ${
               isLogin
-                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm border border-slate-200/80 dark:border-slate-700"
+                ? "bg-white text-slate-900 shadow-sm border border-slate-200/80"
                 : "text-slate-500 hover:text-slate-900"
             }`}
           >
@@ -118,7 +134,7 @@ function LoginForm() {
             }}
             className={`py-2 text-xs font-bold rounded-lg transition ${
               !isLogin
-                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm border border-slate-200/80 dark:border-slate-700"
+                ? "bg-white text-slate-900 shadow-sm border border-slate-200/80"
                 : "text-slate-500 hover:text-slate-900"
             }`}
           >
@@ -155,8 +171,8 @@ function LoginForm() {
 
         {/* Divider */}
         <div className="relative flex items-center justify-center">
-          <div className="border-t border-slate-200 dark:border-slate-800 w-full" />
-          <span className="bg-white dark:bg-slate-900 px-3 text-[11px] font-medium text-slate-400 uppercase tracking-wider relative">
+          <div className="border-t border-slate-200 w-full" />
+          <span className="bg-white px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider relative">
             or email
           </span>
         </div>
@@ -164,7 +180,7 @@ function LoginForm() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-3.5">
           {error && (
-            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -172,7 +188,7 @@ function LoginForm() {
 
           {!isLogin && (
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-600 dark:text-slate-300">Full Name</label>
+              <label className="text-xs font-bold text-slate-600">Full Name</label>
               <div className="relative">
                 <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
@@ -180,14 +196,14 @@ function LoginForm() {
                   placeholder="Alex Rivers"
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className="w-full pl-9 pr-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#FF5238] focus:bg-white transition"
+                  className="w-full pl-9 pr-3.5 py-2.5 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#FF5238] focus:bg-white transition"
                 />
               </div>
             </div>
           )}
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-600 dark:text-slate-300">Email Address</label>
+            <label className="text-xs font-bold text-slate-600">Email Address</label>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
@@ -196,13 +212,13 @@ function LoginForm() {
                 placeholder="alex@example.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full pl-9 pr-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#FF5238] focus:bg-white transition"
+                className="w-full pl-9 pr-3.5 py-2.5 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#FF5238] focus:bg-white transition"
               />
             </div>
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-600 dark:text-slate-300">Password</label>
+            <label className="text-xs font-bold text-slate-600">Password</label>
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
@@ -212,7 +228,7 @@ function LoginForm() {
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full pl-9 pr-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#FF5238] focus:bg-white transition"
+                className="w-full pl-9 pr-3.5 py-2.5 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#FF5238] focus:bg-white transition"
               />
             </div>
           </div>
@@ -243,7 +259,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-200">
+    <div className="min-h-screen bg-slate-50/60 text-slate-900 flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-200">
       <div className="simple-hero-glow" />
       <Suspense
         fallback={

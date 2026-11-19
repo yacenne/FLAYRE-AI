@@ -1,12 +1,12 @@
 @import "tailwindcss";
+@custom-variant dark (&:where([data-theme="dark"]));
 
 /* ============================================================================
-   flayre.ai - Clean, Simple & Modern Design System
-   Pure white base, crisp subtle borders, high-contrast typography & energetic flame accent
+   flayre.ai - Clean White Modern Design System
+   Pure white base, crisp subtle borders, high-contrast slate typography & flame coral accent
 ============================================================================ */
 
 :root {
-  /* Default: Clean White Light Mode */
   --bg-base: #FFFFFF;
   --bg-subtle: #F8FAFC;
   --bg-sidebar: #FFFFFF;
@@ -51,45 +51,6 @@
   --clay-honey: var(--accent-amber);
 }
 
-.dark {
-  /* Dark Mode Variant */
-  --bg-base: #0B0F17;
-  --bg-subtle: #111827;
-  --bg-sidebar: #0F172A;
-  --bg-card: #111827;
-  --bg-card-solid: #111827;
-  --bg-elevated: #1E293B;
-  --bg-hover: rgba(255, 255, 255, 0.05);
-  
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-medium: rgba(255, 255, 255, 0.16);
-  --border-strong: rgba(255, 255, 255, 0.25);
-  
-  --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
-  --text-muted: #64748B;
-  
-  --accent-flame: #FF5238;
-  --accent-flame-hover: #FF6850;
-  --accent-flame-subtle: rgba(255, 82, 56, 0.12);
-  --accent-flame-glow: rgba(255, 82, 56, 0.25);
-  
-  --accent-emerald: #10B981;
-  --accent-emerald-subtle: rgba(16, 185, 129, 0.12);
-  --accent-blue: #3B82F6;
-  --accent-blue-subtle: rgba(59, 130, 246, 0.12);
-  --accent-amber: #F59E0B;
-  --accent-amber-subtle: rgba(245, 158, 11, 0.12);
-  --accent-purple: #8B5CF6;
-  --accent-purple-subtle: rgba(139, 92, 246, 0.12);
-
-  --clay-bg: var(--bg-base);
-  --clay-text-primary: var(--text-primary);
-  --clay-text-secondary: var(--text-secondary);
-  --clay-text-muted: var(--text-muted);
-  --clay-sidebar: var(--bg-sidebar);
-}
-
 * {
   box-sizing: border-box;
 }
@@ -97,20 +58,16 @@
 html {
   scroll-behavior: smooth;
   color-scheme: light;
-}
-
-html.dark {
-  color-scheme: dark;
+  background-color: #FFFFFF;
 }
 
 body {
   font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background-color: var(--bg-base);
-  color: var(--text-primary);
+  background-color: #FFFFFF;
+  color: #0F172A;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
-  transition: background-color 0.2s ease, color 0.2s ease;
   overflow-x: hidden;
 }
 
@@ -121,8 +78,8 @@ body {
   /* Simple, Clean Surface Card */
   .clay-card,
   .ui-card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-subtle);
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
     border-radius: 1rem;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -130,8 +87,8 @@ body {
 
   .clay-card-interactive,
   .ui-card-interactive {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-subtle);
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
     border-radius: 1rem;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -141,31 +98,31 @@ body {
   .clay-card-interactive:hover,
   .ui-card-interactive:hover {
     transform: translateY(-2px);
-    border-color: var(--border-medium);
+    border-color: #CBD5E1;
     box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
   }
 
   /* Tone specific cards */
   .clay-card-terracotta {
-    background-color: var(--accent-flame-subtle);
+    background-color: #FFF1EE;
     border: 1px solid rgba(255, 82, 56, 0.2);
     border-radius: 1rem;
   }
 
   .clay-card-sage {
-    background-color: var(--accent-emerald-subtle);
+    background-color: #ECFDF5;
     border: 1px solid rgba(16, 185, 129, 0.2);
     border-radius: 1rem;
   }
 
   .clay-card-denim {
-    background-color: var(--accent-blue-subtle);
+    background-color: #EFF6FF;
     border: 1px solid rgba(59, 130, 246, 0.2);
     border-radius: 1rem;
   }
 
   .clay-card-honey {
-    background-color: var(--accent-amber-subtle);
+    background-color: #FFFBEB;
     border: 1px solid rgba(245, 158, 11, 0.2);
     border-radius: 1rem;
   }
@@ -177,33 +134,33 @@ body {
     align-items: center;
     justify-content: center;
     border-radius: 0.75rem;
-    background-color: var(--bg-subtle);
-    border: 1px solid var(--border-subtle);
+    background-color: #F8FAFC;
+    border: 1px solid #E2E8F0;
     transition: all 0.15s ease;
   }
 
   .clay-tile-terracotta {
-    background-color: var(--accent-flame-subtle);
-    color: var(--accent-flame);
+    background-color: #FFF1EE;
+    color: #FF5238;
     border: 1px solid rgba(255, 82, 56, 0.25);
   }
 
   .clay-tile-sage,
   .clay-tile-sage-green {
-    background-color: var(--accent-emerald-subtle);
+    background-color: #ECFDF5;
     color: #059669;
     border: 1px solid rgba(16, 185, 129, 0.25);
   }
 
   .clay-tile-honey,
   .clay-tile-ochre {
-    background-color: var(--accent-amber-subtle);
+    background-color: #FFFBEB;
     color: #D97706;
     border: 1px solid rgba(245, 158, 11, 0.25);
   }
 
   .clay-tile-denim {
-    background-color: var(--accent-blue-subtle);
+    background-color: #EFF6FF;
     color: #2563EB;
     border: 1px solid rgba(59, 130, 246, 0.25);
   }
@@ -280,29 +237,22 @@ body {
     border-radius: 0.625rem;
     cursor: pointer;
     background-color: #FFFFFF;
-    color: var(--text-primary);
-    border: 1px solid var(--border-subtle);
+    color: #0F172A;
+    border: 1px solid #E2E8F0;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
     transition: all 0.15s ease;
-  }
-
-  .dark .clay-btn-secondary,
-  .dark .clay-btn-porcelain,
-  .dark .ui-btn-secondary {
-    background-color: rgba(255, 255, 255, 0.06);
-    border-color: var(--border-subtle);
   }
 
   .clay-btn-secondary:hover,
   .clay-btn-porcelain:hover,
   .ui-btn-secondary:hover {
-    background-color: var(--bg-hover);
-    border-color: var(--border-medium);
+    background-color: #F8FAFC;
+    border-color: #CBD5E1;
     transform: translateY(-1px);
   }
 
   .clay-btn-sage {
-    background-color: var(--accent-emerald-subtle);
+    background-color: #ECFDF5;
     color: #059669;
     border: 1px solid rgba(16, 185, 129, 0.3);
     border-radius: 0.625rem;
@@ -324,31 +274,31 @@ body {
     font-size: 0.75rem;
     font-weight: 600;
     border-radius: 9999px;
-    background-color: var(--bg-subtle);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-subtle);
+    background-color: #F8FAFC;
+    color: #475569;
+    border: 1px solid #E2E8F0;
   }
 
   .clay-badge-terracotta {
-    background-color: var(--accent-flame-subtle);
-    color: var(--accent-flame);
+    background-color: #FFF1EE;
+    color: #FF5238;
     border: 1px solid rgba(255, 82, 56, 0.25);
   }
 
   .clay-badge-sage {
-    background-color: var(--accent-emerald-subtle);
+    background-color: #ECFDF5;
     color: #059669;
     border: 1px solid rgba(16, 185, 129, 0.25);
   }
 
   .clay-badge-denim {
-    background-color: var(--accent-blue-subtle);
+    background-color: #EFF6FF;
     color: #2563EB;
     border: 1px solid rgba(59, 130, 246, 0.25);
   }
 
   .clay-badge-honey {
-    background-color: var(--accent-amber-subtle);
+    background-color: #FFFBEB;
     color: #D97706;
     border: 1px solid rgba(245, 158, 11, 0.25);
   }
@@ -357,61 +307,36 @@ body {
   .clay-input,
   .ui-input {
     background-color: #FFFFFF;
-    border: 1px solid var(--border-subtle);
+    border: 1px solid #E2E8F0;
     border-radius: 0.625rem;
     padding: 0.625rem 0.875rem;
-    color: var(--text-primary);
+    color: #0F172A;
     font-size: 0.875rem;
     outline: none;
     transition: all 0.15s ease;
   }
 
-  .dark .clay-input,
-  .dark .ui-input {
-    background-color: #111827;
-  }
-
   .clay-input:focus,
   .ui-input:focus {
-    border-color: var(--accent-flame);
+    border-color: #FF5238;
     box-shadow: 0 0 0 3px rgba(255, 82, 56, 0.15);
   }
 
   /* Nav States */
   .clay-nav-active {
-    background-color: var(--bg-subtle);
-    color: var(--text-primary);
+    background-color: #F8FAFC;
+    color: #0F172A;
     font-weight: 600;
   }
 
   .clay-nav-inactive {
-    color: var(--text-secondary);
+    color: #475569;
     background-color: transparent;
   }
 
   .clay-nav-inactive:hover {
-    color: var(--text-primary);
-    background-color: var(--bg-hover);
-  }
-
-  /* Simple slabs & tiles */
-  .clay-slab {
-    background-color: var(--bg-card);
-    border-radius: 1rem;
-    border: 1px solid var(--border-subtle);
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
-  }
-
-  .clay-studio-tile {
-    background-color: var(--bg-card);
-    border-radius: 0.75rem;
-    border: 1px solid var(--border-subtle);
-    transition: all 0.15s ease;
-  }
-
-  .clay-studio-tile:hover {
-    border-color: var(--border-medium);
-    background-color: var(--bg-hover);
+    color: #0F172A;
+    background-color: #F1F5F9;
   }
 }
 
@@ -442,11 +367,6 @@ body {
   z-index: 0;
 }
 
-/* Gradient text */
-.text-gradient {
-  color: var(--text-primary);
-}
-
 .text-gradient-flame {
   background: linear-gradient(135deg, #FF5238 0%, #F59E0B 100%);
   -webkit-background-clip: text;
@@ -466,10 +386,6 @@ body {
 ::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.12);
   border-radius: 9999px;
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
 }
 
 ::-webkit-scrollbar-thumb:hover {

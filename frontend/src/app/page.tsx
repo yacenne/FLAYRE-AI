@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ChatShowcase } from "@/components/ChatShowcase";
@@ -13,15 +16,33 @@ import {
   Smile,
   Flame,
   CheckCircle2,
+  LayoutDashboard,
 } from "lucide-react";
 
 export default function LandingPage() {
+  const { isAuthenticated, user } = useAuth();
+
   return (
     <div className="min-h-screen bg-white text-slate-900 flex flex-col relative selection:bg-[#FF5238]/20 selection:text-[#FF5238]">
       {/* Subtle top glow */}
       <div className="simple-hero-glow" />
 
       <Navbar />
+
+      {/* Authenticated user top banner */}
+      {isAuthenticated && (
+        <div className="bg-orange-50 border-b border-orange-200 px-4 py-2.5 text-center text-xs font-semibold text-slate-700 flex items-center justify-center gap-2">
+          <span>Signed in as <strong>{user?.email}</strong></span>
+          <span className="text-orange-300">•</span>
+          <Link
+            href="/dashboard"
+            className="text-[#FF5238] hover:underline font-bold inline-flex items-center gap-1"
+          >
+            <span>Open your Dashboard</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      )}
 
       <main className="flex-1 relative z-10">
         {/* ============================================================================ */}
@@ -50,19 +71,41 @@ export default function LandingPage() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-              <Link
-                href="/analyze"
-                className="clay-btn-primary py-3 px-7 text-sm font-semibold w-full sm:w-auto inline-flex items-center justify-center gap-2 shadow-md"
-              >
-                <span>Start Free Analysis</span>
-                <ArrowRight className="w-4 h-4 shrink-0" />
-              </Link>
-              <a
-                href="#demo"
-                className="clay-btn-secondary py-3 px-6 text-sm font-semibold w-full sm:w-auto inline-flex items-center justify-center gap-2"
-              >
-                <span>Try Interactive Demo</span>
-              </a>
+              {isAuthenticated ? (
+                <>
+                  <Link
+                    href="/dashboard"
+                    className="clay-btn-primary py-3 px-7 text-sm font-semibold w-full sm:w-auto inline-flex items-center justify-center gap-2 shadow-md"
+                  >
+                    <LayoutDashboard className="w-4 h-4 shrink-0" />
+                    <span>Go to Dashboard</span>
+                    <ArrowRight className="w-4 h-4 shrink-0" />
+                  </Link>
+                  <Link
+                    href="/analyze"
+                    className="clay-btn-secondary py-3 px-6 text-sm font-semibold w-full sm:w-auto inline-flex items-center justify-center gap-2"
+                  >
+                    <Sparkles className="w-4 h-4 text-[#FF5238]" />
+                    <span>Analyze Screenshot</span>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/analyze"
+                    className="clay-btn-primary py-3 px-7 text-sm font-semibold w-full sm:w-auto inline-flex items-center justify-center gap-2 shadow-md"
+                  >
+                    <span>Start Free Analysis</span>
+                    <ArrowRight className="w-4 h-4 shrink-0" />
+                  </Link>
+                  <a
+                    href="#demo"
+                    className="clay-btn-secondary py-3 px-6 text-sm font-semibold w-full sm:w-auto inline-flex items-center justify-center gap-2"
+                  >
+                    <span>Try Interactive Demo</span>
+                  </a>
+                </>
+              )}
             </div>
 
             {/* Trust Micro-Text */}
