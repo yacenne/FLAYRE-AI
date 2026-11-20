@@ -24,9 +24,20 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const showToast = useCallback((message: string, type: ToastType = "info") => {
+  const showToast = useCallback((message: any, type: ToastType = "info") => {
+    let text = "";
+    if (typeof message === "string") {
+      text = message;
+    } else if (message instanceof Error) {
+      text = message.message;
+    } else if (typeof message === "object" && message !== null) {
+      text = message.message || message.detail || JSON.stringify(message);
+    } else {
+      text = String(message ?? "");
+    }
+
     const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prev) => [...prev, { id, type, message }]);
+    setToasts((prev) => [...prev, { id, type, message: text }]);
 
     setTimeout(() => {
       removeToast(id);

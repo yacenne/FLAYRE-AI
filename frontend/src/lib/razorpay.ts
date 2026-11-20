@@ -90,6 +90,18 @@ export interface InitiateCheckoutArgs {
  * 3. Opens Razorpay modal
  * 4. On payment completion, verifies signature via /api/v1/billing/verify-payment
  */
+function formatErrorDetail(detail: any): string {
+    if (!detail) return "Unknown error occurred";
+    if (typeof detail === "string") return detail;
+    if (Array.isArray(detail)) {
+        return detail.map((d: any) => d.msg || d.message || JSON.stringify(d)).join(", ");
+    }
+    if (typeof detail === "object") {
+        return detail.message || detail.error || JSON.stringify(detail);
+    }
+    return String(detail);
+}
+
 export async function initiateProUpgrade({
     token,
     userEmail,
@@ -108,11 +120,13 @@ export async function initiateProUpgrade({
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
             },
+            body: JSON.stringify({ plan: "pro" }),
         });
 
         if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
-            throw new Error(errData.detail || "Failed to create payment order");
+            const errMsg = formatErrorDetail(errData.detail || errData.message) || "Failed to create payment order";
+            throw new Error(errMsg);
         }
 
         const orderData = await res.json();
@@ -148,7 +162,7 @@ export async function initiateProUpgrade({
                 name: userName || "",
             },
             theme: {
-                color: "#9333ea", // Brand purple
+                color: "#FF5238", // Brand terracotta/orange
             },
             handler: async (response: RazorpayResponse) => {
                 try {
@@ -163,13 +177,15 @@ export async function initiateProUpgrade({
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature,
+                            plan: "pro",
                         }),
                     });
 
-                    const verifyData = await verifyRes.json();
+                    const verifyData = await verifyRes.json().catch(() => ({}));
 
                     if (!verifyRes.ok) {
-                        throw new Error(verifyData.detail || "Server verification failed");
+                        const errMsg = formatErrorDetail(verifyData.detail || verifyData.message) || "Server verification failed";
+                        throw new Error(errMsg);
                     }
 
                     onSuccess(verifyData);
@@ -177,7 +193,10 @@ export async function initiateProUpgrade({
                     const paymentIdInfo = response.razorpay_payment_id
                         ? ` (Payment ID: ${response.razorpay_payment_id})`
                         : "";
-                    const detail = err.message || "Server verification failed";
+                    let detail = err.message || "Server verification failed";
+                    if (detail === "Failed to fetch" || err.name === "TypeError") {
+                        detail = `Network error connecting to backend (${apiUrl})`;
+                    }
                     onError(
                         `Your payment succeeded on Razorpay${paymentIdInfo}, but server verification failed: ${detail}. If your plan is not upgraded shortly, please contact support@flayre.ai with your Payment ID.`
                     );
@@ -193,6 +212,11 @@ export async function initiateProUpgrade({
         const rzp = new window.Razorpay(options);
         rzp.open();
     } catch (err: any) {
-        onError(err.message || "Something went wrong during checkout.");
+        let msg = err.message || "Something went wrong during checkout.";
+        if (msg === "Failed to fetch" || err.name === "TypeError") {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+            msg = `Unable to connect to backend server (${apiUrl}). Please ensure the backend is running.`;
+        }
+        onError(msg);
     }
 }
