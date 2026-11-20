@@ -48,7 +48,14 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     let errorBody: any = null;
     try {
       errorBody = await response.json();
-      errorDetail = errorBody.detail || errorBody.message || errorDetail;
+      const rawDetail = errorBody.detail || errorBody.message;
+      if (typeof rawDetail === 'string') {
+        errorDetail = rawDetail;
+      } else if (Array.isArray(rawDetail)) {
+        errorDetail = rawDetail.map((d: any) => d.msg || d.message || JSON.stringify(d)).join(', ');
+      } else if (rawDetail && typeof rawDetail === 'object') {
+        errorDetail = rawDetail.message || JSON.stringify(rawDetail);
+      }
     } catch {
       // Non-JSON response
     }

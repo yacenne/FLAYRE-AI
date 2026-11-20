@@ -53,7 +53,7 @@ def get_razorpay_client() -> razorpay.Client:
 
 
 PLANS = {
-    "pro": 499,  # ₹499 in paise
+    "pro": 49900,  # ₹499 in paise (₹499.00)
 }
 
 
@@ -83,8 +83,8 @@ async def get_subscription(
 
 @router.post("/create-order", response_model=CreateOrderResponse)
 async def create_order(
-    request: CreateOrderRequest,
     user_id: CurrentUser,
+    request: Optional[CreateOrderRequest] = None,
     subscription_repo: SubscriptionRepository = Depends(get_subscription_repo),
 ):
     """
@@ -97,7 +97,8 @@ async def create_order(
             detail="User already on Pro plan"
         )
 
-    amount = PLANS.get(request.plan)
+    plan = request.plan if request else "pro"
+    amount = PLANS.get(plan)
     if not amount:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -111,7 +112,8 @@ async def create_order(
                 "amount": amount,
                 "currency": "INR",
                 "receipt": f"flayre_{user_id[:8]}",
-                "notes": {"user_id": user_id, "plan": request.plan}
+                "payment_capture": 1,
+                "notes": {"user_id": user_id, "plan": plan}
             })
         )
     except Exception as e:
@@ -180,13 +182,23 @@ async def verify_payment(
             detail=f"Payment gateway error: {str(e)}"
         )
 
+    expected_amount = PLANS.get(request.plan)
+
+    # Auto-capture if authorized
+    if payment.get("status") == "authorized":
+        try:
+            payment = await run_in_threadpool(
+                lambda: client.payment.capture(request.razorpay_payment_id, expected_amount)
+            )
+        except Exception as e:
+            logger.error(f"Razorpay auto-capture failed: {e}")
+
     if payment.get("status") != "captured":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Payment has not been captured"
         )
 
-    expected_amount = PLANS.get(request.plan)
     if payment.get("amount") != expected_amount:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -194,7 +206,17 @@ async def verify_payment(
         )
 
     notes = payment.get("notes") or {}
-    if notes.get("user_id") != user_id:
+    payment_user_id = notes.get("user_id")
+    if not payment_user_id:
+        try:
+            order_data = await run_in_threadpool(
+                lambda: client.order.fetch(request.razorpay_order_id)
+            )
+            payment_user_id = (order_data.get("notes") or {}).get("user_id")
+        except Exception:
+            pass
+
+    if payment_user_id and payment_user_id != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Payment belongs to another user"
